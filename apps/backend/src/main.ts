@@ -8,6 +8,7 @@ import { NestFactory } from '@nestjs/core';
 import {
   AppConfigService,
   AppLogger,
+  GlobalExceptionFilter,
   useRequestIdMiddleware,
 } from '@org/backend-core';
 import { AppModule } from './app/app.module';
@@ -19,6 +20,7 @@ async function bootstrap() {
   logger.setContext('Bootstrap');
   app.useLogger(logger);
   useRequestIdMiddleware(app);
+  app.useGlobalFilters(app.get(GlobalExceptionFilter));
 
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
