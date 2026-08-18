@@ -7,7 +7,13 @@
       "path": "./apps/backend"
     },
     {
-      "path": "./apps/frontend"
+      "path": "./libs/backend/core"
+    },
+    {
+      "path": "./libs/shared/contracts"
+    },
+    {
+      "path": "./libs/shared/utils"
     }
   ],
   "compilerOptions": {}
