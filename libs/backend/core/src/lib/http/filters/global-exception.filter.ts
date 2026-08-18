@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Injectable,
 } from '@nestjs/common';
+import type { ApiError } from '@org/shared-contracts';
 import type { Response } from 'express';
 import { AppConfigService } from '../../config';
 import { AppLogger, RequestContextService } from '../../logger';
@@ -60,7 +61,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     this.logOriginal(exception, resolved.statusCode);
 
     const isProduction = this.config.app.environment === 'production';
-    const body: Record<string, unknown> = {
+    const body: ApiError = {
       statusCode: resolved.statusCode,
       code: resolved.code,
       message: resolved.message,
@@ -68,7 +69,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
 
     if (!isProduction && resolved.details !== undefined) {
-      body['details'] = resolved.details;
+      body.details = resolved.details;
     }
 
     response.status(resolved.statusCode).json(body);

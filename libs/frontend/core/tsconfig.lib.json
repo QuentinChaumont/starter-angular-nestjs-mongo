@@ -13,5 +13,10 @@
     "jest.config.ts",
     "jest.config.cts",
     "src/test-setup.ts"
+  ],
+  "references": [
+    {
+      "path": "../../shared/contracts/tsconfig.lib.json"
+    }
   ]
 }
