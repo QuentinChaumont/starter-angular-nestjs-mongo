@@ -5,11 +5,21 @@
 
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { AppConfigService } from '@org/backend-core';
+import {
+  AppConfigService,
+  AppLogger,
+  useRequestIdMiddleware,
+} from '@org/backend-core';
 import { AppModule } from './app/app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+
+  const logger = app.get(AppLogger);
+  logger.setContext('Bootstrap');
+  app.useLogger(logger);
+  useRequestIdMiddleware(app);
+
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
 
@@ -17,12 +27,15 @@ async function bootstrap() {
   const port = config.app.port;
 
   await app.listen(port);
-  Logger.log(
+  logger.log(
     `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`,
   );
 }
 
 bootstrap().catch((error) => {
-  Logger.error('Failed to start application', error instanceof Error ? error.stack : error);
+  Logger.error(
+    'Failed to start application',
+    error instanceof Error ? error.stack : error,
+  );
   process.exit(1);
 });
