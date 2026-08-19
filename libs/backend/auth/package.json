@@ -1,0 +1,52 @@
+{
+  "name": "@org/backend-auth",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "nx": {
+    "name": "backend-auth",
+    "tags": [
+      "scope:backend",
+      "type:feature"
+    ],
+    "targets": {
+      "test": {
+        "options": {
+          "passWithNoTests": true
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/swagger": "^11.4.7",
+    "@org/backend-core": "0.0.1",
+    "@org/backend-features-user": "0.0.1",
+    "class-validator": "^0.15.1",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1"
+  },
+  "devDependencies": {
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/mongoose": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/testing": "^11.0.0",
+    "@org/backend-database-mongo": "0.0.1",
+    "@types/express": "^4.17.0",
+    "@types/passport-jwt": "^4.0.1",
+    "mongodb-memory-server": "^11.2.0",
+    "mongoose": "^9.9.3"
+  }
+}

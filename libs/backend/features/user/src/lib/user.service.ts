@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ConflictError, NotFoundError } from '@org/backend-core';
+import { ConflictError, NotFoundError, hashPassword } from '@org/backend-core';
 import { UserRepository } from './user.repository';
 import { User, UserDocument } from './user.schema';
 
@@ -25,13 +25,20 @@ export class UserService {
     return found;
   }
 
+  async findByEmailWithPassword(email: string): Promise<UserDocument | null> {
+    return this.repository.findByEmailWithPassword(email);
+  }
+
   async findAll(): Promise<UserDocument[]> {
     return this.repository.findMany();
   }
 
   async create(input: Partial<User>): Promise<UserDocument> {
     try {
-      return await this.repository.create(input);
+      const toCreate = input.password
+        ? { ...input, password: await hashPassword(input.password) }
+        : input;
+      return await this.repository.create(toCreate);
     } catch (error) {
       if (isDuplicateKeyError(error)) {
         throw new ConflictError(
@@ -44,7 +51,10 @@ export class UserService {
   }
 
   async updateById(id: string, update: Partial<User>): Promise<UserDocument> {
-    const updated = await this.repository.updateById(id, update);
+    const toUpdate = update.password
+      ? { ...update, password: await hashPassword(update.password) }
+      : update;
+    const updated = await this.repository.updateById(id, toUpdate);
     if (!updated) {
       throw new NotFoundError('USER_NOT_FOUND', 'User not found');
     }

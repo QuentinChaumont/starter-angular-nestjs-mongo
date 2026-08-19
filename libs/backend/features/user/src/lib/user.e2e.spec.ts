@@ -59,8 +59,14 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
 
   const validPayload = {
     email: 'jane.doe@example.com',
+    password: 'Str0ng!Passw0rd',
     firstName: 'Jane',
     lastName: 'Doe',
+  };
+  const publicFields = {
+    email: validPayload.email,
+    firstName: validPayload.firstName,
+    lastName: validPayload.lastName,
   };
 
   async function createUser(payload = validPayload) {
@@ -76,8 +82,9 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
     const { response, body } = await createUser();
 
     expect(response.status).toBe(201);
-    expect(body).toMatchObject(validPayload);
+    expect(body).toMatchObject(publicFields);
     expect(body._id).toBeDefined();
+    expect(body.password).toBeUndefined();
   });
 
   it('reads a user by id', async () => {
@@ -86,7 +93,7 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
     const response = await fetch(`${baseUrl}/${created._id}`);
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toMatchObject(validPayload);
+    expect(await response.json()).toMatchObject(publicFields);
   });
 
   it('lists users', async () => {

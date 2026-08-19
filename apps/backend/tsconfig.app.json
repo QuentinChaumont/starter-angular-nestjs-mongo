@@ -23,6 +23,9 @@
       "path": "../../libs/backend/features/user/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/backend/auth/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/backend/core/tsconfig.lib.json"
     },
     {

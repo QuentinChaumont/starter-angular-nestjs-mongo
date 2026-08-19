@@ -23,6 +23,9 @@
     },
     {
       "path": "./libs/backend/features/user"
+    },
+    {
+      "path": "./libs/backend/auth"
     }
   ],
   "compilerOptions": {}
