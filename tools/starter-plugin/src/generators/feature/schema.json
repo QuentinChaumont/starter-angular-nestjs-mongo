@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "Feature",
+  "title": "Generate a minimal backend feature library",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the feature (lowercase letters, digits and dashes, e.g. \"orders\").",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "What name would you like to use for the feature?"
+    }
+  },
+  "required": ["name"]
+}

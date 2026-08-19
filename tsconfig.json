@@ -17,6 +17,9 @@
     },
     {
       "path": "./libs/backend/database/mongo"
+    },
+    {
+      "path": "./tools/starter-plugin"
     }
   ],
   "compilerOptions": {}

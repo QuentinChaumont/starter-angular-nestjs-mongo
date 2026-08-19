@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "name": "starter-plugin",
+  "generators": {
+    "feature": {
+      "factory": "./src/generators/feature/generator",
+      "schema": "./src/generators/feature/schema.json",
+      "description": "Generate a minimal backend feature library at libs/backend/features/<name>."
+    }
+  }
+}

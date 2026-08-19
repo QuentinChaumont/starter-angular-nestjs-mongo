@@ -1,0 +1,20 @@
+{
+  "name": "@org/starter-plugin",
+  "version": "0.0.1",
+  "private": true,
+  "generators": "./generators.json",
+  "nx": {
+    "name": "starter-plugin",
+    "tags": ["type:tool"],
+    "targets": {
+      "test": {
+        "options": {
+          "passWithNoTests": true
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@nx/devkit": "23.1.1"
+  }
+}
