@@ -20,6 +20,9 @@
     },
     {
       "path": "./tools/starter-plugin"
+    },
+    {
+      "path": "./libs/backend/features/user"
     }
   ],
   "compilerOptions": {}
