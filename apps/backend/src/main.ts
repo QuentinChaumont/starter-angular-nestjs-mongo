@@ -10,6 +10,7 @@ import {
   AppLogger,
   GlobalExceptionFilter,
   createValidationPipe,
+  setupOpenApi,
   useRequestIdMiddleware,
 } from '@org/backend-core';
 import { AppModule } from './app/app.module';
@@ -23,6 +24,7 @@ async function bootstrap() {
   useRequestIdMiddleware(app);
   app.useGlobalFilters(app.get(GlobalExceptionFilter));
   app.useGlobalPipes(createValidationPipe());
+  setupOpenApi(app);
 
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
