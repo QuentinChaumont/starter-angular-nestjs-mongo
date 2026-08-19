@@ -1,0 +1,18 @@
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+<% if (crud) { %>import { <%= className %>Controller } from './<%= fileName %>.controller';
+<% } %>import { <%= className %>Repository } from './<%= fileName %>.repository';
+import { <%= className %>Service } from './<%= fileName %>.service';
+import { <%= className %>, <%= className %>Schema } from './<%= fileName %>.schema';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: <%= className %>.name, schema: <%= className %>Schema },
+    ]),
+  ],
+  controllers: [<% if (crud) { %><%= className %>Controller<% } %>],
+  providers: [<%= className %>Repository, <%= className %>Service],
+  exports: [<%= className %>Service],
+})
+export class <%= className %>Module {}

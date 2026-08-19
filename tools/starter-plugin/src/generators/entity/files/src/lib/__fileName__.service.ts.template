@@ -1,0 +1,52 @@
+import { Injectable } from '@nestjs/common';
+import { NotFoundError } from '@org/backend-core';
+import { <%= className %>Repository } from './<%= fileName %>.repository';
+import { <%= className %>, <%= className %>Document } from './<%= fileName %>.schema';
+
+@Injectable()
+export class <%= className %>Service {
+  constructor(private readonly repository: <%= className %>Repository) {}
+
+  async findById(id: string): Promise<<%= className %>Document> {
+    const found = await this.repository.findById(id);
+    if (!found) {
+      throw new NotFoundError(
+        '<%= constantName %>_NOT_FOUND',
+        '<%= className %> not found',
+      );
+    }
+    return found;
+  }
+
+  async findAll(): Promise<<%= className %>Document[]> {
+    return this.repository.findMany();
+  }
+
+  async create(input: Partial<<%= className %>>): Promise<<%= className %>Document> {
+    return this.repository.create(input);
+  }
+
+  async updateById(
+    id: string,
+    update: Partial<<%= className %>>,
+  ): Promise<<%= className %>Document> {
+    const updated = await this.repository.updateById(id, update);
+    if (!updated) {
+      throw new NotFoundError(
+        '<%= constantName %>_NOT_FOUND',
+        '<%= className %> not found',
+      );
+    }
+    return updated;
+  }
+
+  async deleteById(id: string): Promise<void> {
+    const deleted = await this.repository.deleteById(id);
+    if (!deleted) {
+      throw new NotFoundError(
+        '<%= constantName %>_NOT_FOUND',
+        '<%= className %> not found',
+      );
+    }
+  }
+}

@@ -1,0 +1,15 @@
+import { Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
+
+/**
+ * Persistence schema for <%= className %>. Add `@Prop()` fields here that
+ * mirror `<%= className %>Model` from `./models/<%= fileName %>.model`
+ * (import `Prop` from `@nestjs/mongoose` once you do).
+ */
+@Schema({ timestamps: true })
+export class <%= className %> {
+}
+
+export type <%= className %>Document = HydratedDocument<<%= className %>>;
+
+export const <%= className %>Schema = SchemaFactory.createForClass(<%= className %>);

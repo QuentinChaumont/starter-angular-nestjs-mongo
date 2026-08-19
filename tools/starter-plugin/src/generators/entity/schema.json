@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "Entity",
+  "title": "Generate a Mongo-backed backend entity library",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the entity (lowercase letters, digits and dashes, e.g. \"user\").",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "What name would you like to use for the entity?"
+    },
+    "crud": {
+      "type": "boolean",
+      "description": "Also generate a REST controller and DTOs wired to the service.",
+      "default": false,
+      "x-prompt": "Generate a REST controller and DTOs (--crud)?"
+    }
+  },
+  "required": ["name"]
+}

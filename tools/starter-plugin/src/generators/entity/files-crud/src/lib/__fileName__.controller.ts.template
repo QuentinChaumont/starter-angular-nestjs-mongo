@@ -1,0 +1,44 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { <%= className %>Service } from './<%= fileName %>.service';
+import { Create<%= className %>Dto } from './dto/create-<%= fileName %>.dto';
+import { Update<%= className %>Dto } from './dto/update-<%= fileName %>.dto';
+
+@ApiTags('<%= fileName %>s')
+@Controller('<%= fileName %>s')
+export class <%= className %>Controller {
+  constructor(private readonly service: <%= className %>Service) {}
+
+  @Post()
+  create(@Body() dto: Create<%= className %>Dto) {
+    return this.service.create(dto);
+  }
+
+  @Get()
+  findAll() {
+    return this.service.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.service.findById(id);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() dto: Update<%= className %>Dto) {
+    return this.service.updateById(id, dto);
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string): Promise<void> {
+    await this.service.deleteById(id);
+  }
+}

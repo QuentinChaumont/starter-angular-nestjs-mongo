@@ -1,0 +1,6 @@
+/**
+ * Payload accepted by `POST /<%= fileName %>s`. Add `class-validator`
+ * decorated fields here that mirror `<%= className %>Model`.
+ */
+export class Create<%= className %>Dto {
+}

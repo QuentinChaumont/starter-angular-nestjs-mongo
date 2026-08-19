@@ -1,0 +1,6 @@
+/**
+ * Plain data shape for a <%= className %>, independent from persistence
+ * concerns. Add fields here, then mirror them with `@Prop()` decorators on
+ * the schema class in `<%= fileName %>.schema.ts`.
+ */
+export type <%= className %>Model = Record<string, never>;

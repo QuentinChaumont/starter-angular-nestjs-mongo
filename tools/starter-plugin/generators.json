@@ -6,6 +6,11 @@
       "factory": "./src/generators/feature/generator",
       "schema": "./src/generators/feature/schema.json",
       "description": "Generate a minimal backend feature library at libs/backend/features/<name>."
+    },
+    "entity": {
+      "factory": "./src/generators/entity/generator",
+      "schema": "./src/generators/entity/schema.json",
+      "description": "Generate a Mongo-backed backend entity library at libs/backend/features/<name>, with an optional REST controller (--crud)."
     }
   }
 }

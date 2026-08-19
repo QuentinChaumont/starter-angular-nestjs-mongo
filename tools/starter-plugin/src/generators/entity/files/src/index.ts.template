@@ -1,0 +1,9 @@
+export * from './lib/<%= fileName %>.module';
+export * from './lib/<%= fileName %>.service';
+export * from './lib/<%= fileName %>.repository';
+export * from './lib/<%= fileName %>.schema';
+export * from './lib/models/<%= fileName %>.model';
+<% if (crud) { %>export * from './lib/<%= fileName %>.controller';
+export * from './lib/dto/create-<%= fileName %>.dto';
+export * from './lib/dto/update-<%= fileName %>.dto';
+<% } %>
