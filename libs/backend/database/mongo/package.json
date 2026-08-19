@@ -23,6 +23,7 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/mongoose": "^11.0.0",
     "@org/backend-core": "0.0.1",
+    "@org/shared-contracts": "0.0.1",
     "mongoose": "^9.9.3"
   },
   "devDependencies": {
