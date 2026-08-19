@@ -43,6 +43,7 @@
     "jest-preset-angular": "~17.0.0",
     "jest-util": "~30.3.0",
     "jsonc-eslint-parser": "^2.1.0",
+    "mongodb-memory-server": "^11.2.0",
     "nx": "23.1.1",
     "prettier": "^3.8.1",
     "ts-jest": "^29.4.7",
@@ -58,7 +59,8 @@
     "packages/*",
     "apps/*",
     "libs/backend/*",
-    "libs/shared/*"
+    "libs/shared/*",
+    "libs/backend/database/*"
   ],
   "dependencies": {
     "@angular/common": "~22.0.4",
@@ -71,10 +73,12 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.0",
+    "@nestjs/mongoose": "^11.0.4",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/swagger": "^11.4.7",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
+    "mongoose": "^9.9.3",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.0"
   }
