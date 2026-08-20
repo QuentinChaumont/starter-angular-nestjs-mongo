@@ -32,6 +32,9 @@ export class User {
   @Prop({ required: true, trim: true })
   lastName!: string;
 
+  @Prop({ type: [String], default: [] })
+  roles!: string[];
+
   createdAt!: Date;
   updatedAt!: Date;
 }

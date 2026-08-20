@@ -45,6 +45,7 @@ describe('Auth (e2e, real Mongo instance)', () => {
   let usersBaseUrl: string;
 
   const credentials = { email: 'jane.doe@example.com', password: 'Str0ng!Passw0rd' };
+  const adminCredentials = { email: 'admin@example.com', password: 'Str0ng!Passw0rd' };
 
   beforeAll(async () => {
     mongod = await MongoMemoryServer.create();
@@ -77,6 +78,16 @@ describe('Auth (e2e, real Mongo instance)', () => {
         ...credentials,
         firstName: 'Jane',
         lastName: 'Doe',
+      }),
+    });
+    await fetch(usersBaseUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        ...adminCredentials,
+        firstName: 'Ada',
+        lastName: 'Admin',
+        roles: ['admin'],
       }),
     });
   }, 60_000);
@@ -145,6 +156,37 @@ describe('Auth (e2e, real Mongo instance)', () => {
     const { body: loginBody } = await login(credentials);
 
     const response = await fetch(`${authBaseUrl}/me`, {
+      headers: { authorization: `Bearer ${loginBody.accessToken}` },
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(loginBody.user);
+  });
+
+  it('rejects GET /auth/admin without a token (401)', async () => {
+    const response = await fetch(`${authBaseUrl}/admin`);
+
+    expect(response.status).toBe(401);
+    const body = await response.json();
+    expect(body.code).toBe('UNAUTHENTICATED');
+  });
+
+  it('rejects GET /auth/admin for an authenticated user without the role (403)', async () => {
+    const { body: loginBody } = await login(credentials);
+
+    const response = await fetch(`${authBaseUrl}/admin`, {
+      headers: { authorization: `Bearer ${loginBody.accessToken}` },
+    });
+
+    expect(response.status).toBe(403);
+    const body = await response.json();
+    expect(body.code).toBe('FORBIDDEN');
+  });
+
+  it('allows GET /auth/admin for a user with the admin role', async () => {
+    const { body: loginBody } = await login(adminCredentials);
+
+    const response = await fetch(`${authBaseUrl}/admin`, {
       headers: { authorization: `Bearer ${loginBody.accessToken}` },
     });
 

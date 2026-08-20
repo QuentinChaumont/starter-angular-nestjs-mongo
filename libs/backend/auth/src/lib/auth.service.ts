@@ -28,7 +28,7 @@ export class AuthService {
 
     const authenticatedUser: AuthenticatedUser = {
       id: user._id.toString(),
-      roles: [],
+      roles: user.roles,
     };
 
     const accessToken = await this.jwt.signAsync({
