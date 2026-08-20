@@ -20,7 +20,14 @@
     "tags": [
       "scope:shared",
       "type:util"
-    ]
+    ],
+    "targets": {
+      "test": {
+        "options": {
+          "passWithNoTests": true
+        }
+      }
+    }
   },
   "dependencies": {
     "tslib": "^2.3.0"

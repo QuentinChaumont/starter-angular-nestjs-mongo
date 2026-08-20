@@ -9,8 +9,6 @@ import {
 import { AuthModule } from '@org/backend-auth';
 import { MongoModule } from '@org/backend-database-mongo';
 import { UserModule } from '@org/backend-features-user';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 
 @Module({
   imports: [
@@ -23,7 +21,5 @@ import { AppService } from './app.service';
     UserModule,
     AuthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

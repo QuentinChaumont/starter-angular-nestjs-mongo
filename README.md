@@ -1,107 +1,196 @@
-# New Nx Repository
+# Starter Nx — Angular + NestJS + Mongo
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+An Nx monorepo starter: an Angular frontend, a NestJS backend, and a set of
+optional backend bricks (Mongo, JWT auth, HTTP security, healthchecks) that
+you add only when a project actually needs them.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+The base socle — typed config, structured logging with request IDs, uniform
+HTTP errors, global validation, shared API contracts, OpenAPI — is always
+there. Everything else is opt-in via generators.
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/docs/technologies/typescript/introduction?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
-🚀 If you haven't connected to Nx Cloud yet, [complete your setup here](https://cloud.nx.app/get-started). Get faster builds with remote caching, distributed task execution, and self-healing CI. [See how your workspace can benefit](#nx-cloud).
-## Generate a library
+## Creating a project from this starter
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
+Clone (or use as a template), then:
+
+```bash
+npm install
+npx nx run-many -t lint,test,build
 ```
 
-## Run tasks
+Add whichever bricks the project needs (see below), then start the app:
 
-To build the library use:
-
-```sh
-npx nx run pkg1:build
+```bash
+npx nx serve @org/backend    # NestJS API, http://localhost:3000/api
+npx nx serve frontend        # Angular app
 ```
 
-To run any task with Nx use:
+## Architecture
 
-```sh
-npx nx run <project-name>:<target>
+```text
+apps/
+├── backend/        NestJS app — composition root only (app.module.ts, main.ts)
+└── frontend/        Angular app
+
+libs/
+├── backend/
+│   ├── core/         Always present: config, logger, HTTP errors, validation,
+│   │                 OpenAPI, and the security/health bricks (see below)
+│   ├── database/
+│   │   └── mongo/    Optional: Mongoose connection + BaseRepository<T>
+│   ├── auth/         Optional: JWT auth (Passport), roles guard
+│   ├── testing/       Optional: shared test helpers (buildTestConfig, ...)
+│   └── features/      One lib per business feature (e.g. `user`)
+│
+├── frontend/
+│   └── core/
+│
+└── shared/
+    ├── contracts/     Types shared between Angular and NestJS (no Mongoose,
+    │                  no Nest decorators, no Angular)
+    └── utils/         Framework-agnostic utilities
+
+tools/
+└── starter-plugin/    Local Nx generators (see below)
 ```
 
-These targets are either [inferred automatically](https://nx.dev/docs/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+Nx module boundaries (`eslint.config.mjs`) enforce: `scope:shared` code
+can't depend on `scope:backend`/`scope:frontend`, and `scope:frontend`
+can't depend on `scope:backend` (and vice versa). Run
+`npx nx lint <project>` to check a project against them.
 
-[More about running tasks in the docs &raquo;](https://nx.dev/docs/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Controller → Service → Repository
 
-## Versioning and releasing
+Every backend feature follows the same one-way chain:
 
-To version and release the library use
-
-```
-npx nx release
-```
-
-Pass `--dry-run` to see what would happen without actually releasing the library.
-
-[Learn more about Nx release &raquo;](https://nx.dev/docs/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Keep TypeScript project references up to date
-
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
-
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
-
-```sh
-npx nx sync
+```text
+Controller → Service → Repository → Mongoose
 ```
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+Controllers never touch Mongoose models directly, and services never call
+`@InjectModel(...)` themselves — only the repository layer does. This keeps
+business logic testable without a database and keeps persistence details
+out of the HTTP layer.
 
-```sh
-npx nx sync:check
+### `requestId`
+
+Every HTTP request gets a `requestId`: reused from an incoming
+`X-Request-Id` header if present, otherwise generated with
+`crypto.randomUUID()`. It's available via `AsyncLocalStorage` from anywhere
+in the request's call stack (controller, service, repository) without
+threading it through function arguments, is included automatically in
+every log line, and is echoed back in the `X-Request-Id` response header.
+
+### Error format
+
+Every error response — from the app's own domain errors, from framework
+exceptions, or from anything unexpected — is normalized by
+`GlobalExceptionFilter` to the same shape:
+
+```json
+{
+  "statusCode": 404,
+  "code": "USER_NOT_FOUND",
+  "message": "User not found",
+  "requestId": "...",
+  "details": { "userId": "..." }
+}
 ```
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
+`details` is only ever present for specific application errors that
+declare it, and only outside production. In production, unexpected errors
+never leak a stack trace or a raw Mongoose error — the original is logged
+server-side (with the `requestId`) and the client gets a generic `500`.
 
-## Nx Cloud
+## Environment variables
 
-Nx Cloud ensures a [fast and scalable CI](https://nx.dev/nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+Read and validated once at startup (`libs/backend/core/config`) — an
+invalid value stops the app immediately with a readable error instead of
+failing later at first use.
 
-- [Remote caching](https://nx.dev/docs/features/ci-features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/docs/features/ci-features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/docs/features/ci-features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/docs/features/ci-features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+| Variable | Required | Default | Notes |
+| --- | --- | --- | --- |
+| `NODE_ENV` | no | `development` | `development` \| `test` \| `production` |
+| `PORT` | no | `3000` | |
+| `CORS_ORIGINS` | no | `http://localhost:4200` | Comma-separated list |
+| `RATE_LIMIT_TTL_SECONDS` | no | `60` | Rate-limit window (security brick) |
+| `RATE_LIMIT_LIMIT` | no | `100` | Max requests per window (security brick) |
+| `MONGO_URI` | only if Mongo is installed | — | `mongodb://...` or `mongodb+srv://...` |
+| `JWT_SECRET` | only if auth is installed | — | |
+| `JWT_EXPIRES_IN` | no | `15m` | Only read once auth is installed |
 
-### Set up CI (non-Github Actions CI)
+Access config only through `AppConfigService` (e.g. `config.app.port`,
+`config.mongo.uri`) — never read `process.env` directly outside
+`libs/backend/core/config`.
 
-**Note:** This is only required if your CI provider is not GitHub Actions.
+## Naming conventions
 
-Use the following command to configure a CI workflow for your workspace:
+- Files and folders: `kebab-case` (`user.service.ts`, `roles.guard.ts`).
+- Nx project names: `backend-<segment>` / `frontend-<segment>` /
+  `shared-<segment>` (e.g. `backend-features-user`), matching their path
+  under `libs/`.
+- npm package names: `@org/<same-as-project-name>`.
+- Nx tags: `scope:{backend,frontend,shared}` and
+  `type:{core,feature,data-access,util,app,tool}` — used by the module
+  boundary lint rule above.
 
-```sh
-npx nx g ci-workflow
+## Adding the optional bricks
+
+Each generator is idempotent (safe to run again) and brings its own npm
+dependencies along.
+
+### Mongo
+
+```bash
+npx nx g @org/starter-plugin:mongo
 ```
 
-[Learn more about Nx on CI](https://nx.dev/docs/features/ci-features?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Connects `libs/backend/database/mongo` (Mongoose connection,
+`BaseRepository<T>`, and a `GET /health/ready` route) to the app.
 
-## Install Nx Console
+### An entity
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+```bash
+npx nx g @org/starter-plugin:entity product --crud
+```
 
-[Install Nx Console &raquo;](https://nx.dev/docs/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+Generates `libs/backend/features/product` with a Mongo-backed schema,
+repository, service, and (with `--crud`) a REST controller — requires
+Mongo to already be installed.
 
-## 🔗 Learn More
+### Auth
 
-- [Nx Documentation](https://nx.dev/docs)
-- [Crafting Your Workspace Tutorial](https://nx.dev/docs/getting-started/tutorials/crafting-your-workspace)
-- [Module Boundaries](https://nx.dev/docs/features/enforce-module-boundaries)
-- [Releasing Packages](https://nx.dev/docs/features/manage-releases)
-- [Nx Plugins](https://nx.dev/docs/concepts/nx-plugins)
-- [Nx Cloud](https://nx.dev/nx-cloud)
+```bash
+npx nx g @org/starter-plugin:auth
+```
 
-## 💬 Community
+Connects `libs/backend/auth` (JWT login, `JwtAuthGuard`, `RolesGuard`,
+`@CurrentUser()`) to the app. Requires Mongo **and** a `user` entity with
+`--crud` — `AuthModule` logs users in against it.
 
-Join the Nx community:
+### Security
 
-- [Discord](https://go.nx.dev/community)
-- [X (Twitter)](https://twitter.com/nxdevtools)
-- [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [YouTube](https://www.youtube.com/@nxdevtools)
-- [Blog](https://nx.dev/blog)
+```bash
+npx nx g @org/starter-plugin:security
+```
+
+Wires Helmet, CORS, and rate limiting into the app (`main.ts` +
+`app.module.ts`).
+
+### Healthchecks
+
+```bash
+npx nx g @org/starter-plugin:health
+```
+
+Adds `GET /health/live` (always up — no external checks, so a Mongo outage
+never fails it). `GET /health/ready` comes from the Mongo brick instead,
+independently.
+
+## Testing
+
+`libs/backend/testing` (`@org/backend-testing`) exists to keep spec files
+short: `buildTestConfig(overrides)`, `startTestMongo()`,
+`listenOnRandomPort(app)`, `signTestJwt(config, user)`,
+`nonExistentObjectId()`. See its README for details. (`backend-core`'s own
+specs can't depend on it — that would be circular — and use an internal
+equivalent at `libs/backend/core/src/testing/` instead.)
