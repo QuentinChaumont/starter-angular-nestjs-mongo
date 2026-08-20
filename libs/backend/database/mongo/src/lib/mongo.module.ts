@@ -1,6 +1,8 @@
 import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { TerminusModule } from '@nestjs/terminus';
 import { AppConfigModule, AppConfigService } from '@org/backend-core';
+import { MongoReadinessController } from './health/mongo-readiness.controller';
 import { resolveMongoUri } from './resolve-mongo-uri';
 
 /**
@@ -13,6 +15,7 @@ import { resolveMongoUri } from './resolve-mongo-uri';
 @Module({
   imports: [
     AppConfigModule,
+    TerminusModule,
     MongooseModule.forRootAsync({
       imports: [AppConfigModule],
       inject: [AppConfigService],
@@ -21,6 +24,7 @@ import { resolveMongoUri } from './resolve-mongo-uri';
       }),
     }),
   ],
+  controllers: [MongoReadinessController],
   exports: [MongooseModule],
 })
 export class MongoModule {}

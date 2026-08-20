@@ -3,6 +3,7 @@ import {
   AppConfigModule,
   AppHttpModule,
   AppSecurityModule,
+  HealthModule,
   LoggerModule,
 } from '@org/backend-core';
 import { AuthModule } from '@org/backend-auth';
@@ -17,6 +18,7 @@ import { AppService } from './app.service';
     LoggerModule,
     AppHttpModule,
     AppSecurityModule,
+    HealthModule,
     MongoModule,
     UserModule,
     AuthModule,
