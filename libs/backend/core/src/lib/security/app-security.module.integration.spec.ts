@@ -1,9 +1,9 @@
 import { Controller, Get, INestApplication, Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Test } from '@nestjs/testing';
 import { AppConfigService } from '../config/app-config.service';
-import { EnvironmentVariables } from '../config/environment-variables';
+import { buildTestConfig } from '../../testing/build-test-config';
+import { listenOnRandomPort } from '../../testing/listen-on-random-port';
 import { AppSecurityModule } from './app-security.module';
 
 @Controller('probe')
@@ -19,18 +19,6 @@ class ProbeController {
   controllers: [ProbeController],
 })
 class ProbeModule {}
-
-function buildConfig(): AppConfigService {
-  return new AppConfigService(
-    new ConfigService<EnvironmentVariables, true>({
-      NODE_ENV: 'development',
-      PORT: 3000,
-      CORS_ORIGINS: ['http://localhost:4200'],
-      RATE_LIMIT_TTL_SECONDS: 60,
-      RATE_LIMIT_LIMIT: 2,
-    }),
-  );
-}
 
 /**
  * AppSecurityModule imports the real AppConfigModule, whose ConfigModule
@@ -48,17 +36,13 @@ describe('AppSecurityModule rate limiting (integration)', () => {
       imports: [ProbeModule],
     })
       .overrideProvider(AppConfigService)
-      .useValue(buildConfig())
+      .useValue(buildTestConfig({ RATE_LIMIT_LIMIT: 2 }))
       .compile();
 
     app = moduleRef.createNestApplication();
     app.useGlobalGuards(app.get(ThrottlerGuard));
     await app.init();
-    await app.listen(0);
-
-    const address = app.getHttpServer().address();
-    const port = typeof address === 'object' && address ? address.port : 0;
-    baseUrl = `http://127.0.0.1:${port}`;
+    baseUrl = await listenOnRandomPort(app);
   });
 
   afterAll(async () => {

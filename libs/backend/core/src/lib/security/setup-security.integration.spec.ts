@@ -1,8 +1,8 @@
 import { Controller, Get, INestApplication, Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppConfigService } from '../config/app-config.service';
-import { EnvironmentVariables } from '../config/environment-variables';
+import { buildTestConfig } from '../../testing/build-test-config';
+import { listenOnRandomPort } from '../../testing/listen-on-random-port';
 import { setupSecurity } from './setup-security';
 
 @Controller('probe')
@@ -13,35 +13,25 @@ class ProbeController {
   }
 }
 
-function buildConfig(corsOrigins: string[]): AppConfigService {
-  return new AppConfigService(
-    new ConfigService<EnvironmentVariables, true>({
-      NODE_ENV: 'development',
-      PORT: 3000,
-      CORS_ORIGINS: corsOrigins,
-      RATE_LIMIT_TTL_SECONDS: 60,
-      RATE_LIMIT_LIMIT: 100,
-    }),
-  );
-}
-
 async function createProbeApp(
   corsOrigins: string[],
 ): Promise<{ app: INestApplication; baseUrl: string }> {
   @Module({
     controllers: [ProbeController],
-    providers: [{ provide: AppConfigService, useValue: buildConfig(corsOrigins) }],
+    providers: [
+      {
+        provide: AppConfigService,
+        useValue: buildTestConfig({ CORS_ORIGINS: corsOrigins }),
+      },
+    ],
   })
   class ProbeModule {}
 
   const app = await NestFactory.create(ProbeModule, { logger: false });
   setupSecurity(app);
-  await app.listen(0);
+  const baseUrl = await listenOnRandomPort(app);
 
-  const address = app.getHttpServer().address();
-  const port = typeof address === 'object' && address ? address.port : 0;
-
-  return { app, baseUrl: `http://127.0.0.1:${port}` };
+  return { app, baseUrl };
 }
 
 describe('setupSecurity (integration)', () => {

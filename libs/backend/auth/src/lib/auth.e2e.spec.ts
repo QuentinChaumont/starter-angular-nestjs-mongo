@@ -1,33 +1,18 @@
 import { INestApplication, Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Test } from '@nestjs/testing';
 import {
   AppConfigModule,
   AppConfigService,
   AppHttpModule,
-  EnvironmentVariables,
   GlobalExceptionFilter,
   LoggerModule,
   createValidationPipe,
   useRequestIdMiddleware,
 } from '@org/backend-core';
 import { UserModule } from '@org/backend-features-user';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { listenOnRandomPort, startTestMongo, TestMongo } from '@org/backend-testing';
 import { AuthModule } from './auth.module';
-
-function buildConfig(overrides: Partial<EnvironmentVariables> = {}) {
-  return new AppConfigService(
-    new ConfigService<EnvironmentVariables, true>({
-      NODE_ENV: 'development',
-      PORT: 3000,
-      CORS_ORIGINS: ['http://localhost:4200'],
-      RATE_LIMIT_TTL_SECONDS: 60,
-      RATE_LIMIT_LIMIT: 100,
-      ...overrides,
-    }),
-  );
-}
 
 @Module({
   imports: [
@@ -41,7 +26,7 @@ function buildConfig(overrides: Partial<EnvironmentVariables> = {}) {
 class TestAppModule {}
 
 describe('Auth (e2e, real Mongo instance)', () => {
-  let mongod: MongoMemoryServer;
+  let testMongo: TestMongo;
   let app: INestApplication;
   let authBaseUrl: string;
   let usersBaseUrl: string;
@@ -50,15 +35,19 @@ describe('Auth (e2e, real Mongo instance)', () => {
   const adminCredentials = { email: 'admin@example.com', password: 'Str0ng!Passw0rd' };
 
   beforeAll(async () => {
-    mongod = await MongoMemoryServer.create();
+    testMongo = await startTestMongo({
+      JWT_SECRET: 'test-secret',
+      JWT_EXPIRES_IN: '1h',
+    });
 
     const moduleRef = await Test.createTestingModule({
-      imports: [TestAppModule, MongooseModule.forRoot(mongod.getUri())],
+      imports: [
+        TestAppModule,
+        MongooseModule.forRoot(testMongo.mongod.getUri()),
+      ],
     })
       .overrideProvider(AppConfigService)
-      .useValue(
-        buildConfig({ JWT_SECRET: 'test-secret', JWT_EXPIRES_IN: '1h' }),
-      )
+      .useValue(testMongo.config)
       .compile();
 
     app = moduleRef.createNestApplication();
@@ -66,12 +55,9 @@ describe('Auth (e2e, real Mongo instance)', () => {
     app.useGlobalFilters(app.get(GlobalExceptionFilter));
     app.useGlobalPipes(createValidationPipe());
     await app.init();
-    await app.listen(0);
-
-    const address = app.getHttpServer().address();
-    const port = typeof address === 'object' && address ? address.port : 0;
-    authBaseUrl = `http://127.0.0.1:${port}/auth`;
-    usersBaseUrl = `http://127.0.0.1:${port}/users`;
+    const baseUrl = await listenOnRandomPort(app);
+    authBaseUrl = `${baseUrl}/auth`;
+    usersBaseUrl = `${baseUrl}/users`;
 
     await fetch(usersBaseUrl, {
       method: 'POST',
@@ -96,7 +82,7 @@ describe('Auth (e2e, real Mongo instance)', () => {
 
   afterAll(async () => {
     await app.close();
-    await mongod.stop();
+    await testMongo.mongod.stop();
   });
 
   async function login(payload: { email: string; password: string }) {

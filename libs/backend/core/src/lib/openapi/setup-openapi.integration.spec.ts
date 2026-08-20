@@ -1,9 +1,10 @@
 import { Controller, Get, INestApplication, Module } from '@nestjs/common';
 import { ApiOkResponse, ApiProperty } from '@nestjs/swagger';
-import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppConfigService } from '../config/app-config.service';
 import { EnvironmentVariables } from '../config/environment-variables';
+import { buildTestConfig } from '../../testing/build-test-config';
+import { listenOnRandomPort } from '../../testing/listen-on-random-port';
 import { OPENAPI_PATH, setupOpenApi } from './setup-openapi';
 
 class ProbeResponseDto {
@@ -20,37 +21,25 @@ class ProbeController {
   }
 }
 
-function buildConfig(
-  nodeEnv: EnvironmentVariables['NODE_ENV'],
-): AppConfigService {
-  return new AppConfigService(
-    new ConfigService<EnvironmentVariables, true>({
-      NODE_ENV: nodeEnv,
-      PORT: 3000,
-      CORS_ORIGINS: ['http://localhost:4200'],
-      RATE_LIMIT_TTL_SECONDS: 60,
-      RATE_LIMIT_LIMIT: 100,
-    }),
-  );
-}
-
 async function createProbeApp(
   nodeEnv: EnvironmentVariables['NODE_ENV'],
 ): Promise<{ app: INestApplication; baseUrl: string }> {
   @Module({
     controllers: [ProbeController],
-    providers: [{ provide: AppConfigService, useValue: buildConfig(nodeEnv) }],
+    providers: [
+      {
+        provide: AppConfigService,
+        useValue: buildTestConfig({ NODE_ENV: nodeEnv }),
+      },
+    ],
   })
   class ProbeModule {}
 
   const app = await NestFactory.create(ProbeModule, { logger: false });
   setupOpenApi(app);
-  await app.listen(0);
+  const baseUrl = await listenOnRandomPort(app);
 
-  const address = app.getHttpServer().address();
-  const port = typeof address === 'object' && address ? address.port : 0;
-
-  return { app, baseUrl: `http://127.0.0.1:${port}` };
+  return { app, baseUrl };
 }
 
 describe('setupOpenApi (integration)', () => {

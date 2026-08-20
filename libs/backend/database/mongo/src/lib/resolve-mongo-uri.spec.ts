@@ -1,18 +1,5 @@
-import { ConfigService } from '@nestjs/config';
-import { AppConfigService, EnvironmentVariables } from '@org/backend-core';
+import { buildTestConfig as buildConfig } from '@org/backend-testing';
 import { resolveMongoUri } from './resolve-mongo-uri';
-
-function buildConfig(overrides: Partial<EnvironmentVariables> = {}) {
-  const configService = new ConfigService<EnvironmentVariables, true>({
-    NODE_ENV: 'development',
-    PORT: 3000,
-    CORS_ORIGINS: ['http://localhost:4200'],
-    RATE_LIMIT_TTL_SECONDS: 60,
-    RATE_LIMIT_LIMIT: 100,
-    ...overrides,
-  });
-  return new AppConfigService(configService);
-}
 
 describe('resolveMongoUri', () => {
   it('returns the configured URI when it is a valid mongodb:// URI', () => {

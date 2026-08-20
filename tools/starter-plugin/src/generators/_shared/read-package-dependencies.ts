@@ -1,6 +1,20 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
+function readPackageJsonSection(
+  packageJsonDir: string,
+  key: 'dependencies' | 'devDependencies',
+): Record<string, string> {
+  const packageJson = JSON.parse(
+    readFileSync(join(packageJsonDir, 'package.json'), 'utf-8'),
+  );
+  const section: Record<string, string> = packageJson[key] ?? {};
+
+  return Object.fromEntries(
+    Object.entries(section).filter(([name]) => !name.startsWith('@org/')),
+  );
+}
+
 /**
  * Reads the real (non-`@org/*` workspace-internal) "dependencies" of a
  * lib's own package.json from disk. Deriving the npm packages a brick needs
@@ -12,14 +26,7 @@ import { join } from 'path';
 export function readPackageDependencies(
   packageJsonDir: string,
 ): Record<string, string> {
-  const packageJson = JSON.parse(
-    readFileSync(join(packageJsonDir, 'package.json'), 'utf-8'),
-  );
-  const dependencies: Record<string, string> = packageJson.dependencies ?? {};
-
-  return Object.fromEntries(
-    Object.entries(dependencies).filter(([name]) => !name.startsWith('@org/')),
-  );
+  return readPackageJsonSection(packageJsonDir, 'dependencies');
 }
 
 /**

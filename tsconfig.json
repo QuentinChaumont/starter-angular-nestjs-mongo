@@ -26,6 +26,9 @@
     },
     {
       "path": "./libs/backend/auth"
+    },
+    {
+      "path": "./libs/backend/testing"
     }
   ],
   "compilerOptions": {}

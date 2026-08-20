@@ -66,6 +66,20 @@ describe('mongo generator', () => {
     expect(packageJson.dependencies['@org/backend-core']).toBeUndefined();
   });
 
+  it('also brings along backend-testing, since Mongo specs depend on it', async () => {
+    await mongoGenerator(tree);
+
+    expect(tree.exists('libs/backend/testing/package.json')).toBe(true);
+    expect(
+      tree.exists('libs/backend/testing/src/lib/start-test-mongo.ts'),
+    ).toBe(true);
+
+    const packageJson = JSON.parse(
+      tree.read('package.json', 'utf-8') as string,
+    );
+    expect(packageJson.dependencies['@nestjs/jwt']).toBeDefined();
+  });
+
   it('is idempotent: running twice does not duplicate the import or array entry', async () => {
     await mongoGenerator(tree);
     await mongoGenerator(tree);

@@ -7,17 +7,17 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { Type } from 'class-transformer';
 import { IsEmail, IsInt, Min } from 'class-validator';
 import { AppConfigService } from '../../config/app-config.service';
-import { EnvironmentVariables } from '../../config/environment-variables';
 import { AppLogger } from '../../logger/app-logger.service';
 import { RequestContextService } from '../../logger/request-context.service';
 import { RequestIdMiddleware } from '../../logger/request-id.middleware';
 import { REQUEST_ID_HEADER } from '../../logger/request-id.util';
 import { useRequestIdMiddleware } from '../../logger/use-request-id-middleware';
+import { buildTestConfig } from '../../../testing/build-test-config';
+import { listenOnRandomPort } from '../../../testing/listen-on-random-port';
 import { GlobalExceptionFilter } from '../filters/global-exception.filter';
 import { createValidationPipe } from './create-validation-pipe';
 
@@ -46,18 +46,6 @@ class ProbeController {
   }
 }
 
-function buildConfig(): AppConfigService {
-  return new AppConfigService(
-    new ConfigService<EnvironmentVariables, true>({
-      NODE_ENV: 'development',
-      PORT: 3000,
-      CORS_ORIGINS: ['http://localhost:4200'],
-      RATE_LIMIT_TTL_SECONDS: 60,
-      RATE_LIMIT_LIMIT: 100,
-    }),
-  );
-}
-
 describe('Global input validation (integration)', () => {
   let app: INestApplication;
   let baseUrl: string;
@@ -69,7 +57,7 @@ describe('Global input validation (integration)', () => {
         RequestContextService,
         AppLogger,
         RequestIdMiddleware,
-        { provide: AppConfigService, useValue: buildConfig() },
+        { provide: AppConfigService, useValue: buildTestConfig() },
         GlobalExceptionFilter,
       ],
     })
@@ -79,11 +67,7 @@ describe('Global input validation (integration)', () => {
     useRequestIdMiddleware(app);
     app.useGlobalFilters(app.get(GlobalExceptionFilter));
     app.useGlobalPipes(createValidationPipe());
-    await app.listen(0);
-
-    const address = app.getHttpServer().address();
-    const port = typeof address === 'object' && address ? address.port : 0;
-    baseUrl = `http://127.0.0.1:${port}`;
+    baseUrl = await listenOnRandomPort(app);
   });
 
   afterAll(async () => {

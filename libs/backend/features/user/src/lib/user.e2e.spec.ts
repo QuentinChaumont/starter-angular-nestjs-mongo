@@ -9,26 +9,31 @@ import {
   createValidationPipe,
   useRequestIdMiddleware,
 } from '@org/backend-core';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import {
+  listenOnRandomPort,
+  nonExistentObjectId,
+  startTestMongo,
+  TestMongo,
+} from '@org/backend-testing';
 import type { Connection, Model } from 'mongoose';
 import { User } from './user.schema';
 import { UserModule } from './user.module';
 
 describe('User CRUD (e2e, real Mongo instance)', () => {
-  let mongod: MongoMemoryServer;
+  let testMongo: TestMongo;
   let app: INestApplication;
   let baseUrl: string;
   let connection: Connection;
 
   beforeAll(async () => {
-    mongod = await MongoMemoryServer.create();
+    testMongo = await startTestMongo();
 
     @Module({
       imports: [
         AppConfigModule,
         LoggerModule,
         AppHttpModule,
-        MongooseModule.forRoot(mongod.getUri()),
+        MongooseModule.forRoot(testMongo.mongod.getUri()),
         UserModule,
       ],
     })
@@ -38,11 +43,7 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
     useRequestIdMiddleware(app);
     app.useGlobalFilters(app.get(GlobalExceptionFilter));
     app.useGlobalPipes(createValidationPipe());
-    await app.listen(0);
-
-    const address = app.getHttpServer().address();
-    const port = typeof address === 'object' && address ? address.port : 0;
-    baseUrl = `http://127.0.0.1:${port}/users`;
+    baseUrl = `${await listenOnRandomPort(app)}/users`;
 
     connection = app.get<Connection>(getConnectionToken());
     await app.get<Model<User>>(getModelToken(User.name)).syncIndexes();
@@ -54,7 +55,7 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
 
   afterAll(async () => {
     await app.close();
-    await mongod.stop();
+    await testMongo.mongod.stop();
   });
 
   const validPayload = {
@@ -144,7 +145,7 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
 
   it('returns 404 for an unknown user', async () => {
     const response = await fetch(
-      `${baseUrl}/${'0'.repeat(24)}`, // well-formed but non-existent ObjectId
+      `${baseUrl}/${nonExistentObjectId()}`,
     );
 
     expect(response.status).toBe(404);

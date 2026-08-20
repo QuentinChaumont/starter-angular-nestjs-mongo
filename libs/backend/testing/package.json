@@ -1,5 +1,5 @@
 {
-  "name": "@org/backend-features-user",
+  "name": "@org/backend-testing",
   "version": "0.0.1",
   "private": true,
   "main": "./src/index.ts",
@@ -13,10 +13,10 @@
     "./package.json": "./package.json"
   },
   "nx": {
-    "name": "backend-features-user",
+    "name": "backend-testing",
     "tags": [
       "scope:backend",
-      "type:feature"
+      "type:util"
     ],
     "targets": {
       "test": {
@@ -28,19 +28,13 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
-    "@nestjs/mongoose": "^11.0.0",
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/jwt": "^11.0.2",
     "@org/backend-core": "0.0.1",
-    "@org/backend-database-mongo": "0.0.1",
-    "mongoose": "^9.9.3",
-    "@nestjs/swagger": "^11.4.7",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.15.1"
+    "mongodb-memory-server": "^11.2.0"
   },
   "devDependencies": {
     "@nestjs/core": "^11.0.0",
-    "@nestjs/platform-express": "^11.0.0",
-    "@nestjs/testing": "^11.0.0",
-    "@org/backend-testing": "0.0.1",
-    "mongodb-memory-server": "^11.2.0"
+    "@nestjs/testing": "^11.0.0"
   }
 }

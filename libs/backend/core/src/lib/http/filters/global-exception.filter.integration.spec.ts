@@ -5,7 +5,6 @@ import {
   Module,
   NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppConfigService } from '../../config/app-config.service';
 import { EnvironmentVariables } from '../../config/environment-variables';
@@ -14,6 +13,8 @@ import { RequestContextService } from '../../logger/request-context.service';
 import { RequestIdMiddleware } from '../../logger/request-id.middleware';
 import { REQUEST_ID_HEADER } from '../../logger/request-id.util';
 import { useRequestIdMiddleware } from '../../logger/use-request-id-middleware';
+import { buildTestConfig } from '../../../testing/build-test-config';
+import { listenOnRandomPort } from '../../../testing/listen-on-random-port';
 import { NotFoundError } from '../errors/not-found.error';
 import { GlobalExceptionFilter } from './global-exception.filter';
 
@@ -37,20 +38,6 @@ class ProbeController {
   }
 }
 
-function buildConfig(
-  nodeEnv: EnvironmentVariables['NODE_ENV'],
-): AppConfigService {
-  return new AppConfigService(
-    new ConfigService<EnvironmentVariables, true>({
-      NODE_ENV: nodeEnv,
-      PORT: 3000,
-      CORS_ORIGINS: ['http://localhost:4200'],
-      RATE_LIMIT_TTL_SECONDS: 60,
-      RATE_LIMIT_LIMIT: 100,
-    }),
-  );
-}
-
 async function createProbeApp(
   nodeEnv: EnvironmentVariables['NODE_ENV'],
 ): Promise<{ app: INestApplication; baseUrl: string }> {
@@ -60,7 +47,10 @@ async function createProbeApp(
       RequestContextService,
       AppLogger,
       RequestIdMiddleware,
-      { provide: AppConfigService, useValue: buildConfig(nodeEnv) },
+      {
+        provide: AppConfigService,
+        useValue: buildTestConfig({ NODE_ENV: nodeEnv }),
+      },
       GlobalExceptionFilter,
     ],
   })
@@ -69,12 +59,9 @@ async function createProbeApp(
   const app = await NestFactory.create(ProbeModule, { logger: false });
   useRequestIdMiddleware(app);
   app.useGlobalFilters(app.get(GlobalExceptionFilter));
-  await app.listen(0);
+  const baseUrl = await listenOnRandomPort(app);
 
-  const address = app.getHttpServer().address();
-  const port = typeof address === 'object' && address ? address.port : 0;
-
-  return { app, baseUrl: `http://127.0.0.1:${port}` };
+  return { app, baseUrl };
 }
 
 describe('GlobalExceptionFilter (integration)', () => {

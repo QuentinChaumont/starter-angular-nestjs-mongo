@@ -5,13 +5,16 @@ import {
   formatFiles,
 } from '@nx/devkit';
 import { join } from 'path';
-import { copySourceDirectory } from '../_shared/copy-source-directory';
 import { ensureArrayItem } from '../_shared/ensure-array-item';
+import { ensureLibCopied } from '../_shared/ensure-lib-copied';
 import { ensureNamedImport } from '../_shared/ensure-named-import';
 import { readPackageDependencies } from '../_shared/read-package-dependencies';
 
+const WORKSPACE_ROOT = join(__dirname, '../../../../../');
 const LIB_ROOT = 'libs/backend/auth';
-const SOURCE_LIB_ROOT = join(__dirname, '../../../../../', LIB_ROOT);
+const SOURCE_LIB_ROOT = join(WORKSPACE_ROOT, LIB_ROOT);
+const TESTING_LIB_ROOT = 'libs/backend/testing';
+const SOURCE_TESTING_LIB_ROOT = join(WORKSPACE_ROOT, TESTING_LIB_ROOT);
 const APP_MODULE_PATH = 'apps/backend/src/app/app.module.ts';
 
 /**
@@ -19,7 +22,9 @@ const APP_MODULE_PATH = 'apps/backend/src/app/app.module.ts';
  * feature entity (see V1.md step 13), so this brick only makes sense once
  * both Mongo and a `user` entity exist — this checks for both up front and
  * fails with an actionable message rather than generating code that can't
- * compile. Idempotent — safe to run again once installed.
+ * compile. Also brings along `backend-testing`, since Auth's own spec files
+ * depend on it (`startTestMongo`, etc.) — see V1.md step 18. Idempotent —
+ * safe to run again once installed.
  */
 export default async function authGenerator(
   tree: Tree,
@@ -35,14 +40,15 @@ export default async function authGenerator(
     );
   }
 
-  const alreadyPresent = tree.exists(`${LIB_ROOT}/package.json`);
-  if (!alreadyPresent) {
-    copySourceDirectory(tree, SOURCE_LIB_ROOT, LIB_ROOT);
-  }
+  ensureLibCopied(tree, LIB_ROOT, SOURCE_LIB_ROOT);
+  ensureLibCopied(tree, TESTING_LIB_ROOT, SOURCE_TESTING_LIB_ROOT);
 
   const installTask = addDependenciesToPackageJson(
     tree,
-    readPackageDependencies(SOURCE_LIB_ROOT),
+    {
+      ...readPackageDependencies(SOURCE_LIB_ROOT),
+      ...readPackageDependencies(SOURCE_TESTING_LIB_ROOT),
+    },
     {},
   );
 

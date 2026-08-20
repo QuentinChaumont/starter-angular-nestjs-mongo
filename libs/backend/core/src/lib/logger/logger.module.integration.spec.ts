@@ -6,6 +6,7 @@ import {
   Module,
 } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { listenOnRandomPort } from '../../testing/listen-on-random-port';
 import { LoggerModule } from './logger.module';
 import { RequestContextService } from './request-context.service';
 import { REQUEST_ID_HEADER } from './request-id.util';
@@ -56,11 +57,7 @@ describe('LoggerModule (integration)', () => {
   beforeAll(async () => {
     app = await NestFactory.create(ProbeModule, { logger: false });
     useRequestIdMiddleware(app);
-    await app.listen(0);
-
-    const address = app.getHttpServer().address();
-    const port = typeof address === 'object' && address ? address.port : 0;
-    baseUrl = `http://127.0.0.1:${port}`;
+    baseUrl = await listenOnRandomPort(app);
   });
 
   afterAll(async () => {

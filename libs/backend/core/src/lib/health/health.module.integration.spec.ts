@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { listenOnRandomPort } from '../../testing/listen-on-random-port';
 import { HealthModule } from './health.module';
 
 describe('HealthModule (integration)', () => {
@@ -8,11 +9,7 @@ describe('HealthModule (integration)', () => {
 
   beforeAll(async () => {
     app = await NestFactory.create(HealthModule, { logger: false });
-    await app.listen(0);
-
-    const address = app.getHttpServer().address();
-    const port = typeof address === 'object' && address ? address.port : 0;
-    baseUrl = `http://127.0.0.1:${port}`;
+    baseUrl = await listenOnRandomPort(app);
   });
 
   afterAll(async () => {

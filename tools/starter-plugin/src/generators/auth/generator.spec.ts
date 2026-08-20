@@ -78,6 +78,17 @@ describe('auth generator', () => {
     expect(packageJson.dependencies['@org/backend-core']).toBeUndefined();
   });
 
+  it('also brings along backend-testing, since Auth specs depend on it', async () => {
+    seedMongoAndUserEntity(tree);
+
+    await authGenerator(tree);
+
+    expect(tree.exists('libs/backend/testing/package.json')).toBe(true);
+    expect(tree.exists('libs/backend/testing/src/lib/sign-test-jwt.ts')).toBe(
+      true,
+    );
+  });
+
   it('is idempotent: running twice does not duplicate the import or array entry', async () => {
     seedMongoAndUserEntity(tree);
 

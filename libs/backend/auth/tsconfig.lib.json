@@ -24,6 +24,9 @@
       "path": "../core/tsconfig.lib.json"
     },
     {
+      "path": "../testing/tsconfig.lib.json"
+    },
+    {
       "path": "../database/mongo/tsconfig.lib.json"
     }
   ],

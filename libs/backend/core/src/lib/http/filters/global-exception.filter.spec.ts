@@ -1,25 +1,9 @@
 import { ArgumentsHost, NotFoundException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { AppConfigService } from '../../config/app-config.service';
-import { EnvironmentVariables } from '../../config/environment-variables';
 import { AppLogger } from '../../logger/app-logger.service';
 import { RequestContextService } from '../../logger/request-context.service';
+import { buildTestConfig as buildConfig } from '../../../testing/build-test-config';
 import { NotFoundError } from '../errors/not-found.error';
 import { GlobalExceptionFilter } from './global-exception.filter';
-
-function buildConfig(
-  overrides: Partial<EnvironmentVariables> = {},
-): AppConfigService {
-  const configService = new ConfigService<EnvironmentVariables, true>({
-    NODE_ENV: 'development',
-    PORT: 3000,
-    CORS_ORIGINS: ['http://localhost:4200'],
-    RATE_LIMIT_TTL_SECONDS: 60,
-    RATE_LIMIT_LIMIT: 100,
-    ...overrides,
-  });
-  return new AppConfigService(configService);
-}
 
 function buildHost() {
   const response = {

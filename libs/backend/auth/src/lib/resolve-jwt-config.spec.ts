@@ -1,18 +1,5 @@
-import { ConfigService } from '@nestjs/config';
-import { AppConfigService, EnvironmentVariables } from '@org/backend-core';
+import { buildTestConfig as buildConfig } from '@org/backend-testing';
 import { resolveJwtConfig } from './resolve-jwt-config';
-
-function buildConfig(overrides: Partial<EnvironmentVariables> = {}) {
-  const configService = new ConfigService<EnvironmentVariables, true>({
-    NODE_ENV: 'development',
-    PORT: 3000,
-    CORS_ORIGINS: ['http://localhost:4200'],
-    RATE_LIMIT_TTL_SECONDS: 60,
-    RATE_LIMIT_LIMIT: 100,
-    ...overrides,
-  });
-  return new AppConfigService(configService);
-}
 
 describe('resolveJwtConfig', () => {
   it('returns the configured secret and expiresIn', () => {
