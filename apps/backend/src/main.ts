@@ -5,12 +5,14 @@
 
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import {
   AppConfigService,
   AppLogger,
   GlobalExceptionFilter,
   createValidationPipe,
   setupOpenApi,
+  setupSecurity,
   useRequestIdMiddleware,
 } from '@org/backend-core';
 import { AppModule } from './app/app.module';
@@ -21,6 +23,8 @@ async function bootstrap() {
   const logger = app.get(AppLogger);
   logger.setContext('Bootstrap');
   app.useLogger(logger);
+  setupSecurity(app);
+  app.useGlobalGuards(app.get(ThrottlerGuard));
   useRequestIdMiddleware(app);
   app.useGlobalFilters(app.get(GlobalExceptionFilter));
   app.useGlobalPipes(createValidationPipe());

@@ -7,6 +7,8 @@ import {
 const DEFAULT_NODE_ENV: NodeEnvironment = 'development';
 const DEFAULT_PORT = 3000;
 const DEFAULT_CORS_ORIGINS = ['http://localhost:4200'];
+const DEFAULT_RATE_LIMIT_TTL_SECONDS = 60;
+const DEFAULT_RATE_LIMIT_LIMIT = 100;
 
 const MIN_PORT = 1;
 const MAX_PORT = 65535;
@@ -40,6 +42,25 @@ function parsePort(raw: unknown, errors: string[]): number {
   }
 
   return port;
+}
+
+function parsePositiveInt(
+  key: string,
+  raw: unknown,
+  defaultValue: number,
+  errors: string[],
+): number {
+  if (raw === undefined || raw === '') {
+    return defaultValue;
+  }
+
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 1) {
+    errors.push(`${key} must be a positive integer, received "${String(raw)}"`);
+    return defaultValue;
+  }
+
+  return value;
 }
 
 function parseCorsOrigins(raw: unknown): string[] {
@@ -81,6 +102,18 @@ export function validateEnv(
   const NODE_ENV = parseNodeEnv(rawEnv['NODE_ENV'], errors);
   const PORT = parsePort(rawEnv['PORT'], errors);
   const CORS_ORIGINS = parseCorsOrigins(rawEnv['CORS_ORIGINS']);
+  const RATE_LIMIT_TTL_SECONDS = parsePositiveInt(
+    'RATE_LIMIT_TTL_SECONDS',
+    rawEnv['RATE_LIMIT_TTL_SECONDS'],
+    DEFAULT_RATE_LIMIT_TTL_SECONDS,
+    errors,
+  );
+  const RATE_LIMIT_LIMIT = parsePositiveInt(
+    'RATE_LIMIT_LIMIT',
+    rawEnv['RATE_LIMIT_LIMIT'],
+    DEFAULT_RATE_LIMIT_LIMIT,
+    errors,
+  );
   const MONGO_URI = parseOptionalString('MONGO_URI', rawEnv['MONGO_URI'], errors);
   const JWT_SECRET = parseOptionalString('JWT_SECRET', rawEnv['JWT_SECRET'], errors);
   const JWT_EXPIRES_IN = parseOptionalString(
@@ -99,6 +132,8 @@ export function validateEnv(
     NODE_ENV,
     PORT,
     CORS_ORIGINS,
+    RATE_LIMIT_TTL_SECONDS,
+    RATE_LIMIT_LIMIT,
     ...(MONGO_URI !== undefined ? { MONGO_URI } : {}),
     ...(JWT_SECRET !== undefined ? { JWT_SECRET } : {}),
     ...(JWT_EXPIRES_IN !== undefined ? { JWT_EXPIRES_IN } : {}),

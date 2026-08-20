@@ -22,6 +22,8 @@ function buildConfig(overrides: Partial<EnvironmentVariables> = {}) {
       NODE_ENV: 'development',
       PORT: 3000,
       CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
       ...overrides,
     }),
   );

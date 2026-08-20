@@ -13,6 +13,8 @@ describe('AppConfigService', () => {
       NODE_ENV: 'production',
       PORT: 4000,
       CORS_ORIGINS: ['https://example.com'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
     });
 
     expect(service.app).toEqual({ environment: 'production', port: 4000 });
@@ -23,9 +25,25 @@ describe('AppConfigService', () => {
       NODE_ENV: 'development',
       PORT: 3000,
       CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
     });
 
     expect(service.http).toEqual({ corsOrigins: ['http://localhost:4200'] });
+  });
+
+  it('exposes security.rateLimit', () => {
+    const service = createService({
+      NODE_ENV: 'development',
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 30,
+      RATE_LIMIT_LIMIT: 10,
+    });
+
+    expect(service.security).toEqual({
+      rateLimit: { ttlSeconds: 30, limit: 10 },
+    });
   });
 
   it('exposes mongo.uri and jwt fields as undefined when not configured', () => {
@@ -33,6 +51,8 @@ describe('AppConfigService', () => {
       NODE_ENV: 'development',
       PORT: 3000,
       CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
     });
 
     expect(service.mongo).toEqual({ uri: undefined });
@@ -44,6 +64,8 @@ describe('AppConfigService', () => {
       NODE_ENV: 'development',
       PORT: 3000,
       CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
       MONGO_URI: 'mongodb://localhost:27017/app',
       JWT_SECRET: 'secret',
       JWT_EXPIRES_IN: '1h',

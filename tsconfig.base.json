@@ -18,6 +18,7 @@
     "target": "es2022",
     "customConditions": ["@org/source"],
     "noUncheckedSideEffectImports": false,
+    "ignoreDeprecations": "6.0",
     "types": ["*"],
     "paths": {
       "@org/frontend-core": ["./libs/frontend/core/src/index.ts"]

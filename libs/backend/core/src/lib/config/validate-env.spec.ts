@@ -8,6 +8,8 @@ describe('validateEnv', () => {
       NODE_ENV: 'development',
       PORT: 3000,
       CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
     });
   });
 
@@ -16,13 +18,29 @@ describe('validateEnv', () => {
       NODE_ENV: 'production',
       PORT: '4000',
       CORS_ORIGINS: 'https://example.com, https://admin.example.com',
+      RATE_LIMIT_TTL_SECONDS: '30',
+      RATE_LIMIT_LIMIT: '10',
     });
 
     expect(result).toEqual({
       NODE_ENV: 'production',
       PORT: 4000,
       CORS_ORIGINS: ['https://example.com', 'https://admin.example.com'],
+      RATE_LIMIT_TTL_SECONDS: 30,
+      RATE_LIMIT_LIMIT: 10,
     });
+  });
+
+  it('throws a readable error for a non-numeric RATE_LIMIT_TTL_SECONDS', () => {
+    expect(() => validateEnv({ RATE_LIMIT_TTL_SECONDS: 'abc' })).toThrow(
+      /RATE_LIMIT_TTL_SECONDS must be a positive integer/,
+    );
+  });
+
+  it('throws a readable error for a non-positive RATE_LIMIT_LIMIT', () => {
+    expect(() => validateEnv({ RATE_LIMIT_LIMIT: '0' })).toThrow(
+      /RATE_LIMIT_LIMIT must be a positive integer/,
+    );
   });
 
   it('throws a readable error for an invalid NODE_ENV', () => {

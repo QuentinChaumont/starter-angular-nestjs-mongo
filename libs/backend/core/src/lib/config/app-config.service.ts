@@ -21,6 +21,17 @@ export class AppConfigService {
     };
   }
 
+  get security() {
+    return {
+      rateLimit: {
+        ttlSeconds: this.configService.get('RATE_LIMIT_TTL_SECONDS', {
+          infer: true,
+        }),
+        limit: this.configService.get('RATE_LIMIT_LIMIT', { infer: true }),
+      },
+    };
+  }
+
   get mongo() {
     return {
       uri: this.configService.get('MONGO_URI', { infer: true }),
