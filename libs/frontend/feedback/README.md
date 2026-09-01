@@ -1,0 +1,56 @@
+# frontend-feedback
+
+Centralised popups and toasts, plus the `ApiError` → toast bridge. Install
+with `nx g @org/starter-plugin:frontend-feedback` (needs `frontend-design`).
+
+## Exposes (`@org/frontend-feedback`)
+
+| Export | Use |
+| --- | --- |
+| `DialogService` | `confirm(opts)` / `alert(opts)` → `Observable<boolean>` / `<void>`; `open(component, config)` typed passthrough with shared defaults. |
+| `NotificationService` | `success` / `info` / `warn` / `error(message, opts?)` over `MatSnackBar`. |
+| `httpErrorInterceptor`, `SKIP_ERROR_TOAST` | The `ApiError` → toast interceptor + its per-request opt-out. |
+| `provideFeedback()` | Shared `MatDialog` defaults. |
+| `provideNotificationConfig(partial)`, `NOTIFICATION_CONFIG` | Toast durations. |
+
+## Dialogs
+
+`DialogService` is **not** a re-export of `MatDialog` — it fixes the
+conventions (420px width, focus/restore behaviour, a single built-in
+confirm/alert dialog). `confirm()` resolves `false` on cancel **or**
+Escape.
+
+```ts
+this.dialog.confirm({ title: 'Delete user?', message: '…', danger: true })
+  .subscribe((ok) => { if (ok) … });
+```
+
+## Error toasts
+
+`httpErrorInterceptor` runs **after** `authInterceptor` (the app wires the
+order in `provideHttpClient(withInterceptors([...]))`). It:
+
+- ignores `401` (the auth flow owns it — a successful silent refresh never
+  flashes a toast);
+- for an `ApiError` body: toasts `message` + a **Copy ID** action when a
+  `requestId` is present;
+- for status `0`: a network-error toast;
+- for `5xx`: a generic retry toast.
+
+Opt out for a call you handle inline:
+
+```ts
+http.post(url, body, {
+  context: new HttpContext().set(SKIP_ERROR_TOAST, true),
+});
+```
+
+## i18n
+
+All strings are hard-coded English — a deliberate v2 limitation. The
+service layer is the single place to route them through a translation
+pipe later.
+
+## Running unit tests
+
+`nx test frontend-feedback`.

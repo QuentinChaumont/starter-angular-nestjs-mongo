@@ -1,0 +1,60 @@
+// Global theme entry point. Imported once from `apps/frontend/src/styles.scss`:
+//
+//   @use '../../../libs/frontend/design/src/lib/theme/theme';
+//
+// It:
+//   1. loads the brand tokens (`_tokens.scss`);
+//   2. sets up Angular Material M3 (typography / density / shape / the full
+//      tonal system Material needs internally);
+//   3. re-points Material's key `--mat-sys-*` colour tokens at the brand
+//      `--app-color-*` tokens, so every Material component follows the
+//      charter — and any runtime override from step 24's ThemeService.
+
+@use '@angular/material' as mat;
+@use 'tokens';
+
+html {
+  // "system" by default; step 24's ThemeService forces `light` / `dark`
+  // by setting `color-scheme` on this element.
+  color-scheme: light dark;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$azure-palette,
+        tertiary: mat.$cyan-palette,
+        theme-type: color-scheme,
+      ),
+      typography: (
+        plain-family: var(--app-font-family),
+        brand-family: var(--app-font-family),
+      ),
+      density: 0,
+    )
+  );
+
+  // Brand colours win over the generated palette.
+  --mat-sys-primary: var(--app-color-primary);
+  --mat-sys-on-primary: var(--app-color-on-primary);
+  --mat-sys-secondary: var(--app-color-secondary);
+  --mat-sys-on-secondary: var(--app-color-on-secondary);
+  --mat-sys-error: var(--app-color-error);
+  --mat-sys-on-error: var(--app-color-on-error);
+  --mat-sys-background: var(--app-color-background);
+  --mat-sys-surface: var(--app-color-surface);
+  --mat-sys-on-surface: var(--app-color-on-surface);
+  --mat-sys-outline: var(--app-color-outline);
+  --mat-sys-outline-variant: var(--app-color-surface-variant);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--app-color-background);
+  color: var(--app-color-on-surface);
+  font-family: var(--app-font-family);
+}
+
+* {
+  box-sizing: border-box;
+}

@@ -1,0 +1,20 @@
+{
+  "name": "frontend-consent",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/frontend/consent/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:frontend", "type:util"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{projectRoot}/test-output/jest/coverage"],
+      "options": {
+        "jestConfig": "libs/frontend/consent/jest.config.cts",
+        "tsConfig": "libs/frontend/consent/tsconfig.spec.json",
+        "passWithNoTests": true
+      }
+    },
+    "lint": { "executor": "@nx/eslint:lint" }
+  }
+}
