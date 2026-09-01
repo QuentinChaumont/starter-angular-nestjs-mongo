@@ -29,25 +29,27 @@
   "dependencies": {
     "@nestjs/common": "^11.0.0",
     "@nestjs/jwt": "^11.0.2",
+    "@nestjs/mongoose": "^11.0.0",
     "@nestjs/passport": "^11.0.5",
     "@nestjs/swagger": "^11.4.7",
     "@org/backend-core": "0.0.1",
+    "@org/backend-database-mongo": "0.0.1",
     "@org/backend-features-user": "0.0.1",
+    "@org/shared-contracts": "0.0.1",
     "class-validator": "^0.15.1",
+    "mongoose": "^9.9.3",
+    "openid-client": "^5.7.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1"
   },
   "devDependencies": {
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.0",
-    "@nestjs/mongoose": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
-    "@org/backend-database-mongo": "0.0.1",
     "@org/backend-testing": "0.0.1",
     "@types/express": "^4.17.0",
     "@types/passport-jwt": "^4.0.1",
-    "mongodb-memory-server": "^11.2.0",
-    "mongoose": "^9.9.3"
+    "mongodb-memory-server": "^11.2.0"
   }
 }

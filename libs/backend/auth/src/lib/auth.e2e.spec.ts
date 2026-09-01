@@ -181,4 +181,131 @@ describe('Auth (e2e, real Mongo instance)', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(loginBody.user);
   });
+
+  describe('refresh, rotation and logout', () => {
+    type FetchResponse = Awaited<ReturnType<typeof fetch>>;
+
+    class CookieJar {
+      private readonly jar = new Map<string, string>();
+
+      store(response: FetchResponse): void {
+        for (const raw of response.headers.getSetCookie()) {
+          const [pair] = raw.split(';');
+          const eq = pair.indexOf('=');
+          const name = pair.slice(0, eq).trim();
+          const value = pair.slice(eq + 1).trim();
+          if (value === '') {
+            this.jar.delete(name);
+          } else {
+            this.jar.set(name, value);
+          }
+        }
+      }
+
+      get(name: string): string | undefined {
+        return this.jar.get(name);
+      }
+
+      header(): string {
+        return [...this.jar].map(([k, v]) => `${k}=${v}`).join('; ');
+      }
+    }
+
+    async function loginWithJar(): Promise<CookieJar> {
+      const jar = new CookieJar();
+      const response = await fetch(`${authBaseUrl}/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+      jar.store(response);
+      return jar;
+    }
+
+    function refresh(jar: CookieJar, withCsrf = true): Promise<FetchResponse> {
+      const headers: Record<string, string> = { cookie: jar.header() };
+      if (withCsrf) {
+        headers['x-csrf-token'] = jar.get('csrf-token') ?? '';
+      }
+      return fetch(`${authBaseUrl}/refresh`, { method: 'POST', headers });
+    }
+
+    it('login sets an httpOnly refresh cookie and a csrf cookie', async () => {
+      const jar = await loginWithJar();
+
+      expect(jar.get('refresh_token')).toBeDefined();
+      expect(jar.get('csrf-token')).toBeDefined();
+    });
+
+    it('rejects refresh with no refresh cookie', async () => {
+      const response = await fetch(`${authBaseUrl}/refresh`, {
+        method: 'POST',
+        headers: { 'x-csrf-token': 'anything' },
+      });
+
+      expect(response.status).toBe(401);
+    });
+
+    it('rejects refresh without a matching X-CSRF-Token header (403)', async () => {
+      const jar = await loginWithJar();
+
+      const response = await refresh(jar, false);
+
+      expect(response.status).toBe(403);
+      expect((await response.json()).code).toBe('CSRF_TOKEN_INVALID');
+    });
+
+    it('rotates the refresh token and returns a fresh access token', async () => {
+      const jar = await loginWithJar();
+      const firstRefresh = jar.get('refresh_token');
+
+      const response = await refresh(jar);
+      jar.store(response);
+
+      expect(response.status).toBe(201);
+      const body = await response.json();
+      expect(typeof body.accessToken).toBe('string');
+      expect(body.tokenType).toBe('Bearer');
+      expect(jar.get('refresh_token')).not.toBe(firstRefresh);
+    });
+
+    it('detects reuse of an already-rotated refresh token (401)', async () => {
+      const jar = await loginWithJar();
+      const stolen = jar.get('refresh_token') as string;
+      const csrf = jar.get('csrf-token') as string;
+
+      const rotated = await refresh(jar);
+      jar.store(rotated);
+
+      const replay = await fetch(`${authBaseUrl}/refresh`, {
+        method: 'POST',
+        headers: {
+          cookie: `refresh_token=${stolen}; csrf-token=${csrf}`,
+          'x-csrf-token': csrf,
+        },
+      });
+
+      expect(replay.status).toBe(401);
+      expect((await replay.json()).code).toBe('REFRESH_TOKEN_REUSED');
+
+      // The rotated (still-live) token is now revoked too.
+      const afterBreach = await refresh(jar);
+      expect(afterBreach.status).toBe(401);
+    });
+
+    it('logout revokes the token and clears the cookies', async () => {
+      const jar = await loginWithJar();
+
+      const logout = await fetch(`${authBaseUrl}/logout`, {
+        method: 'POST',
+        headers: {
+          cookie: jar.header(),
+          'x-csrf-token': jar.get('csrf-token') ?? '',
+        },
+      });
+      expect(logout.status).toBe(204);
+      jar.store(logout);
+      expect(jar.get('refresh_token')).toBeUndefined();
+    });
+  });
 });

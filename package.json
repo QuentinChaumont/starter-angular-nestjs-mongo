@@ -67,10 +67,13 @@
     "libs/backend/features/*"
   ],
   "dependencies": {
+    "@angular/animations": "~22.0.4",
+    "@angular/cdk": "~22.0.4",
     "@angular/common": "~22.0.4",
     "@angular/compiler": "~22.0.4",
     "@angular/core": "~22.0.4",
     "@angular/forms": "~22.0.4",
+    "@angular/material": "~22.0.4",
     "@angular/platform-browser": "~22.0.4",
     "@angular/platform-browser-dynamic": "~22.0.4",
     "@angular/router": "~22.0.4",
@@ -88,6 +91,7 @@
     "class-validator": "^0.15.1",
     "helmet": "^8.3.0",
     "mongoose": "^9.9.3",
+    "openid-client": "^5.7.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.0",

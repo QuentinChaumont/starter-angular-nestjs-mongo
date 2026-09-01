@@ -28,6 +28,9 @@
     },
     {
       "path": "../database/mongo/tsconfig.lib.json"
+    },
+    {
+      "path": "../../shared/contracts/tsconfig.lib.json"
     }
   ],
   "exclude": [

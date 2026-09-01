@@ -18,4 +18,8 @@ export class UserRepository extends BaseRepository<User> {
   async findByEmailWithPassword(email: string): Promise<UserDocument | null> {
     return this.model.findOne({ email }).select('+password').exec();
   }
+
+  async findByEmail(email: string): Promise<UserDocument | null> {
+    return this.model.findOne({ email }).exec();
+  }
 }

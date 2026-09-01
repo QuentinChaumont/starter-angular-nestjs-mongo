@@ -29,6 +29,10 @@ export class UserService {
     return this.repository.findByEmailWithPassword(email);
   }
 
+  async findByEmail(email: string): Promise<UserDocument | null> {
+    return this.repository.findByEmail(email);
+  }
+
   async findAll(): Promise<UserDocument[]> {
     return this.repository.findMany();
   }

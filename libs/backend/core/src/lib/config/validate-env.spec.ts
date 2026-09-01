@@ -71,6 +71,55 @@ describe('validateEnv', () => {
     expect(result.JWT_EXPIRES_IN).toBeUndefined();
   });
 
+  it('does not require REFRESH_EXPIRES_IN or AUTH_COOKIE_SECURE', () => {
+    const result = validateEnv({});
+
+    expect(result.REFRESH_EXPIRES_IN).toBeUndefined();
+    expect(result.AUTH_COOKIE_SECURE).toBeUndefined();
+  });
+
+  it('parses AUTH_COOKIE_SECURE as a boolean and passes REFRESH_EXPIRES_IN through', () => {
+    expect(validateEnv({ AUTH_COOKIE_SECURE: 'false' }).AUTH_COOKIE_SECURE).toBe(
+      false,
+    );
+    expect(validateEnv({ AUTH_COOKIE_SECURE: 'true' }).AUTH_COOKIE_SECURE).toBe(
+      true,
+    );
+    expect(validateEnv({ REFRESH_EXPIRES_IN: '7d' }).REFRESH_EXPIRES_IN).toBe(
+      '7d',
+    );
+  });
+
+  it('throws a readable error for a non-boolean AUTH_COOKIE_SECURE', () => {
+    expect(() => validateEnv({ AUTH_COOKIE_SECURE: 'maybe' })).toThrow(
+      /AUTH_COOKIE_SECURE must be a boolean/,
+    );
+  });
+
+  it('leaves every OIDC_* variable optional', () => {
+    const result = validateEnv({});
+
+    expect(result.OIDC_ISSUER).toBeUndefined();
+    expect(result.OIDC_CLIENT_ID).toBeUndefined();
+    expect(result.OIDC_REQUIRE_VERIFIED_EMAIL).toBeUndefined();
+  });
+
+  it('passes OIDC_* variables through', () => {
+    const result = validateEnv({
+      OIDC_ISSUER: 'https://idp.example',
+      OIDC_CLIENT_ID: 'client-1',
+      OIDC_REDIRECT_URI: 'https://api.example/api/auth/oidc/callback',
+      OIDC_REQUIRE_VERIFIED_EMAIL: 'false',
+    });
+
+    expect(result.OIDC_ISSUER).toBe('https://idp.example');
+    expect(result.OIDC_CLIENT_ID).toBe('client-1');
+    expect(result.OIDC_REDIRECT_URI).toBe(
+      'https://api.example/api/auth/oidc/callback',
+    );
+    expect(result.OIDC_REQUIRE_VERIFIED_EMAIL).toBe(false);
+  });
+
   it('passes through optional variables when present', () => {
     const result = validateEnv({
       MONGO_URI: 'mongodb://localhost:27017/app',

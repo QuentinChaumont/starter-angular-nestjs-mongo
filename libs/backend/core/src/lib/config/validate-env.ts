@@ -94,6 +94,33 @@ function parseOptionalString(
   return value;
 }
 
+function parseOptionalBoolean(
+  key: string,
+  raw: unknown,
+  errors: string[],
+): boolean | undefined {
+  if (raw === undefined || raw === '') {
+    return undefined;
+  }
+
+  if (typeof raw === 'boolean') {
+    return raw;
+  }
+
+  const value = String(raw).trim().toLowerCase();
+  if (value === 'true' || value === '1') {
+    return true;
+  }
+  if (value === 'false' || value === '0') {
+    return false;
+  }
+
+  errors.push(
+    `${key} must be a boolean (true/false), received "${String(raw)}"`,
+  );
+  return undefined;
+}
+
 export function validateEnv(
   rawEnv: Record<string, unknown>,
 ): EnvironmentVariables {
@@ -121,6 +148,62 @@ export function validateEnv(
     rawEnv['JWT_EXPIRES_IN'],
     errors,
   );
+  const REFRESH_EXPIRES_IN = parseOptionalString(
+    'REFRESH_EXPIRES_IN',
+    rawEnv['REFRESH_EXPIRES_IN'],
+    errors,
+  );
+  const AUTH_COOKIE_SECURE = parseOptionalBoolean(
+    'AUTH_COOKIE_SECURE',
+    rawEnv['AUTH_COOKIE_SECURE'],
+    errors,
+  );
+
+  const OIDC_ISSUER = parseOptionalString(
+    'OIDC_ISSUER',
+    rawEnv['OIDC_ISSUER'],
+    errors,
+  );
+  const OIDC_CLIENT_ID = parseOptionalString(
+    'OIDC_CLIENT_ID',
+    rawEnv['OIDC_CLIENT_ID'],
+    errors,
+  );
+  const OIDC_CLIENT_SECRET = parseOptionalString(
+    'OIDC_CLIENT_SECRET',
+    rawEnv['OIDC_CLIENT_SECRET'],
+    errors,
+  );
+  const OIDC_REDIRECT_URI = parseOptionalString(
+    'OIDC_REDIRECT_URI',
+    rawEnv['OIDC_REDIRECT_URI'],
+    errors,
+  );
+  const OIDC_SCOPES = parseOptionalString(
+    'OIDC_SCOPES',
+    rawEnv['OIDC_SCOPES'],
+    errors,
+  );
+  const OIDC_POST_LOGIN_REDIRECT = parseOptionalString(
+    'OIDC_POST_LOGIN_REDIRECT',
+    rawEnv['OIDC_POST_LOGIN_REDIRECT'],
+    errors,
+  );
+  const OIDC_FRONTEND_URL = parseOptionalString(
+    'OIDC_FRONTEND_URL',
+    rawEnv['OIDC_FRONTEND_URL'],
+    errors,
+  );
+  const OIDC_REQUIRE_VERIFIED_EMAIL = parseOptionalBoolean(
+    'OIDC_REQUIRE_VERIFIED_EMAIL',
+    rawEnv['OIDC_REQUIRE_VERIFIED_EMAIL'],
+    errors,
+  );
+  const OIDC_ROLES_CLAIM = parseOptionalString(
+    'OIDC_ROLES_CLAIM',
+    rawEnv['OIDC_ROLES_CLAIM'],
+    errors,
+  );
 
   if (errors.length > 0) {
     throw new Error(
@@ -137,5 +220,20 @@ export function validateEnv(
     ...(MONGO_URI !== undefined ? { MONGO_URI } : {}),
     ...(JWT_SECRET !== undefined ? { JWT_SECRET } : {}),
     ...(JWT_EXPIRES_IN !== undefined ? { JWT_EXPIRES_IN } : {}),
+    ...(REFRESH_EXPIRES_IN !== undefined ? { REFRESH_EXPIRES_IN } : {}),
+    ...(AUTH_COOKIE_SECURE !== undefined ? { AUTH_COOKIE_SECURE } : {}),
+    ...(OIDC_ISSUER !== undefined ? { OIDC_ISSUER } : {}),
+    ...(OIDC_CLIENT_ID !== undefined ? { OIDC_CLIENT_ID } : {}),
+    ...(OIDC_CLIENT_SECRET !== undefined ? { OIDC_CLIENT_SECRET } : {}),
+    ...(OIDC_REDIRECT_URI !== undefined ? { OIDC_REDIRECT_URI } : {}),
+    ...(OIDC_SCOPES !== undefined ? { OIDC_SCOPES } : {}),
+    ...(OIDC_POST_LOGIN_REDIRECT !== undefined
+      ? { OIDC_POST_LOGIN_REDIRECT }
+      : {}),
+    ...(OIDC_FRONTEND_URL !== undefined ? { OIDC_FRONTEND_URL } : {}),
+    ...(OIDC_REQUIRE_VERIFIED_EMAIL !== undefined
+      ? { OIDC_REQUIRE_VERIFIED_EMAIL }
+      : {}),
+    ...(OIDC_ROLES_CLAIM !== undefined ? { OIDC_ROLES_CLAIM } : {}),
   };
 }

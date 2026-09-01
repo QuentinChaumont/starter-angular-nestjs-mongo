@@ -31,6 +31,16 @@
       "factory": "./src/generators/health/generator",
       "schema": "./src/generators/health/schema.json",
       "description": "Install the optional liveness healthcheck (GET /health/live) into the API app."
+    },
+    "frontend-design": {
+      "factory": "./src/generators/frontend-design/generator",
+      "schema": "./src/generators/frontend-design/schema.json",
+      "description": "Install the frontend design brick: Angular Material + CDK, the M3 theme and the brand charter, wired into apps/frontend."
+    },
+    "frontend-auth": {
+      "factory": "./src/generators/frontend-auth/generator",
+      "schema": "./src/generators/frontend-auth/schema.json",
+      "description": "Install the frontend auth brick: session store, HTTP interceptors, route guards and the /login + /auth/callback routes."
     }
   }
 }

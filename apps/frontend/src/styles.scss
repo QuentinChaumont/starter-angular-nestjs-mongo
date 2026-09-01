@@ -1,1 +1,3 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global styles. The design brick owns the theme; add app-specific
+   overrides below its @use. */
+@use '../../../libs/frontend/design/src/lib/theme/theme';

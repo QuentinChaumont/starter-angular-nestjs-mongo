@@ -21,7 +21,9 @@
     "ignoreDeprecations": "6.0",
     "types": ["*"],
     "paths": {
-      "@org/frontend-core": ["./libs/frontend/core/src/index.ts"]
+      "@org/frontend-auth": ["./libs/frontend/auth/src/index.ts"],
+      "@org/frontend-core": ["./libs/frontend/core/src/index.ts"],
+      "@org/frontend-design": ["./libs/frontend/design/src/index.ts"]
     }
   }
 }
