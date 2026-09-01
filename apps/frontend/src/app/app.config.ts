@@ -9,6 +9,7 @@ import {
   csrfInterceptor,
   provideAuth,
 } from '@org/frontend-auth';
+import { provideConsent } from '@org/frontend-consent';
 import { provideDashboard } from '@org/frontend-dashboard';
 import { materialProviders, provideTheme } from '@org/frontend-design';
 import { httpErrorInterceptor, provideFeedback } from '@org/frontend-feedback';
@@ -26,6 +27,7 @@ export const appConfig: ApplicationConfig = {
     provideTheme(),
     provideAuth(),
     provideFeedback(),
+    provideConsent(),
     provideDashboard(DASHBOARD_NAV),
   ],
 };

@@ -12,6 +12,16 @@ export const appRoutes: Route[] = [
       import('@org/frontend-auth').then((m) => m.OidcCallback),
   },
   {
+    path: 'legal/cookies',
+    loadComponent: () =>
+      import('@org/frontend-consent').then((m) => m.CookiePolicy),
+  },
+  {
+    path: 'legal/privacy',
+    loadComponent: () =>
+      import('@org/frontend-consent').then((m) => m.PrivacyPolicy),
+  },
+  {
     path: 'app',
     canActivate: [authGuard],
     loadComponent: () =>

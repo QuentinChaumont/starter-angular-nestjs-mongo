@@ -51,6 +51,11 @@
       "factory": "./src/generators/frontend-feedback/generator",
       "schema": "./src/generators/frontend-feedback/schema.json",
       "description": "Install the feedback brick: DialogService, NotificationService and the ApiError -> toast HTTP interceptor."
+    },
+    "frontend-consent": {
+      "factory": "./src/generators/frontend-consent/generator",
+      "schema": "./src/generators/frontend-consent/schema.json",
+      "description": "Install the consent brick: first-visit cookie banner, preferences dialog, /legal routes and legal-page templates."
     }
   }
 }
