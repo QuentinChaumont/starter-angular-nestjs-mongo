@@ -46,6 +46,11 @@
       "factory": "./src/generators/frontend-dashboard/generator",
       "schema": "./src/generators/frontend-dashboard/schema.json",
       "description": "Install the dashboard shell brick: responsive MatSidenav layout, config-driven menu, and the /app/** route group behind authGuard."
+    },
+    "frontend-feedback": {
+      "factory": "./src/generators/frontend-feedback/generator",
+      "schema": "./src/generators/frontend-feedback/schema.json",
+      "description": "Install the feedback brick: DialogService, NotificationService and the ApiError -> toast HTTP interceptor."
     }
   }
 }
