@@ -41,6 +41,11 @@
       "factory": "./src/generators/frontend-auth/generator",
       "schema": "./src/generators/frontend-auth/schema.json",
       "description": "Install the frontend auth brick: session store, HTTP interceptors, route guards and the /login + /auth/callback routes."
+    },
+    "frontend-dashboard": {
+      "factory": "./src/generators/frontend-dashboard/generator",
+      "schema": "./src/generators/frontend-dashboard/schema.json",
+      "description": "Install the dashboard shell brick: responsive MatSidenav layout, config-driven menu, and the /app/** route group behind authGuard."
     }
   }
 }
