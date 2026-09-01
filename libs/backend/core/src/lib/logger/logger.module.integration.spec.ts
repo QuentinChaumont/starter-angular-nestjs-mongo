@@ -73,13 +73,13 @@ describe('LoggerModule (integration)', () => {
       'integration-test-id',
     );
 
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body.controllerRequestId).toBe('integration-test-id');
     expect(body.serviceRequestId).toBe('integration-test-id');
   });
 
   it('generates a distinct requestId per request when none is provided', async () => {
-    const [first, second] = await Promise.all([
+    const [first, second]: [any, any] = await Promise.all([
       fetch(`${baseUrl}/probe`).then((response) => response.json()),
       fetch(`${baseUrl}/probe`).then((response) => response.json()),
     ]);

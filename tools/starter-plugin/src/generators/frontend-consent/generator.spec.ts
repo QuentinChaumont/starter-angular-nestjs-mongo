@@ -81,8 +81,8 @@ describe('frontend-consent generator', () => {
     );
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
-    expect(routes).toContain('m.CookiePolicy');
-    expect(routes).toContain('m.PrivacyPolicy');
+    expect(routes).toContain('component: CookiePolicy');
+    expect(routes).toContain('component: PrivacyPolicy');
     expect(routes).toContain("path: 'legal/cookies'");
 
     expect(
@@ -104,6 +104,6 @@ describe('frontend-consent generator', () => {
     expect((template.match(/lib-consent-banner/g) ?? []).length).toBe(2); // open + close tag
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
-    expect((routes.match(/m\.CookiePolicy/g) ?? []).length).toBe(1);
+    expect((routes.match(/path: 'legal\/cookies'/g) ?? []).length).toBe(1);
   });
 });

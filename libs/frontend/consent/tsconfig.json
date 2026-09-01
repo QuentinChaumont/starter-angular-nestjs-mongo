@@ -5,10 +5,12 @@
     "moduleResolution": "bundler",
     "noPropertyAccessFromIndexSignature": true,
     "module": "preserve",
-    "composite": false,
     "declarationMap": false,
     "emitDeclarationOnly": false,
-    "lib": ["es2022", "dom"]
+    "lib": [
+      "es2022",
+      "dom"
+    ]
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
@@ -19,7 +21,11 @@
   "files": [],
   "include": [],
   "references": [
-    { "path": "./tsconfig.lib.json" },
-    { "path": "./tsconfig.spec.json" }
+    {
+      "path": "./tsconfig.lib.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
   ]
 }

@@ -1,17 +1,21 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./out-tsc/jest",
-    "module": "commonjs",
-    "target": "es2016",
-    "types": ["jest", "node"],
-    "moduleResolution": "node10"
+    "outDir": "./out-tsc/spec",
+    "types": ["jest", "node"]
   },
   "files": ["src/test-setup.ts"],
   "include": [
     "jest.config.ts",
-    "src/**/*.test.ts",
-    "src/**/*.spec.ts",
+    "jest.config.cts",
+    "src/**/*.ts",
     "src/**/*.d.ts"
+  ],
+  "references": [
+    { "path": "../../libs/frontend/design/tsconfig.lib.json" },
+    { "path": "../../libs/frontend/auth/tsconfig.lib.json" },
+    { "path": "../../libs/frontend/dashboard/tsconfig.lib.json" },
+    { "path": "../../libs/frontend/feedback/tsconfig.lib.json" },
+    { "path": "../../libs/frontend/consent/tsconfig.lib.json" }
   ]
 }

@@ -1,6 +1,6 @@
 import type { PaginatedResponse, PaginationQuery } from '@org/shared-contracts';
 import {
-  FilterQuery,
+  QueryFilter,
   HydratedDocument,
   Model,
   UpdateQuery,
@@ -33,13 +33,13 @@ export abstract class BaseRepository<TRawDoc, TCreateInput = Partial<TRawDoc>> {
   }
 
   async findOne(
-    filter: FilterQuery<TRawDoc>,
+    filter: QueryFilter<TRawDoc>,
   ): Promise<HydratedDocument<TRawDoc> | null> {
     return this.model.findOne(filter).exec();
   }
 
   async findMany(
-    filter: FilterQuery<TRawDoc> = {},
+    filter: QueryFilter<TRawDoc> = {},
     options: FindManyOptions = {},
   ): Promise<HydratedDocument<TRawDoc>[]> {
     const query = this.model.find(filter);
@@ -55,7 +55,7 @@ export abstract class BaseRepository<TRawDoc, TCreateInput = Partial<TRawDoc>> {
   }
 
   async findPage(
-    filter: FilterQuery<TRawDoc> = {},
+    filter: QueryFilter<TRawDoc> = {},
     pagination: PaginationQuery = {},
   ): Promise<PaginatedResponse<HydratedDocument<TRawDoc>>> {
     const page =
@@ -75,8 +75,10 @@ export abstract class BaseRepository<TRawDoc, TCreateInput = Partial<TRawDoc>> {
   }
 
   async create(input: TCreateInput): Promise<HydratedDocument<TRawDoc>> {
-    const [created] = await this.model.create([input]);
-    return created;
+    const created = await this.model.create(
+      input as Partial<TRawDoc>,
+    );
+    return created as HydratedDocument<TRawDoc>;
   }
 
   async updateById(
@@ -99,12 +101,12 @@ export abstract class BaseRepository<TRawDoc, TCreateInput = Partial<TRawDoc>> {
     return deleted !== null;
   }
 
-  async exists(filter: FilterQuery<TRawDoc>): Promise<boolean> {
+  async exists(filter: QueryFilter<TRawDoc>): Promise<boolean> {
     const match = await this.model.exists(filter);
     return match !== null;
   }
 
-  async count(filter: FilterQuery<TRawDoc> = {}): Promise<number> {
+  async count(filter: QueryFilter<TRawDoc> = {}): Promise<number> {
     return this.model.countDocuments(filter).exec();
   }
 }

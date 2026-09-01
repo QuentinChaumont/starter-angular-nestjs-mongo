@@ -1,3 +1,4 @@
+import type { AppConfigService } from '../../config';
 import { ArgumentsHost, NotFoundException } from '@nestjs/common';
 import { AppLogger } from '../../logger/app-logger.service';
 import { RequestContextService } from '../../logger/request-context.service';

@@ -23,10 +23,8 @@ const SOURCE_CORE_API_FILE = join(WORKSPACE_ROOT, CORE_API_FILE);
 const APP_CONFIG_PATH = 'apps/frontend/src/app/app.config.ts';
 const APP_ROUTES_PATH = 'apps/frontend/src/app/app.routes.ts';
 
-const LOGIN_ROUTE =
-  "{ path: 'login', loadComponent: () => import('@org/frontend-auth').then((m) => m.LoginPage) }";
-const CALLBACK_ROUTE =
-  "{ path: 'auth/callback', loadComponent: () => import('@org/frontend-auth').then((m) => m.OidcCallback) }";
+const LOGIN_ROUTE = "{ path: 'login', component: LoginPage }";
+const CALLBACK_ROUTE = "{ path: 'auth/callback', component: OidcCallback }";
 
 /**
  * Adds the frontend auth brick: session store, HTTP interceptors, guards
@@ -93,8 +91,10 @@ export default async function frontendAuthGenerator(
   ]);
   ensureArrayItem(tree, APP_CONFIG_PATH, 'providers', 'provideAuth()');
 
-  ensureRoute(tree, APP_ROUTES_PATH, LOGIN_ROUTE, 'm.LoginPage');
-  ensureRoute(tree, APP_ROUTES_PATH, CALLBACK_ROUTE, 'm.OidcCallback');
+  ensureNamedImport(tree, APP_ROUTES_PATH, 'LoginPage', '@org/frontend-auth');
+  ensureNamedImport(tree, APP_ROUTES_PATH, 'OidcCallback', '@org/frontend-auth');
+  ensureRoute(tree, APP_ROUTES_PATH, LOGIN_ROUTE, "path: 'login'");
+  ensureRoute(tree, APP_ROUTES_PATH, CALLBACK_ROUTE, "path: 'auth/callback'");
 
   const tsconfigPath = tree.exists('tsconfig.base.json')
     ? 'tsconfig.base.json'

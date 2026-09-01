@@ -17,9 +17,9 @@ const APP_ROUTES_PATH = 'apps/frontend/src/app/app.routes.ts';
 
 const BANNER_TAG = '<lib-consent-banner></lib-consent-banner>';
 const COOKIE_ROUTE =
-  "{ path: 'legal/cookies', loadComponent: () => import('@org/frontend-consent').then((m) => m.CookiePolicy) }";
+  "{ path: 'legal/cookies', component: CookiePolicy }";
 const PRIVACY_ROUTE =
-  "{ path: 'legal/privacy', loadComponent: () => import('@org/frontend-consent').then((m) => m.PrivacyPolicy) }";
+  "{ path: 'legal/privacy', component: PrivacyPolicy }";
 
 /**
  * Adds the consent brick: the first-visit cookie banner, preferences
@@ -74,8 +74,20 @@ export default async function frontendConsentGenerator(
     ensureLineAtTop(tree, APP_TEMPLATE_PATH, BANNER_TAG);
   }
 
-  ensureRoute(tree, APP_ROUTES_PATH, COOKIE_ROUTE, 'm.CookiePolicy');
-  ensureRoute(tree, APP_ROUTES_PATH, PRIVACY_ROUTE, 'm.PrivacyPolicy');
+  ensureNamedImport(
+    tree,
+    APP_ROUTES_PATH,
+    'CookiePolicy',
+    '@org/frontend-consent',
+  );
+  ensureNamedImport(
+    tree,
+    APP_ROUTES_PATH,
+    'PrivacyPolicy',
+    '@org/frontend-consent',
+  );
+  ensureRoute(tree, APP_ROUTES_PATH, COOKIE_ROUTE, "path: 'legal/cookies'");
+  ensureRoute(tree, APP_ROUTES_PATH, PRIVACY_ROUTE, "path: 'legal/privacy'");
 
   await formatFiles(tree);
 }

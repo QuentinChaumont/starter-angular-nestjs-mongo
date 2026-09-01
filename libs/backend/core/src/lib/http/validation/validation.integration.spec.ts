@@ -96,7 +96,7 @@ describe('Global input validation (integration)', () => {
     });
 
     expect(response.status).toBe(400);
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body).toEqual({
       statusCode: 400,
       code: 'VALIDATION_ERROR',
@@ -117,7 +117,7 @@ describe('Global input validation (integration)', () => {
     });
 
     expect(response.status).toBe(400);
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body.code).toBe('VALIDATION_ERROR');
   });
 
@@ -132,7 +132,7 @@ describe('Global input validation (integration)', () => {
     const response = await fetch(`${baseUrl}/probe?page=0`);
 
     expect(response.status).toBe(400);
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body.code).toBe('VALIDATION_ERROR');
   });
 });

@@ -83,7 +83,7 @@ describe('GlobalExceptionFilter (integration)', () => {
       });
 
       expect(response.status).toBe(404);
-      const body = await response.json();
+      const body: any = await response.json();
       expect(body).toEqual({
         statusCode: 404,
         code: 'USER_NOT_FOUND',
@@ -99,7 +99,7 @@ describe('GlobalExceptionFilter (integration)', () => {
       });
 
       expect(response.status).toBe(404);
-      const body = await response.json();
+      const body: any = await response.json();
       expect(body).toEqual({
         statusCode: 404,
         code: 'NOT_FOUND',
@@ -114,7 +114,7 @@ describe('GlobalExceptionFilter (integration)', () => {
       });
 
       expect(response.status).toBe(500);
-      const body = await response.json();
+      const body: any = await response.json();
       expect(body.statusCode).toBe(500);
       expect(body.code).toBe('INTERNAL_SERVER_ERROR');
       expect(body.message).toBe('Internal server error');
@@ -140,7 +140,7 @@ describe('GlobalExceptionFilter (integration)', () => {
         headers: { [REQUEST_ID_HEADER]: 'prod-app-error' },
       });
 
-      const body = await response.json();
+      const body: any = await response.json();
       expect(body).toEqual({
         statusCode: 404,
         code: 'USER_NOT_FOUND',
@@ -155,7 +155,7 @@ describe('GlobalExceptionFilter (integration)', () => {
       });
 
       expect(response.status).toBe(500);
-      const body = await response.json();
+      const body: any = await response.json();
       expect(body).toEqual({
         statusCode: 500,
         code: 'INTERNAL_SERVER_ERROR',

@@ -29,7 +29,9 @@ export async function signTestJwt(
 
   const jwt = new JwtService({
     secret,
-    signOptions: expiresIn ? { expiresIn } : {},
+    ...(expiresIn
+      ? { signOptions: { expiresIn: expiresIn as `${number}` } }
+      : {}),
   });
   return jwt.signAsync({ sub: user.id, roles: user.roles });
 }

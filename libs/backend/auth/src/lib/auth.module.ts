@@ -32,7 +32,10 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       inject: [AppConfigService],
       useFactory: (config: AppConfigService) => {
         const { secret, expiresIn } = resolveJwtConfig(config);
-        return { secret, signOptions: { expiresIn } };
+        return {
+          secret,
+          signOptions: { expiresIn: expiresIn as `${number}` },
+        };
       },
     }),
   ],

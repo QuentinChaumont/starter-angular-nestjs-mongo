@@ -2,14 +2,35 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
-    "types": []
+    "types": [],
+    "composite": false,
+    "declaration": false
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts"
+  ],
   "exclude": [
     "src/**/*.spec.ts",
     "src/**/*.test.ts",
     "jest.config.ts",
     "jest.config.cts",
     "src/test-setup.ts"
+  ],
+  "references": [
+    {
+      "path": "../../libs/frontend/feedback/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/frontend/design/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/frontend/dashboard/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/frontend/consent/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/frontend/auth/tsconfig.lib.json"
+    }
   ]
 }

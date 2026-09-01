@@ -65,7 +65,7 @@ describe('setupOpenApi (integration)', () => {
       const response = await fetch(`${baseUrl}/${OPENAPI_PATH}-json`);
       expect(response.status).toBe(200);
 
-      const document = await response.json();
+      const document: any = await response.json();
       expect(document.paths['/probe'].get).toBeDefined();
       expect(document.components.schemas['ProbeResponseDto']).toEqual(
         expect.objectContaining({

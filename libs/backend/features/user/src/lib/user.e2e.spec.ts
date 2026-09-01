@@ -76,7 +76,7 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    return { response, body: await response.json() };
+    return { response, body: (await response.json()) as any };
   }
 
   it('creates a user', async () => {
@@ -117,7 +117,7 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
     });
 
     expect(response.status).toBe(200);
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body.firstName).toBe('Janet');
     expect(body.lastName).toBe(validPayload.lastName);
   });
@@ -149,7 +149,7 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
     );
 
     expect(response.status).toBe(404);
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body.code).toBe('USER_NOT_FOUND');
   });
 
@@ -157,7 +157,7 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
     const response = await fetch(`${baseUrl}/not-a-valid-object-id`);
 
     expect(response.status).toBe(404);
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body.code).toBe('USER_NOT_FOUND');
   });
 
@@ -169,7 +169,7 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
     });
 
     expect(response.status).toBe(400);
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body.code).toBe('VALIDATION_ERROR');
   });
 });

@@ -1,43 +1,20 @@
 import { Route } from '@angular/router';
-import { authGuard, roleGuard } from '@org/frontend-auth';
+import { LoginPage, OidcCallback, authGuard, roleGuard } from '@org/frontend-auth';
+import { CookiePolicy, PrivacyPolicy } from '@org/frontend-consent';
+import { DashboardHome, DashboardShell } from '@org/frontend-dashboard';
 
 export const appRoutes: Route[] = [
-  {
-    path: 'login',
-    loadComponent: () => import('@org/frontend-auth').then((m) => m.LoginPage),
-  },
-  {
-    path: 'auth/callback',
-    loadComponent: () =>
-      import('@org/frontend-auth').then((m) => m.OidcCallback),
-  },
-  {
-    path: 'legal/cookies',
-    loadComponent: () =>
-      import('@org/frontend-consent').then((m) => m.CookiePolicy),
-  },
-  {
-    path: 'legal/privacy',
-    loadComponent: () =>
-      import('@org/frontend-consent').then((m) => m.PrivacyPolicy),
-  },
+  { path: 'login', component: LoginPage },
+  { path: 'auth/callback', component: OidcCallback },
+  { path: 'legal/cookies', component: CookiePolicy },
+  { path: 'legal/privacy', component: PrivacyPolicy },
   {
     path: 'app',
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('@org/frontend-dashboard').then((m) => m.DashboardShell),
+    component: DashboardShell,
     children: [
-      {
-        path: '',
-        loadComponent: () =>
-          import('@org/frontend-dashboard').then((m) => m.DashboardHome),
-      },
-      {
-        path: 'admin',
-        canActivate: [roleGuard('admin')],
-        loadComponent: () =>
-          import('@org/frontend-dashboard').then((m) => m.DashboardHome),
-      },
+      { path: '', component: DashboardHome },
+      { path: 'admin', canActivate: [roleGuard('admin')], component: DashboardHome },
     ],
   },
   { path: '', pathMatch: 'full', redirectTo: 'app' },

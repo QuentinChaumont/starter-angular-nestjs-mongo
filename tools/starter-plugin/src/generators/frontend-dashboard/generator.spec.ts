@@ -23,7 +23,7 @@ export const appConfig: ApplicationConfig = {
     `import { Route } from '@angular/router';
 
 export const appRoutes: Route[] = [
-  { path: 'login', loadComponent: () => import('@org/frontend-auth').then((m) => m.LoginPage) },
+  { path: 'login', component: LoginPage },
 ];
 `,
   );
@@ -67,11 +67,11 @@ describe('frontend-dashboard generator', () => {
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
     expect(routes).toContain("import { authGuard, roleGuard } from '@org/frontend-auth';");
-    expect(routes).toContain('m.DashboardShell');
+    expect(routes).toContain('component: DashboardShell');
     expect(routes).toContain('canActivate: [authGuard]');
     expect(routes).toContain("redirectTo: 'app'");
     // the pre-existing login route is untouched
-    expect(routes).toContain('m.LoginPage');
+    expect(routes).toContain("path: 'login'");
 
     expect(
       readJson(tree, 'tsconfig.base.json').compilerOptions.paths[
@@ -85,7 +85,7 @@ describe('frontend-dashboard generator', () => {
     await frontendDashboardGenerator(tree);
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
-    expect((routes.match(/m\.DashboardShell/g) ?? []).length).toBe(1);
+    expect((routes.match(/component: DashboardShell/g) ?? []).length).toBe(1);
     expect((routes.match(/redirectTo: 'app'/g) ?? []).length).toBe(1);
 
     const config = tree.read(APP_CONFIG, 'utf-8') as string;

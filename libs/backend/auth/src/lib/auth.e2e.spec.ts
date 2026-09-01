@@ -91,7 +91,7 @@ describe('Auth (e2e, real Mongo instance)', () => {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    return { response, body: await response.json() };
+    return { response, body: (await response.json()) as any };
   }
 
   it('logs in with valid credentials and returns a JWT', async () => {
@@ -126,7 +126,7 @@ describe('Auth (e2e, real Mongo instance)', () => {
     const response = await fetch(`${authBaseUrl}/me`);
 
     expect(response.status).toBe(401);
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body.code).toBe('UNAUTHENTICATED');
   });
 
@@ -136,7 +136,7 @@ describe('Auth (e2e, real Mongo instance)', () => {
     });
 
     expect(response.status).toBe(401);
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body.code).toBe('UNAUTHENTICATED');
   });
 
@@ -155,7 +155,7 @@ describe('Auth (e2e, real Mongo instance)', () => {
     const response = await fetch(`${authBaseUrl}/admin`);
 
     expect(response.status).toBe(401);
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body.code).toBe('UNAUTHENTICATED');
   });
 
@@ -167,7 +167,7 @@ describe('Auth (e2e, real Mongo instance)', () => {
     });
 
     expect(response.status).toBe(403);
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body.code).toBe('FORBIDDEN');
   });
 
@@ -237,13 +237,26 @@ describe('Auth (e2e, real Mongo instance)', () => {
       expect(jar.get('csrf-token')).toBeDefined();
     });
 
-    it('rejects refresh with no refresh cookie', async () => {
+    it('rejects refresh with a valid CSRF token but no refresh cookie', async () => {
+      const response = await fetch(`${authBaseUrl}/refresh`, {
+        method: 'POST',
+        headers: {
+          cookie: 'csrf-token=tok',
+          'x-csrf-token': 'tok',
+        },
+      });
+
+      expect(response.status).toBe(401);
+      expect(((await response.json()) as any).code).toBe('REFRESH_TOKEN_MISSING');
+    });
+
+    it('rejects refresh with no cookies at all (CSRF guard, 403)', async () => {
       const response = await fetch(`${authBaseUrl}/refresh`, {
         method: 'POST',
         headers: { 'x-csrf-token': 'anything' },
       });
 
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(403);
     });
 
     it('rejects refresh without a matching X-CSRF-Token header (403)', async () => {
@@ -252,7 +265,7 @@ describe('Auth (e2e, real Mongo instance)', () => {
       const response = await refresh(jar, false);
 
       expect(response.status).toBe(403);
-      expect((await response.json()).code).toBe('CSRF_TOKEN_INVALID');
+      expect(((await response.json()) as any).code).toBe('CSRF_TOKEN_INVALID');
     });
 
     it('rotates the refresh token and returns a fresh access token', async () => {
@@ -263,7 +276,7 @@ describe('Auth (e2e, real Mongo instance)', () => {
       jar.store(response);
 
       expect(response.status).toBe(201);
-      const body = await response.json();
+      const body: any = await response.json();
       expect(typeof body.accessToken).toBe('string');
       expect(body.tokenType).toBe('Bearer');
       expect(jar.get('refresh_token')).not.toBe(firstRefresh);
@@ -286,7 +299,7 @@ describe('Auth (e2e, real Mongo instance)', () => {
       });
 
       expect(replay.status).toBe(401);
-      expect((await replay.json()).code).toBe('REFRESH_TOKEN_REUSED');
+      expect(((await replay.json()) as any).code).toBe('REFRESH_TOKEN_REUSED');
 
       // The rotated (still-live) token is now revoked too.
       const afterBreach = await refresh(jar);

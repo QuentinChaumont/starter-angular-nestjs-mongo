@@ -71,8 +71,8 @@ describe('frontend-auth generator', () => {
     expect(appConfig).toContain("from '@angular/common/http'");
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
-    expect(routes).toContain('m.LoginPage');
-    expect(routes).toContain('m.OidcCallback');
+    expect(routes).toContain('component: LoginPage');
+    expect(routes).toContain('component: OidcCallback');
     expect(routes).toContain("path: 'login'");
     expect(routes).toContain("path: 'auth/callback'");
 
@@ -94,7 +94,7 @@ describe('frontend-auth generator', () => {
     expect((appConfig.match(/provideHttpClient/g) ?? []).length).toBe(2); // import + call
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
-    expect((routes.match(/m\.LoginPage/g) ?? []).length).toBe(1);
-    expect((routes.match(/m\.OidcCallback/g) ?? []).length).toBe(1);
+    expect((routes.match(/path: 'login'/g) ?? []).length).toBe(1);
+    expect((routes.match(/path: 'auth\/callback'/g) ?? []).length).toBe(1);
   });
 });

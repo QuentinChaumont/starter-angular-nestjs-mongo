@@ -34,7 +34,9 @@ describe('httpErrorInterceptor', () => {
 
   function flush(status: number, body: unknown, url = '/api/x') {
     http.get(url).subscribe({ error: () => undefined });
-    mock.expectOne(url).flush(body, { status, statusText: 'x' });
+    mock
+      .expectOne(url)
+      .flush(body as string | object | null, { status, statusText: 'x' });
   }
 
   it('toasts the message + a Copy ID action for an ApiError body', () => {

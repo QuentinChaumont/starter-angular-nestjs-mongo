@@ -5,10 +5,12 @@
     "experimentalDecorators": true,
     "moduleResolution": "bundler",
     "module": "preserve",
-    "composite": false,
+    "lib": [
+      "es2022",
+      "dom"
+    ],
     "declarationMap": false,
-    "emitDeclarationOnly": false,
-    "lib": ["es2022", "dom"]
+    "emitDeclarationOnly": false
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
@@ -19,9 +21,6 @@
   "files": [],
   "include": [],
   "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
     {
       "path": "./tsconfig.spec.json"
     }

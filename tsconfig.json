@@ -29,6 +29,27 @@
     },
     {
       "path": "./libs/backend/testing"
+    },
+    {
+      "path": "./libs/frontend/dashboard"
+    },
+    {
+      "path": "./libs/frontend/feedback"
+    },
+    {
+      "path": "./libs/frontend/consent"
+    },
+    {
+      "path": "./libs/frontend/design"
+    },
+    {
+      "path": "./libs/frontend/auth"
+    },
+    {
+      "path": "./libs/frontend/core"
+    },
+    {
+      "path": "./apps/frontend"
     }
   ],
   "compilerOptions": {}

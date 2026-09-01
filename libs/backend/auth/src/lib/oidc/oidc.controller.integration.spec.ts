@@ -166,7 +166,7 @@ describe('OidcController (integration)', () => {
     });
 
     expect(response.status).toBe(401);
-    expect((await response.json()).code).toBe('OIDC_STATE_INVALID');
+    expect(((await response.json()) as any).code).toBe('OIDC_STATE_INVALID');
   });
 
   it('rejects a callback with no transaction cookie (401)', async () => {
@@ -175,6 +175,6 @@ describe('OidcController (integration)', () => {
     });
 
     expect(response.status).toBe(401);
-    expect((await response.json()).code).toBe('OIDC_STATE_INVALID');
+    expect(((await response.json()) as any).code).toBe('OIDC_STATE_INVALID');
   });
 });

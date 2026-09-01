@@ -20,7 +20,7 @@ import { Roles } from './decorators/roles.decorator';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
-import { AuthenticatedUser } from './models/authenticated-user';
+import type { AuthenticatedUser } from './models/authenticated-user';
 import type { SessionContext } from './refresh/refresh-token.service';
 
 const TOKEN_TYPE = 'Bearer' as const;

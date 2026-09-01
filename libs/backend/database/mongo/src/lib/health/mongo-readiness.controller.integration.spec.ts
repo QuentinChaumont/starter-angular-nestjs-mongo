@@ -33,7 +33,7 @@ describe('MongoReadinessController (integration, real Mongo instance)', () => {
     const response = await fetch(`${baseUrl}/health/ready`);
 
     expect(response.status).toBe(200);
-    const body = await response.json();
+    const body: any = await response.json();
     expect(body.info.mongo).toEqual({ status: 'up' });
   }, 30_000);
 });

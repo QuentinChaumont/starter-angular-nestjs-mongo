@@ -16,9 +16,9 @@ const NAV_PATH = 'apps/frontend/src/app/dashboard-nav.ts';
 const SOURCE_NAV_FILE = join(WORKSPACE_ROOT, NAV_PATH);
 
 const SHELL_ROUTE =
-  "{ path: 'app', canActivate: [authGuard], loadComponent: () => import('@org/frontend-dashboard').then((m) => m.DashboardShell), children: [" +
-  "{ path: '', loadComponent: () => import('@org/frontend-dashboard').then((m) => m.DashboardHome) }, " +
-  "{ path: 'admin', canActivate: [roleGuard('admin')], loadComponent: () => import('@org/frontend-dashboard').then((m) => m.DashboardHome) }] }";
+  "{ path: 'app', canActivate: [authGuard], component: DashboardShell, children: [" +
+  "{ path: '', component: DashboardHome }, " +
+  "{ path: 'admin', canActivate: [roleGuard('admin')], component: DashboardHome }] }";
 const REDIRECT_ROUTE = "{ path: '', pathMatch: 'full', redirectTo: 'app' }";
 
 /**
@@ -70,7 +70,19 @@ export default async function frontendDashboardGenerator(
 
   ensureNamedImport(tree, APP_ROUTES_PATH, 'authGuard', '@org/frontend-auth');
   ensureNamedImport(tree, APP_ROUTES_PATH, 'roleGuard', '@org/frontend-auth');
-  ensureRoute(tree, APP_ROUTES_PATH, SHELL_ROUTE, 'm.DashboardShell');
+  ensureNamedImport(
+    tree,
+    APP_ROUTES_PATH,
+    'DashboardShell',
+    '@org/frontend-dashboard',
+  );
+  ensureNamedImport(
+    tree,
+    APP_ROUTES_PATH,
+    'DashboardHome',
+    '@org/frontend-dashboard',
+  );
+  ensureRoute(tree, APP_ROUTES_PATH, SHELL_ROUTE, "path: 'app'");
   ensureRoute(tree, APP_ROUTES_PATH, REDIRECT_ROUTE, "redirectTo: 'app'");
 
   await formatFiles(tree);

@@ -1,12 +1,15 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",
+    "outDir": "./out-tsc/lib",
     "rootDir": "src",
     "declaration": true,
-    "types": []
+    "types": [],
+    "tsBuildInfoFile": "./out-tsc/lib/tsconfig.lib.tsbuildinfo"
   },
-  "include": ["src/**/*.ts"],
+  "include": [
+    "src/**/*.ts"
+  ],
   "exclude": [
     "src/**/*.spec.ts",
     "src/**/*.test.ts",
@@ -16,10 +19,10 @@
   ],
   "references": [
     {
-      "path": "../core/tsconfig.lib.json"
+      "path": "../design/tsconfig.lib.json"
     },
     {
-      "path": "../design/tsconfig.lib.json"
+      "path": "../core/tsconfig.lib.json"
     },
     {
       "path": "../auth/tsconfig.lib.json"

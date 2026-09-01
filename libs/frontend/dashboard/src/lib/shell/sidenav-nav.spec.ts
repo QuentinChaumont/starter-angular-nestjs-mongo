@@ -1,8 +1,12 @@
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AuthStore } from '@org/frontend-auth';
 import { DASHBOARD_NAV, NavItem } from '../nav.tokens';
 import { SidenavNav } from './sidenav-nav';
+
+@Component({ template: '' })
+class Blank {}
 
 const NAV: NavItem[] = [
   { label: 'Home', icon: 'home', route: '' },
@@ -13,7 +17,10 @@ const NAV: NavItem[] = [
 function render() {
   TestBed.configureTestingModule({
     imports: [SidenavNav],
-    providers: [provideRouter([]), { provide: DASHBOARD_NAV, useValue: NAV }],
+    providers: [
+      provideRouter([{ path: '**', component: Blank }]),
+      { provide: DASHBOARD_NAV, useValue: NAV },
+    ],
   });
   const fixture = TestBed.createComponent(SidenavNav);
   fixture.detectChanges();

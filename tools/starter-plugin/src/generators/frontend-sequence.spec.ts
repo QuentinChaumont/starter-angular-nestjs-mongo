@@ -111,18 +111,18 @@ describe('frontend brick sequence', () => {
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
     for (const marker of [
-      'm.LoginPage',
-      'm.OidcCallback',
-      'm.DashboardShell',
+      "path: 'login'",
+      "path: 'auth/callback'",
+      "component: DashboardShell",
       "redirectTo: 'app'",
-      'm.CookiePolicy',
-      'm.PrivacyPolicy',
+      "path: 'legal/cookies'",
+      "path: 'legal/privacy'",
     ]) {
       expect(routes).toContain(marker);
     }
     // public routes stay first (install order)
-    expect(routes.indexOf('m.LoginPage')).toBeLessThan(
-      routes.indexOf('m.DashboardShell'),
+    expect(routes.indexOf("path: 'login'")).toBeLessThan(
+      routes.indexOf('component: DashboardShell'),
     );
 
     const component = tree.read(APP_COMPONENT, 'utf-8') as string;
