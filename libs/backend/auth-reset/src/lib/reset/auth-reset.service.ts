@@ -5,7 +5,7 @@ import {
   renderEmailVerification,
   renderPasswordReset,
 } from '@org/backend-mailer';
-import { UserService } from '@org/backend-features-user';
+import { UserEvents, UserService } from '@org/backend-features-user';
 import { AuthEvents } from '@org/backend-auth';
 import { RefreshTokenService } from '@org/backend-auth';
 import { EmailVerificationService } from '../verification/email-verification.service';
@@ -28,13 +28,17 @@ export class AuthResetService implements OnModuleInit {
     private readonly mailer: MailerService,
     private readonly config: AppConfigService,
     private readonly events: AuthEvents,
+    private readonly userEvents: UserEvents,
     private readonly logger: AppLogger,
   ) {}
 
-  /** Subscribe to registration so a verification email goes out on sign-up.
-   * A failure here must not break the registration response. */
+  /**
+   * Send a verification email when an account is created, and again when
+   * its address changes. A failure here must never break the originating
+   * request.
+   */
   onModuleInit(): void {
-    this.events.onUserRegistered((event) => {
+    const send = (event: { userId: string; email: string }) =>
       this.sendVerificationEmail(event).catch((error: unknown) => {
         this.logger.error(
           `Failed to send verification email: ${
@@ -44,7 +48,9 @@ export class AuthResetService implements OnModuleInit {
           'AuthResetService',
         );
       });
-    });
+
+    this.events.onUserRegistered(send);
+    this.userEvents.onEmailChanged(send);
   }
 
   /**

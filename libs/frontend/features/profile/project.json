@@ -1,0 +1,22 @@
+{
+  "name": "frontend-features-profile",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/frontend/features/profile/src",
+  "prefix": "lib",
+  "projectType": "library",
+  "tags": ["scope:frontend", "type:feature"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{projectRoot}/test-output/jest/coverage"],
+      "options": {
+        "jestConfig": "libs/frontend/features/profile/jest.config.cts",
+        "tsConfig": "libs/frontend/features/profile/tsconfig.spec.json",
+        "passWithNoTests": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
+}

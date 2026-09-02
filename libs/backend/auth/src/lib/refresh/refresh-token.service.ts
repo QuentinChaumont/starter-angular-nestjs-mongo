@@ -59,7 +59,9 @@ export class RefreshTokenService {
     presentedToken: string,
     context: SessionContext = {},
   ): Promise<{ userId: string; issued: IssuedRefreshToken }> {
-    const existing = await this.repository.findByHash(hashToken(presentedToken));
+    const existing = await this.repository.findByHash(
+      hashToken(presentedToken),
+    );
 
     if (!existing) {
       throw new UnauthorizedError(
@@ -90,14 +92,24 @@ export class RefreshTokenService {
 
   /** Idempotent: a missing or already-revoked token is a no-op. */
   async revoke(presentedToken: string): Promise<void> {
-    const existing = await this.repository.findByHash(hashToken(presentedToken));
+    const existing = await this.repository.findByHash(
+      hashToken(presentedToken),
+    );
     if (existing && !existing.revokedAt) {
       await this.repository.revokeById(existing.id);
     }
   }
 
-  /** For a future "sign out everywhere" — not wired to a route in V2. */
+  /** "Sign out everywhere". */
   revokeAllForUser(userId: string): Promise<void> {
     return this.repository.revokeAllForUser(userId);
+  }
+
+  /**
+   * Revokes every session except the one holding `keepToken` (raw). Used by
+   * `change-password`: kill other sessions, leave the caller signed in.
+   */
+  revokeAllForUserExcept(userId: string, keepToken: string): Promise<void> {
+    return this.repository.revokeAllForUserExcept(userId, hashToken(keepToken));
   }
 }

@@ -27,7 +27,10 @@
       "@org/frontend-core": ["./libs/frontend/core/src/index.ts"],
       "@org/frontend-dashboard": ["./libs/frontend/dashboard/src/index.ts"],
       "@org/frontend-design": ["./libs/frontend/design/src/index.ts"],
-      "@org/frontend-feedback": ["./libs/frontend/feedback/src/index.ts"]
+      "@org/frontend-feedback": ["./libs/frontend/feedback/src/index.ts"],
+      "@org/frontend-features-profile": [
+        "./libs/frontend/features/profile/src/index.ts"
+      ]
     }
   }
 }

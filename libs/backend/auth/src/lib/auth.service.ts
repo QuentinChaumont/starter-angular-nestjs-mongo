@@ -5,6 +5,7 @@ import {
   AuthenticatedUser,
   ForbiddenError,
   UnauthorizedError,
+  ValidationError,
   verifyPassword,
 } from '@org/backend-core';
 import { UserService } from '@org/backend-features-user';
@@ -194,6 +195,35 @@ export class AuthService {
   async logout(presentedToken: string | undefined): Promise<void> {
     if (presentedToken) {
       await this.refreshTokens.revoke(presentedToken);
+    }
+  }
+
+  /**
+   * Verifies the current password, sets the new one, and revokes every
+   * **other** session (`currentToken` — the caller's refresh cookie — is
+   * spared, so the browser that made the change stays signed in). A wrong
+   * current password is a `400` and touches nothing.
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+    currentToken: string | undefined,
+  ): Promise<void> {
+    const user = await this.users.findByIdWithPassword(userId);
+    if (!(await verifyPassword(currentPassword, user.password))) {
+      throw new ValidationError(
+        'INVALID_CURRENT_PASSWORD',
+        'The current password is incorrect',
+      );
+    }
+
+    await this.users.updateById(userId, { password: newPassword });
+
+    if (currentToken) {
+      await this.refreshTokens.revokeAllForUserExcept(userId, currentToken);
+    } else {
+      await this.refreshTokens.revokeAllForUser(userId);
     }
   }
 

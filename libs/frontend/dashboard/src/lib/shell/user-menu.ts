@@ -28,6 +28,10 @@ import { ThemeSettingsPanel } from '@org/frontend-design';
 
     <mat-menu #menu="matMenu">
       <div class="user-menu__header">{{ roleLabel() }}</div>
+      <button mat-menu-item (click)="goProfile()">
+        <mat-icon>person</mat-icon>
+        <span>Profile</span>
+      </button>
       <button mat-menu-item (click)="openTheme()">
         <mat-icon>palette</mat-icon>
         <span>Appearance</span>
@@ -64,6 +68,12 @@ export class UserMenu {
   protected roleLabel(): string {
     const roles = this.store.user()?.roles ?? [];
     return roles.length ? roles.join(', ') : 'Signed in';
+  }
+
+  /** Present as a route only when the profile brick (V2.1 step 34) is
+   * installed; the menu entry is harmless without it. */
+  protected goProfile(): void {
+    this.router.navigate(['/app/profile']);
   }
 
   protected openTheme(): void {

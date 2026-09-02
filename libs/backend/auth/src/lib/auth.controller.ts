@@ -26,6 +26,7 @@ import { AuthService } from './auth.service';
 import { AuthCookieService } from './cookies/auth-cookie.service';
 import { CsrfGuard } from './csrf/csrf.guard';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import type { AuthenticatedUser } from '@org/backend-core';
@@ -127,6 +128,28 @@ export class AuthController {
   @Get('me')
   me(@CurrentUser() user: AuthenticatedUser): Promise<MeResponse> {
     return this.authService.currentUser(user.id);
+  }
+
+  /**
+   * Change the current account's password. Bearer-authenticated (no CSRF
+   * guard — an attacker can't forge the `Authorization` header). Revokes
+   * every other session; this one keeps working.
+   */
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, AuthThrottlerGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Post('change-password')
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangePasswordDto,
+    @Req() req: Request,
+  ): Promise<void> {
+    await this.authService.changePassword(
+      user.id,
+      dto.currentPassword,
+      dto.newPassword,
+      this.cookies.readRefreshToken(req),
+    );
   }
 
   /**

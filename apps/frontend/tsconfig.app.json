@@ -6,9 +6,7 @@
     "composite": false,
     "declaration": false
   },
-  "include": [
-    "src/**/*.ts"
-  ],
+  "include": ["src/**/*.ts"],
   "exclude": [
     "src/**/*.spec.ts",
     "src/**/*.test.ts",
@@ -18,6 +16,9 @@
   ],
   "references": [
     {
+      "path": "../../libs/frontend/features/profile/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/frontend/feedback/tsconfig.lib.json"
     },
     {
@@ -25,6 +26,9 @@
     },
     {
       "path": "../../libs/frontend/dashboard/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/frontend/core/tsconfig.lib.json"
     },
     {
       "path": "../../libs/frontend/consent/tsconfig.lib.json"

@@ -205,7 +205,9 @@ describe('auth-reset (e2e, real Mongo instance)', () => {
       const before = await fetch(`${baseUrl}/auth/me`, {
         headers: { authorization: `Bearer ${accessToken}` },
       });
-      expect(((await before.json()) as { emailVerifiedAt: unknown }).emailVerifiedAt).toBeNull();
+      expect(
+        ((await before.json()) as { emailVerifiedAt: unknown }).emailVerifiedAt,
+      ).toBeNull();
 
       expect((await post('/auth/verify-email', { token })).status).toBe(204);
 
@@ -215,6 +217,38 @@ describe('auth-reset (e2e, real Mongo instance)', () => {
       expect(
         ((await after.json()) as { emailVerifiedAt: unknown }).emailVerifiedAt,
       ).toEqual(expect.any(String));
+    });
+
+    it('re-sends a verification link when the email is changed via PATCH /users/me', async () => {
+      const email = 'mover@example.com';
+      const created = await users.create({
+        email,
+        password,
+        firstName: 'Mo',
+        lastName: 'Ver',
+      });
+      await users.markEmailVerified(created._id.toString());
+      const login = await post('/auth/login', { email, password });
+      const { accessToken } = (await login.json()) as { accessToken: string };
+      mail.clear();
+
+      const newEmail = 'moved@example.com';
+      const patch = await fetch(`${baseUrl}/users/me`, {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ email: newEmail }),
+      });
+      expect(patch.status).toBe(200);
+
+      // the event listener runs after the response; give it a tick
+      await new Promise((r) => setTimeout(r, 50));
+      const verifyMail = mail.sent.find((m) => m.to === newEmail);
+      expect(verifyMail).toBeDefined();
+      const token = linkToken(verifyMail?.text ?? '');
+      expect((await post('/auth/verify-email', { token })).status).toBe(204);
     });
   });
 });

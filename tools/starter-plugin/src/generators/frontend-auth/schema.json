@@ -3,5 +3,11 @@
   "$id": "FrontendAuth",
   "title": "Install the frontend auth brick (login, OIDC, interceptors, guards)",
   "type": "object",
-  "properties": {}
+  "properties": {
+    "profile": {
+      "type": "boolean",
+      "description": "Also add the /app/profile page (needs frontend-dashboard + frontend-feedback).",
+      "default": false
+    }
+  }
 }

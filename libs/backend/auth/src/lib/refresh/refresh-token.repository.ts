@@ -42,6 +42,24 @@ export class RefreshTokenRepository extends BaseRepository<RefreshToken> {
       .exec();
   }
 
+  /** Like `revokeAllForUser`, but spares the token whose hash is
+   * `keepTokenHash` — the caller's current session. */
+  async revokeAllForUserExcept(
+    userId: string,
+    keepTokenHash: string,
+  ): Promise<void> {
+    await this.model
+      .updateMany(
+        {
+          userId,
+          revokedAt: { $exists: false },
+          tokenHash: { $ne: keepTokenHash },
+        },
+        { revokedAt: new Date() },
+      )
+      .exec();
+  }
+
   async deleteExpiredForUser(userId: string): Promise<void> {
     await this.model
       .deleteMany({ userId, expiresAt: { $lt: new Date() } })

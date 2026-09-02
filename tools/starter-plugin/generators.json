@@ -50,7 +50,7 @@
     "frontend-auth": {
       "factory": "./src/generators/frontend-auth/generator",
       "schema": "./src/generators/frontend-auth/schema.json",
-      "description": "Install the frontend auth brick: session store, HTTP interceptors, route guards and the /login + /auth/callback routes."
+      "description": "Install the frontend auth brick: session store, HTTP interceptors, route guards and the /login + /auth/callback routes. Pass --profile to also add the /app/profile page."
     },
     "frontend-dashboard": {
       "factory": "./src/generators/frontend-dashboard/generator",

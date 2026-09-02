@@ -56,6 +56,9 @@
     },
     {
       "path": "./libs/backend/auth-reset"
+    },
+    {
+      "path": "./libs/frontend/features/profile"
     }
   ],
   "compilerOptions": {}

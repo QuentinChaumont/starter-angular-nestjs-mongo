@@ -24,6 +24,9 @@
   ],
   "references": [
     {
+      "path": "../../../shared/contracts/tsconfig.lib.json"
+    },
+    {
       "path": "../../database/mongo/tsconfig.lib.json"
     },
     {

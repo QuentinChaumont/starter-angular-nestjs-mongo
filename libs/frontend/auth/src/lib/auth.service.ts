@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { API_BASE_URL } from '@org/frontend-core';
+import { API_BASE_URL, ME_ENDPOINT } from '@org/frontend-core';
 import {
   AccessTokenResponse,
   AuthenticatedUserDto,
@@ -30,6 +30,7 @@ interface LoginResponse extends AccessTokenResponse {
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly base = inject(API_BASE_URL);
+  private readonly meEndpoint = inject(ME_ENDPOINT);
   private readonly store = inject(AuthStore);
 
   /** Single in-flight refresh shared by every concurrent 401. */
@@ -112,7 +113,7 @@ export class AuthService {
 
   loadMe(): Observable<AuthenticatedUserDto> {
     return this.http
-      .get<AuthenticatedUserDto>(`${this.base}/auth/me`, {
+      .get<AuthenticatedUserDto>(`${this.base}${this.meEndpoint}`, {
         withCredentials: true,
       })
       .pipe(tap((user) => this.store.setUser(user)));
@@ -135,6 +136,8 @@ export class AuthService {
 
   oidcLoginUrl(redirectTo?: string): string {
     const url = `${this.base}/auth/oidc/login`;
-    return redirectTo ? `${url}?redirectTo=${encodeURIComponent(redirectTo)}` : url;
+    return redirectTo
+      ? `${url}?redirectTo=${encodeURIComponent(redirectTo)}`
+      : url;
   }
 }

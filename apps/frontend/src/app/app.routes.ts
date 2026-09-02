@@ -27,7 +27,18 @@ export const appRoutes: Route[] = [
     component: DashboardShell,
     children: [
       { path: '', component: DashboardHome },
-      { path: 'admin', canActivate: [roleGuard('admin')], component: DashboardHome },
+      {
+        path: 'admin',
+        canActivate: [roleGuard('admin')],
+        component: DashboardHome,
+      },
+      {
+        path: 'profile',
+        loadChildren: () =>
+          import('@org/frontend-features-profile').then(
+            (m) => m.PROFILE_ROUTES,
+          ),
+      },
     ],
   },
   { path: '', pathMatch: 'full', redirectTo: 'app' },

@@ -1,1 +1,3 @@
-export type FrontendAuthGeneratorSchema = Record<string, never>;
+export interface FrontendAuthGeneratorSchema {
+  profile?: boolean;
+}

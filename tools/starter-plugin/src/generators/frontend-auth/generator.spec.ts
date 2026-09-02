@@ -27,7 +27,10 @@ export const appConfig: ApplicationConfig = {
 export const appRoutes: Route[] = [];
 `,
   );
-  tree.write('tsconfig.base.json', JSON.stringify({ compilerOptions: { paths: {} } }));
+  tree.write(
+    'tsconfig.base.json',
+    JSON.stringify({ compilerOptions: { paths: {} } }),
+  );
 }
 
 describe('frontend-auth generator', () => {
@@ -57,7 +60,9 @@ describe('frontend-auth generator', () => {
     expect(tree.exists('libs/frontend/auth/src/lib/auth.interceptor.ts')).toBe(
       true,
     );
-    expect(tree.exists('libs/frontend/core/src/lib/api-base-url.ts')).toBe(true);
+    expect(tree.exists('libs/frontend/core/src/lib/api-base-url.ts')).toBe(
+      true,
+    );
     expect(tree.read('libs/frontend/core/src/index.ts', 'utf-8')).toContain(
       'api-base-url',
     );
@@ -83,6 +88,99 @@ describe('frontend-auth generator', () => {
         '@org/frontend-auth'
       ],
     ).toEqual(['./libs/frontend/auth/src/index.ts']);
+  });
+
+  describe('--profile', () => {
+    const USER_MENU = 'libs/frontend/dashboard/src/lib/shell/user-menu.ts';
+
+    function seedProfilePrereqs(): void {
+      tree.write('libs/frontend/dashboard/project.json', '{}');
+      tree.write('libs/frontend/feedback/project.json', '{}');
+      tree.write(
+        APP_ROUTES,
+        `import { Route } from '@angular/router';
+
+export const appRoutes: Route[] = [
+  { path: 'app', children: [{ path: '', component: Home }] },
+];
+`,
+      );
+      tree.write(
+        USER_MENU,
+        `import { Component, inject } from '@angular/core';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'lib-user-menu',
+  imports: [MatMenuModule],
+  template: \`
+    <mat-menu>
+      <div class="user-menu__header">{{ roleLabel() }}</div>
+      <button mat-menu-item (click)="openTheme()">Appearance</button>
+    </mat-menu>
+  \`,
+})
+export class UserMenu {
+  private readonly router = inject(Router);
+  protected roleLabel(): string { return ''; }
+  protected openTheme(): void {}
+}
+`,
+      );
+    }
+
+    it('refuses without the dashboard / feedback bricks', async () => {
+      await expect(
+        frontendAuthGenerator(tree, { profile: true }),
+      ).rejects.toThrow(/dashboard brick/);
+
+      tree.write('libs/frontend/dashboard/project.json', '{}');
+      await expect(
+        frontendAuthGenerator(tree, { profile: true }),
+      ).rejects.toThrow(/feedback brick/);
+    });
+
+    it('wires the profile lib, lazy route, ME_ENDPOINT and menu entry', async () => {
+      seedProfilePrereqs();
+      await frontendAuthGenerator(tree, { profile: true });
+
+      expect(tree.exists('libs/frontend/features/profile/project.json')).toBe(
+        true,
+      );
+
+      const routes = tree.read(APP_ROUTES, 'utf-8') as string;
+      expect(routes).toContain("import('@org/frontend-features-profile')");
+      expect(routes).toContain('m.PROFILE_ROUTES');
+      expect(routes).not.toMatch(/^import .*frontend-features-profile/m);
+
+      const appConfig = tree.read(APP_CONFIG, 'utf-8') as string;
+      expect(appConfig).toContain('ME_ENDPOINT');
+      expect(appConfig).toContain("useValue: '/users/me'");
+
+      const menu = tree.read(USER_MENU, 'utf-8') as string;
+      expect(menu).toContain('goProfile()');
+      expect(menu).toContain("this.router.navigate(['/app/profile'])");
+
+      expect(
+        readJson(tree, 'tsconfig.base.json').compilerOptions.paths[
+          '@org/frontend-features-profile'
+        ],
+      ).toEqual(['./libs/frontend/features/profile/src/index.ts']);
+    });
+
+    it('is idempotent', async () => {
+      seedProfilePrereqs();
+      await frontendAuthGenerator(tree, { profile: true });
+      const before = {
+        routes: tree.read(APP_ROUTES, 'utf-8'),
+        config: tree.read(APP_CONFIG, 'utf-8'),
+        menu: tree.read(USER_MENU, 'utf-8'),
+      };
+      await frontendAuthGenerator(tree, { profile: true });
+      expect(tree.read(APP_ROUTES, 'utf-8')).toBe(before.routes);
+      expect(tree.read(APP_CONFIG, 'utf-8')).toBe(before.config);
+      expect(tree.read(USER_MENU, 'utf-8')).toBe(before.menu);
+    });
   });
 
   it('is idempotent', async () => {

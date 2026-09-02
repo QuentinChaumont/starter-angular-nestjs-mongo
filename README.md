@@ -339,6 +339,24 @@ persisted in `localStorage`, never touching the committed charter.
 The app owns `provideHttpClient(withInterceptors([...]))` so the auth and
 feedback bricks each contribute an interceptor (auth before feedback).
 
+**`--profile`** (`nx g @org/starter-plugin:frontend-auth --profile`, needs
+the dashboard + feedback bricks) adds the **`/app/profile`** page — a lazy
+feature that manages the connected account:
+
+- `GET`/`PATCH /api/users/me` — edit first/last name **and email**.
+  Changing the email clears its verified status, rejects a duplicate
+  (`409`), and (with the `auth-reset` brick) re-sends a verification link
+  to the new address; the "verify your email" banner reappears.
+- `POST /api/auth/change-password` — a wrong current password is a `400`;
+  a success revokes every **other** session and keeps this one.
+- `DELETE /api/users/me` `{ password }` — **permanently** deletes the
+  account after re-confirming the password (a confirm dialog gates it in
+  the UI), then signs out and returns to `/login`.
+
+Adds a "Profile" entry to the dashboard user-menu and points
+`AuthStore.loadMe()` at `/users/me` (via the `ME_ENDPOINT` token) so the
+full `UserProfile` is in the store.
+
 ### `frontend-feedback` — dialogs & error toasts
 
 `DialogService.confirm()` / `.alert()` (a single built-in dialog, `false`

@@ -1,7 +1,30 @@
 import { Injectable } from '@nestjs/common';
-import { ConflictError, NotFoundError, hashPassword } from '@org/backend-core';
+import {
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+  hashPassword,
+  verifyPassword,
+} from '@org/backend-core';
+import type { UserProfile } from '@org/shared-contracts';
+import { UserEvents } from './user-events';
 import { UserRepository } from './user.repository';
 import { User, UserDocument } from './user.schema';
+
+/** Maps a persisted user to the profile contract shared with the frontend. */
+export function toUserProfile(user: UserDocument): UserProfile {
+  return {
+    id: user._id.toString(),
+    email: user.email,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    roles: user.roles,
+    emailVerifiedAt: user.emailVerifiedAt
+      ? user.emailVerifiedAt.toISOString()
+      : null,
+    createdAt: user.createdAt.toISOString(),
+  };
+}
 
 const MONGO_DUPLICATE_KEY_CODE = 11000;
 
@@ -15,7 +38,10 @@ function isDuplicateKeyError(error: unknown): boolean {
 
 @Injectable()
 export class UserService {
-  constructor(private readonly repository: UserRepository) {}
+  constructor(
+    private readonly repository: UserRepository,
+    private readonly events: UserEvents,
+  ) {}
 
   async findById(id: string): Promise<UserDocument> {
     const found = await this.repository.findById(id);
@@ -31,6 +57,78 @@ export class UserService {
 
   async findByEmail(email: string): Promise<UserDocument | null> {
     return this.repository.findByEmail(email);
+  }
+
+  async findByIdWithPassword(id: string): Promise<UserDocument> {
+    const found = await this.repository.findByIdWithPassword(id);
+    if (!found) {
+      throw new NotFoundError('USER_NOT_FOUND', 'User not found');
+    }
+    return found;
+  }
+
+  /** The connected account's own profile. */
+  async getProfile(id: string): Promise<UserProfile> {
+    return toUserProfile(await this.findById(id));
+  }
+
+  /**
+   * Edits the connected account. Changing `email` clears `emailVerifiedAt`
+   * and fires `user.email-changed` (the `auth-reset` brick then re-sends a
+   * verification link). A duplicate email is a `409`.
+   */
+  async updateProfile(
+    id: string,
+    input: { firstName?: string; lastName?: string; email?: string },
+  ): Promise<UserProfile> {
+    const user = await this.findById(id);
+
+    if (input.firstName !== undefined) user.firstName = input.firstName;
+    if (input.lastName !== undefined) user.lastName = input.lastName;
+
+    const emailChanged =
+      input.email !== undefined &&
+      input.email.trim().toLowerCase() !== user.email.toLowerCase();
+    if (emailChanged) {
+      user.email = input.email as string;
+      user.emailVerifiedAt = undefined;
+    }
+
+    try {
+      await user.save();
+    } catch (error) {
+      if (isDuplicateKeyError(error)) {
+        throw new ConflictError(
+          'USER_EMAIL_ALREADY_EXISTS',
+          'A user with this email already exists',
+        );
+      }
+      throw error;
+    }
+
+    if (emailChanged) {
+      this.events.emitEmailChanged({
+        userId: id,
+        email: user.email,
+        firstName: user.firstName,
+      });
+    }
+
+    return toUserProfile(user);
+  }
+
+  /** Permanent, irreversible. Re-confirms the password first (accounts with
+   * no password — OIDC-only — skip that check). Orphaned refresh tokens
+   * fail on their next use and are swept by their TTL index. */
+  async deleteAccount(id: string, password: string): Promise<void> {
+    const user = await this.findByIdWithPassword(id);
+    if (user.password && !(await verifyPassword(password, user.password))) {
+      throw new ValidationError(
+        'INVALID_PASSWORD',
+        'The password is incorrect',
+      );
+    }
+    await this.repository.deleteById(id);
   }
 
   async findAll(): Promise<UserDocument[]> {

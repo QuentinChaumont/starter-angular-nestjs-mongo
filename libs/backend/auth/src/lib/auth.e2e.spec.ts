@@ -11,7 +11,11 @@ import {
   useRequestIdMiddleware,
 } from '@org/backend-core';
 import { UserModule, UserService } from '@org/backend-features-user';
-import { listenOnRandomPort, startTestMongo, TestMongo } from '@org/backend-testing';
+import {
+  listenOnRandomPort,
+  startTestMongo,
+  TestMongo,
+} from '@org/backend-testing';
 import { AuthModule } from './auth.module';
 
 @Module({
@@ -31,8 +35,14 @@ describe('Auth (e2e, real Mongo instance)', () => {
   let authBaseUrl: string;
   let usersBaseUrl: string;
 
-  const credentials = { email: 'jane.doe@example.com', password: 'Str0ng!Passw0rd' };
-  const adminCredentials = { email: 'admin@example.com', password: 'Str0ng!Passw0rd' };
+  const credentials = {
+    email: 'jane.doe@example.com',
+    password: 'Str0ng!Passw0rd',
+  };
+  const adminCredentials = {
+    email: 'admin@example.com',
+    password: 'Str0ng!Passw0rd',
+  };
 
   beforeAll(async () => {
     testMongo = await startTestMongo({
@@ -110,7 +120,9 @@ describe('Auth (e2e, real Mongo instance)', () => {
     expect(typeof body.accessToken).toBe('string');
     expect(body.user).toEqual({ id: expect.any(String), roles: [] });
     expect(
-      response.headers.getSetCookie().some((c) => c.startsWith('refresh_token=')),
+      response.headers
+        .getSetCookie()
+        .some((c) => c.startsWith('refresh_token=')),
     ).toBe(true);
   });
 
@@ -325,7 +337,9 @@ describe('Auth (e2e, real Mongo instance)', () => {
       });
 
       expect(response.status).toBe(401);
-      expect(((await response.json()) as any).code).toBe('REFRESH_TOKEN_MISSING');
+      expect(((await response.json()) as any).code).toBe(
+        'REFRESH_TOKEN_MISSING',
+      );
     });
 
     it('rejects refresh with no cookies at all (CSRF guard, 403)', async () => {
@@ -397,6 +411,231 @@ describe('Auth (e2e, real Mongo instance)', () => {
       expect(logout.status).toBe(204);
       jar.store(logout);
       expect(jar.get('refresh_token')).toBeUndefined();
+    });
+  });
+
+  describe('profile (/users/me) and change-password', () => {
+    /** Grabs a cookie value from a Set-Cookie header line. */
+    function cookie(response: Response, name: string): string {
+      const line = response.headers
+        .getSetCookie()
+        .find((c) => c.startsWith(`${name}=`));
+      return line ? line.slice(name.length + 1).split(';')[0] : '';
+    }
+
+    it('GET /users/me is 401 without a token, 200 with', async () => {
+      expect((await fetch(`${usersBaseUrl}/me`)).status).toBe(401);
+
+      const { body } = await login(credentials);
+      const res = await fetch(`${usersBaseUrl}/me`, {
+        headers: { authorization: `Bearer ${body.accessToken}` },
+      });
+      expect(res.status).toBe(200);
+      const profile = (await res.json()) as any;
+      expect(profile).toMatchObject({
+        email: credentials.email,
+        firstName: 'Jane',
+        roles: [],
+        emailVerifiedAt: null,
+      });
+      expect(typeof profile.createdAt).toBe('string');
+    });
+
+    const patchMe = (accessToken: string, patch: unknown) =>
+      fetch(`${usersBaseUrl}/me`, {
+        method: 'PATCH',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(patch),
+      });
+
+    it('PATCH /users/me updates the name', async () => {
+      const { body } = await login(credentials);
+      const res = await patchMe(body.accessToken, { lastName: 'Renamed' });
+      expect(res.status).toBe(200);
+      const profile = (await res.json()) as any;
+      expect(profile.lastName).toBe('Renamed');
+      expect(profile.firstName).toBe('Jane'); // untouched
+    });
+
+    it('PATCH /users/me changes the email and clears its verified status', async () => {
+      const email = 'email-change@example.com';
+      const password = 'Str0ng!Passw0rd';
+      const created = await app
+        .get(UserService)
+        .create({ email, password, firstName: 'E', lastName: 'C' });
+      await app.get(UserService).markEmailVerified(created._id.toString());
+
+      const login1 = await fetch(`${authBaseUrl}/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const { accessToken } = (await login1.json()) as any;
+
+      const res = await patchMe(accessToken, { email: 'moved@example.com' });
+      expect(res.status).toBe(200);
+      const profile = (await res.json()) as any;
+      expect(profile.email).toBe('moved@example.com');
+      expect(profile.emailVerifiedAt).toBeNull();
+
+      // the old address no longer logs in, the new one does
+      const oldLogin = await fetch(`${authBaseUrl}/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      expect(oldLogin.status).toBe(401);
+    });
+
+    it('rejects PATCH /users/me with an email that already exists (409)', async () => {
+      const { body } = await login(credentials);
+      const res = await patchMe(body.accessToken, {
+        email: adminCredentials.email,
+      });
+      expect(res.status).toBe(409);
+      expect(((await res.json()) as any).code).toBe(
+        'USER_EMAIL_ALREADY_EXISTS',
+      );
+    });
+
+    it('DELETE /users/me needs the right password and then wipes the account', async () => {
+      const email = 'delete-me@example.com';
+      const password = 'Str0ng!Passw0rd';
+      await app
+        .get(UserService)
+        .create({ email, password, firstName: 'D', lastName: 'M' });
+      const login1 = await fetch(`${authBaseUrl}/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const { accessToken } = (await login1.json()) as any;
+
+      const del = (pw: string) =>
+        fetch(`${usersBaseUrl}/me`, {
+          method: 'DELETE',
+          headers: {
+            'content-type': 'application/json',
+            authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ password: pw }),
+        });
+
+      expect((await del('nope')).status).toBe(400);
+      expect((await del(password)).status).toBe(204);
+
+      // the account is gone
+      const relogin = await fetch(`${authBaseUrl}/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      expect(relogin.status).toBe(401);
+    });
+
+    async function changePassword(
+      accessToken: string,
+      cookieHeader: string,
+      dto: { currentPassword: string; newPassword: string },
+    ) {
+      return fetch(`${authBaseUrl}/change-password`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${accessToken}`,
+          cookie: cookieHeader,
+        },
+        body: JSON.stringify(dto),
+      });
+    }
+
+    it('rejects a wrong current password with 400 and touches nothing', async () => {
+      const email = 'change-pw-guard@example.com';
+      const password = 'Str0ng!Passw0rd';
+      await app
+        .get(UserService)
+        .create({ email, password, firstName: 'C', lastName: 'P' });
+      const login1 = await fetch(`${authBaseUrl}/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const { accessToken } = (await login1.json()) as any;
+
+      const res = await changePassword(
+        accessToken,
+        `refresh_token=${cookie(login1, 'refresh_token')}`,
+        { currentPassword: 'wrong', newPassword: 'An0ther!Pass' },
+      );
+      expect(res.status).toBe(400);
+      // old password still works
+      const relogin = await fetch(`${authBaseUrl}/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      expect(relogin.status).toBe(201);
+    });
+
+    it('changes the password, revokes other sessions, keeps the current one', async () => {
+      const email = 'change-pw-ok@example.com';
+      const password = 'Str0ng!Passw0rd';
+      const newPassword = 'Br4nd!NewPass';
+      await app
+        .get(UserService)
+        .create({ email, password, firstName: 'C', lastName: 'P' });
+
+      const doLogin = () =>
+        fetch(`${authBaseUrl}/login`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+      const sessionA = await doLogin();
+      const sessionB = await doLogin();
+      const { accessToken: tokenA } = (await sessionA.json()) as any;
+      const refreshA = cookie(sessionA, 'refresh_token');
+      const csrfA = cookie(sessionA, 'csrf-token');
+      const refreshB = cookie(sessionB, 'refresh_token');
+      const csrfB = cookie(sessionB, 'csrf-token');
+
+      const res = await changePassword(
+        tokenA,
+        `refresh_token=${refreshA}; csrf-token=${csrfA}`,
+        { currentPassword: password, newPassword },
+      );
+      expect(res.status).toBe(204);
+
+      // session B is dead, session A still refreshes
+      const refreshBRes = await fetch(`${authBaseUrl}/refresh`, {
+        method: 'POST',
+        headers: {
+          cookie: `refresh_token=${refreshB}; csrf-token=${csrfB}`,
+          'x-csrf-token': csrfB,
+        },
+      });
+      expect(refreshBRes.status).toBe(401);
+
+      const refreshARes = await fetch(`${authBaseUrl}/refresh`, {
+        method: 'POST',
+        headers: {
+          cookie: `refresh_token=${refreshA}; csrf-token=${csrfA}`,
+          'x-csrf-token': csrfA,
+        },
+      });
+      expect(refreshARes.status).toBe(201);
+
+      // the new password is in effect
+      const withNew = await fetch(`${authBaseUrl}/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password: newPassword }),
+      });
+      expect(withNew.status).toBe(201);
     });
   });
 });

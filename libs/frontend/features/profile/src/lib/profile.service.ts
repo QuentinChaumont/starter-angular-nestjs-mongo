@@ -1,0 +1,44 @@
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { API_BASE_URL } from '@org/frontend-core';
+import type {
+  ChangePasswordRequest,
+  DeleteAccountRequest,
+  UpdateProfileRequest,
+  UserProfile,
+} from '@org/shared-contracts';
+import { Observable } from 'rxjs';
+
+/** HTTP calls for the profile brick (V2.1 step 34). Split from
+ * `AuthService` so the base brick stays untouched when this isn't installed. */
+@Injectable({ providedIn: 'root' })
+export class ProfileService {
+  private readonly http = inject(HttpClient);
+  private readonly base = inject(API_BASE_URL);
+
+  getProfile(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(`${this.base}/users/me`, {
+      withCredentials: true,
+    });
+  }
+
+  updateProfile(patch: UpdateProfileRequest): Observable<UserProfile> {
+    return this.http.patch<UserProfile>(`${this.base}/users/me`, patch, {
+      withCredentials: true,
+    });
+  }
+
+  changePassword(payload: ChangePasswordRequest): Observable<void> {
+    return this.http.post<void>(`${this.base}/auth/change-password`, payload, {
+      withCredentials: true,
+    });
+  }
+
+  /** Permanent. The password is re-confirmed server-side. */
+  deleteAccount(password: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/users/me`, {
+      body: { password } satisfies DeleteAccountRequest,
+      withCredentials: true,
+    });
+  }
+}

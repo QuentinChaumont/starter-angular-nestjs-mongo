@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { BaseRepository } from '@org/backend-database-mongo';
-import { Model } from 'mongoose';
+import { Model, isValidObjectId } from 'mongoose';
 import { User, UserDocument } from './user.schema';
 
 @Injectable()
@@ -17,6 +17,15 @@ export class UserRepository extends BaseRepository<User> {
    */
   async findByEmailWithPassword(email: string): Promise<UserDocument | null> {
     return this.model.findOne({ email }).select('+password').exec();
+  }
+
+  /** Same opt-in as `findByEmailWithPassword`, keyed by id — for verifying
+   * the current password on `change-password`. */
+  async findByIdWithPassword(id: string): Promise<UserDocument | null> {
+    if (!isValidObjectId(id)) {
+      return null;
+    }
+    return this.model.findById(id).select('+password').exec();
   }
 
   async findByEmail(email: string): Promise<UserDocument | null> {

@@ -4,6 +4,7 @@ export * from './lib/auth-events';
 export * from './lib/cookies/auth-cookie.service';
 export * from './lib/csrf/csrf.guard';
 export * from './lib/guards/auth-throttler.guard';
+export * from './lib/dto/change-password.dto';
 export * from './lib/dto/login.dto';
 export * from './lib/dto/register.dto';
 export * from './lib/refresh/refresh-token.service';

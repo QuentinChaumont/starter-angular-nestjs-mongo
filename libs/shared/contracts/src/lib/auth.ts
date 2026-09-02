@@ -66,6 +66,15 @@ export interface AuthenticatedUserDto {
    * by the `auth-reset` brick (V2.1 step 33).
    */
   emailVerifiedAt?: string | null;
+  /**
+   * Profile fields — present only once `loadMe()` has hit
+   * `GET /api/users/me` (the profile brick, V2.1 step 34); absent from
+   * `GET /api/auth/me`.
+   */
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  createdAt?: string;
 }
 
 /** Body of `POST /api/auth/forgot-password`. Always answered `202`, whether
