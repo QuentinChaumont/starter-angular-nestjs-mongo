@@ -50,6 +50,9 @@
     },
     {
       "path": "./apps/frontend"
+    },
+    {
+      "path": "./libs/backend/mailer"
     }
   ],
   "compilerOptions": {}

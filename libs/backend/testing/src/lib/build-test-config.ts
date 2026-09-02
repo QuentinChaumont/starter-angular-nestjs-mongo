@@ -1,5 +1,9 @@
 import { ConfigService } from '@nestjs/config';
-import { AppConfigService, EnvironmentVariables } from '@org/backend-core';
+import {
+  AppConfigService,
+  ENVIRONMENT_VARIABLE_NAMES,
+  EnvironmentVariables,
+} from '@org/backend-core';
 
 const DEFAULT_TEST_ENV: EnvironmentVariables = {
   NODE_ENV: 'development',
@@ -21,6 +25,13 @@ const DEFAULT_TEST_ENV: EnvironmentVariables = {
 export function buildTestConfig(
   overrides: Partial<EnvironmentVariables> = {},
 ): AppConfigService {
+  // `ConfigService.get()` falls back to `process.env`, into which Nx injects
+  // the repo-root `.env`. Strip the app's own variables so a developer's local
+  // `.env` can't leak into a test that asserts a variable is unset.
+  for (const name of ENVIRONMENT_VARIABLE_NAMES) {
+    delete process.env[name];
+  }
+
   return new AppConfigService(
     new ConfigService<EnvironmentVariables, true>({
       ...DEFAULT_TEST_ENV,

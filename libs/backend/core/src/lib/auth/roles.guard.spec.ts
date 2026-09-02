@@ -1,6 +1,6 @@
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AuthenticatedUser } from '../models/authenticated-user';
+import { AuthenticatedUser } from './authenticated-user';
 import { RolesGuard } from './roles.guard';
 
 function buildContext(user: AuthenticatedUser | undefined): ExecutionContext {
@@ -42,10 +42,10 @@ describe('RolesGuard', () => {
     expect(() => guard.canActivate(context)).toThrow(/required role/);
   });
 
-  it('denies access when there is no authenticated user at all', () => {
+  it('rejects with 401 when there is no authenticated user at all', () => {
     const guard = buildGuard(['admin']);
     const context = buildContext(undefined);
 
-    expect(() => guard.canActivate(context)).toThrow(/required role/);
+    expect(() => guard.canActivate(context)).toThrow(/Authentication required/);
   });
 });

@@ -3,6 +3,7 @@ import { ApplicationError } from './application-error';
 import { ConflictError } from './conflict.error';
 import { ForbiddenError } from './forbidden.error';
 import { NotFoundError } from './not-found.error';
+import { TooManyRequestsError } from './too-many-requests.error';
 import { UnauthorizedError } from './unauthorized.error';
 import { ValidationError } from './validation.error';
 
@@ -12,6 +13,7 @@ describe('specialized application errors', () => {
     [ConflictError, HttpStatus.CONFLICT],
     [ForbiddenError, HttpStatus.FORBIDDEN],
     [UnauthorizedError, HttpStatus.UNAUTHORIZED],
+    [TooManyRequestsError, HttpStatus.TOO_MANY_REQUESTS],
     [ValidationError, HttpStatus.BAD_REQUEST],
   ])('%p carries the fixed status code %i', (ErrorClass, expectedStatus) => {
     const error = new ErrorClass('SOME_CODE', 'Some message', {

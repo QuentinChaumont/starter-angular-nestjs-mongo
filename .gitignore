@@ -51,3 +51,8 @@ Thumbs.db
 test-output
 
 .angular
+
+# Local runtime config. The committed apps/frontend/.env only pins the SPA's
+# dev-server port (PORT=4200) so a root .env meant for the backend can't move it.
+.env
+!/apps/frontend/.env

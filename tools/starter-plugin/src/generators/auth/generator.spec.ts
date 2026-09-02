@@ -26,6 +26,22 @@ export class AppModule {}
 function seedMongoAndUserEntity(tree: Tree): void {
   tree.write('libs/backend/database/mongo/package.json', '{}');
   tree.write('libs/backend/features/user/src/lib/user.module.ts', 'export class UserModule {}');
+  tree.write(
+    'apps/backend/webpack.config.js',
+    `module.exports = {
+  plugins: [
+    new NxAppWebpackPlugin({
+      main: './src/main.ts',
+      tsConfig: './tsconfig.app.json',
+    }),
+  ],
+};
+`,
+  );
+  tree.write(
+    'apps/backend/package.json',
+    JSON.stringify({ name: '@org/backend', nx: { targets: {} } }, null, 2),
+  );
 }
 
 describe('auth generator', () => {
@@ -54,7 +70,7 @@ describe('auth generator', () => {
     expect(tree.exists('libs/backend/auth/package.json')).toBe(true);
     expect(tree.exists('libs/backend/auth/src/lib/auth.module.ts')).toBe(true);
     expect(
-      tree.exists('libs/backend/auth/src/lib/guards/roles.guard.ts'),
+      tree.exists('libs/backend/auth/src/lib/guards/auth-throttler.guard.ts'),
     ).toBe(true);
 
     const content = tree.read(APP_MODULE_PATH, 'utf-8');
@@ -89,7 +105,26 @@ describe('auth generator', () => {
     );
   });
 
-  it('is idempotent: running twice does not duplicate the import or array entry', async () => {
+  it('wires the seed-admin entry point, target and script', async () => {
+    seedMongoAndUserEntity(tree);
+
+    await authGenerator(tree);
+
+    expect(tree.exists('apps/backend/src/seed-admin.ts')).toBe(true);
+    expect(tree.read('apps/backend/webpack.config.js', 'utf-8')).toContain(
+      "entryName: 'seed-admin'",
+    );
+    const backendPkg = JSON.parse(
+      tree.read('apps/backend/package.json', 'utf-8') as string,
+    );
+    expect(backendPkg.nx.targets['seed-admin'].options.command).toBe(
+      'node apps/backend/dist/seed-admin.js',
+    );
+    const rootPkg = JSON.parse(tree.read('package.json', 'utf-8') as string);
+    expect(rootPkg.scripts['seed:admin']).toBe('nx run @org/backend:seed-admin');
+  });
+
+  it('is idempotent: running twice does not duplicate wiring', async () => {
     seedMongoAndUserEntity(tree);
 
     await authGenerator(tree);
@@ -105,5 +140,8 @@ describe('auth generator', () => {
       arrayMatch?.[1].match(/\bAuthModule\b/g) ?? []
     ).length;
     expect(authModuleCountInArray).toBe(1);
+
+    const webpack = tree.read('apps/backend/webpack.config.js', 'utf-8') as string;
+    expect((webpack.match(/entryName: 'seed-admin'/g) ?? []).length).toBe(1);
   });
 });

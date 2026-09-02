@@ -9,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { isApiError } from '@org/shared-contracts';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
@@ -20,6 +20,7 @@ import { sanitizeRedirect } from '../sanitize-redirect';
   selector: 'lib-login-page',
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -66,6 +67,12 @@ import { sanitizeRedirect } from '../sanitize-redirect';
       @if (oidcEnabled()) {
         <a mat-stroked-button [href]="oidcUrl()">Sign in with SSO</a>
       }
+
+      @if (registrationEnabled()) {
+        <a routerLink="/register" [queryParams]="{ redirectTo: redirectTo }">
+          Create an account
+        </a>
+      }
     </section>
   `,
   styles: `
@@ -102,12 +109,17 @@ export class LoginPage {
   protected readonly submitting = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  private readonly redirectTo = sanitizeRedirect(
+  protected readonly redirectTo = sanitizeRedirect(
     this.route.snapshot.queryParamMap.get('redirectTo'),
   );
 
   protected readonly oidcEnabled = toSignal(
     this.auth.oidcProvider().pipe(map((info) => info.enabled)),
+    { initialValue: false },
+  );
+
+  protected readonly registrationEnabled = toSignal(
+    this.auth.registrationEnabled(),
     { initialValue: false },
   );
 

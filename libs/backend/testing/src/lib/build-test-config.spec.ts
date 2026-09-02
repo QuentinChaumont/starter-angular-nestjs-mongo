@@ -8,6 +8,7 @@ describe('buildTestConfig', () => {
     expect(config.http).toEqual({ corsOrigins: ['http://localhost:4200'] });
     expect(config.security).toEqual({
       rateLimit: { ttlSeconds: 60, limit: 100 },
+      authRateLimit: { ttlSeconds: 60, limit: 10 },
     });
     expect(config.mongo).toEqual({ uri: undefined });
     expect(config.jwt).toEqual({ secret: undefined, expiresIn: undefined });

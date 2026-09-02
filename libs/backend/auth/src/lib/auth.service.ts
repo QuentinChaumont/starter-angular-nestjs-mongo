@@ -2,11 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   AppConfigService,
+  AuthenticatedUser,
+  ForbiddenError,
   UnauthorizedError,
   verifyPassword,
 } from '@org/backend-core';
 import { UserService } from '@org/backend-features-user';
-import { AuthenticatedUser } from './models/authenticated-user';
 import { generateOpaqueToken } from './refresh/opaque-token';
 import { parseDurationMs } from './refresh/parse-duration';
 import {
@@ -17,6 +18,13 @@ import {
 import { resolveJwtConfig } from './resolve-jwt-config';
 
 const MILLIS_PER_SECOND = 1000;
+
+export interface RegisterInput {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
 
 /** Everything the HTTP layer needs to (re)set the session cookies. */
 export interface AuthSession {
@@ -70,6 +78,36 @@ export class AuthService {
   }
 
   /**
+   * Self-service email/password registration. Creates the account (with no
+   * roles) and immediately starts a session, so the SPA lands the new user
+   * straight in. Disabled when `AUTH_REGISTRATION_ENABLED=false`.
+   */
+  async register(
+    input: RegisterInput,
+    context: SessionContext = {},
+  ): Promise<LoginResult> {
+    if (!this.config.auth.registrationEnabled) {
+      throw new ForbiddenError(
+        'REGISTRATION_DISABLED',
+        'Self-service registration is disabled',
+      );
+    }
+
+    const created = await this.users.create({
+      email: input.email,
+      password: input.password,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      roles: [],
+    });
+
+    return this.issueSession(
+      { id: created._id.toString(), roles: created.roles },
+      context,
+    );
+  }
+
+  /**
    * Starts a session for an already-authenticated identity — used by the
    * local login above and by the OIDC callback, which has verified the
    * user through the identity provider instead of a password.
@@ -113,6 +151,10 @@ export class AuthService {
       expiresIn: this.accessTokenTtlSeconds,
       session: this.toSession(issued),
     };
+  }
+
+  isRegistrationEnabled(): boolean {
+    return this.config.auth.registrationEnabled;
   }
 
   async logout(presentedToken: string | undefined): Promise<void> {

@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { AppConfigService, UnauthorizedError } from '@org/backend-core';
+import {
+  AppConfigService,
+  AuthenticatedUser,
+  UnauthorizedError,
+} from '@org/backend-core';
 import { UserService } from '@org/backend-features-user';
-import { AuthenticatedUser } from '../models/authenticated-user';
 import { generateOpaqueToken } from '../refresh/opaque-token';
 import { OidcClaims, extractRoles } from './oidc-claims';
 import { resolveOidcConfig } from './resolve-oidc-config';

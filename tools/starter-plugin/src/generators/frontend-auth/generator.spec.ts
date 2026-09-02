@@ -72,8 +72,10 @@ describe('frontend-auth generator', () => {
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
     expect(routes).toContain('component: LoginPage');
+    expect(routes).toContain('component: RegisterPage');
     expect(routes).toContain('component: OidcCallback');
     expect(routes).toContain("path: 'login'");
+    expect(routes).toContain("path: 'register'");
     expect(routes).toContain("path: 'auth/callback'");
 
     expect(
@@ -95,6 +97,7 @@ describe('frontend-auth generator', () => {
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
     expect((routes.match(/path: 'login'/g) ?? []).length).toBe(1);
+    expect((routes.match(/path: 'register'/g) ?? []).length).toBe(1);
     expect((routes.match(/path: 'auth\/callback'/g) ?? []).length).toBe(1);
   });
 });

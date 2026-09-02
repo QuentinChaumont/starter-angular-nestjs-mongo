@@ -11,7 +11,8 @@ import { AuthStore } from './auth.store';
 
 const REQUEST_ID_HEADER = 'X-Request-Id';
 /** Auth endpoints must never trigger the refresh-on-401 dance. */
-const IS_AUTH_ENDPOINT = /\/auth\/(login|refresh|logout|me|oidc)(\/|\?|$)/;
+const IS_AUTH_ENDPOINT =
+  /\/auth\/(login|register|registration|refresh|logout|me|oidc)(\/|\?|$)/;
 
 function newRequestId(): string | null {
   try {

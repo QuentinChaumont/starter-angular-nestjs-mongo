@@ -1,10 +1,17 @@
 import { Route } from '@angular/router';
-import { LoginPage, OidcCallback, authGuard, roleGuard } from '@org/frontend-auth';
+import {
+  LoginPage,
+  OidcCallback,
+  RegisterPage,
+  authGuard,
+  roleGuard,
+} from '@org/frontend-auth';
 import { CookiePolicy, PrivacyPolicy } from '@org/frontend-consent';
 import { DashboardHome, DashboardShell } from '@org/frontend-dashboard';
 
 export const appRoutes: Route[] = [
   { path: 'login', component: LoginPage },
+  { path: 'register', component: RegisterPage },
   { path: 'auth/callback', component: OidcCallback },
   { path: 'legal/cookies', component: CookiePolicy },
   { path: 'legal/privacy', component: PrivacyPolicy },

@@ -90,6 +90,36 @@ describe('validateEnv', () => {
     );
   });
 
+  it('leaves AUTH_RATE_LIMIT_* / SEED_ADMIN_* unset by default and parses them when given', () => {
+    const bare = validateEnv({});
+    expect(bare.AUTH_RATE_LIMIT_LIMIT).toBeUndefined();
+    expect(bare.SEED_ADMIN_EMAIL).toBeUndefined();
+
+    const configured = validateEnv({
+      AUTH_RATE_LIMIT_TTL_SECONDS: '30',
+      AUTH_RATE_LIMIT_LIMIT: '5',
+      SEED_ADMIN_EMAIL: 'admin@example.com',
+      SEED_ADMIN_PASSWORD: 'Str0ng!Passw0rd',
+    });
+    expect(configured.AUTH_RATE_LIMIT_TTL_SECONDS).toBe(30);
+    expect(configured.AUTH_RATE_LIMIT_LIMIT).toBe(5);
+    expect(configured.SEED_ADMIN_EMAIL).toBe('admin@example.com');
+  });
+
+  it('rejects a non-positive AUTH_RATE_LIMIT_LIMIT', () => {
+    expect(() => validateEnv({ AUTH_RATE_LIMIT_LIMIT: '0' })).toThrow(
+      /AUTH_RATE_LIMIT_LIMIT must be a positive integer/,
+    );
+  });
+
+  it('parses AUTH_REGISTRATION_ENABLED as an optional boolean', () => {
+    expect(validateEnv({}).AUTH_REGISTRATION_ENABLED).toBeUndefined();
+    expect(
+      validateEnv({ AUTH_REGISTRATION_ENABLED: 'false' })
+        .AUTH_REGISTRATION_ENABLED,
+    ).toBe(false);
+  });
+
   it('throws a readable error for a non-boolean AUTH_COOKIE_SECURE', () => {
     expect(() => validateEnv({ AUTH_COOKIE_SECURE: 'maybe' })).toThrow(
       /AUTH_COOKIE_SECURE must be a boolean/,
@@ -130,6 +160,21 @@ describe('validateEnv', () => {
     expect(result.MONGO_URI).toBe('mongodb://localhost:27017/app');
     expect(result.JWT_SECRET).toBe('secret');
     expect(result.JWT_EXPIRES_IN).toBe('1h');
+  });
+
+  it('leaves the mailer variables optional and passes them through', () => {
+    expect(validateEnv({}).SMTP_URL).toBeUndefined();
+    expect(validateEnv({}).MAIL_FROM).toBeUndefined();
+    expect(validateEnv({}).MAIL_PREVIEW_DIR).toBeUndefined();
+
+    const result = validateEnv({
+      SMTP_URL: 'smtp://localhost:1025',
+      MAIL_FROM: 'no-reply@example.test',
+      MAIL_PREVIEW_DIR: 'tmp/outbox',
+    });
+    expect(result.SMTP_URL).toBe('smtp://localhost:1025');
+    expect(result.MAIL_FROM).toBe('no-reply@example.test');
+    expect(result.MAIL_PREVIEW_DIR).toBe('tmp/outbox');
   });
 
   it('rejects an empty optional variable', () => {

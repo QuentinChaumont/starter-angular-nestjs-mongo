@@ -7,12 +7,21 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Roles } from '@org/backend-core';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+/**
+ * Direct user administration. `@Roles('admin')` is enforced only when the
+ * auth brick is installed (it binds the global `OptionalJwtAuthGuard` +
+ * `RolesGuard`); on a socle-only app with no auth, these routes stay open.
+ * Self-service sign-up goes through `POST /auth/register` instead.
+ */
 @ApiTags('users')
+@ApiBearerAuth()
+@Roles('admin')
 @Controller('users')
 export class UserController {
   constructor(private readonly service: UserService) {}

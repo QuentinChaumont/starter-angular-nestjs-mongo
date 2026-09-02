@@ -29,6 +29,14 @@ export class AppConfigService {
         }),
         limit: this.configService.get('RATE_LIMIT_LIMIT', { infer: true }),
       },
+      authRateLimit: {
+        ttlSeconds:
+          this.configService.get('AUTH_RATE_LIMIT_TTL_SECONDS', {
+            infer: true,
+          }) ?? 60,
+        limit:
+          this.configService.get('AUTH_RATE_LIMIT_LIMIT', { infer: true }) ?? 10,
+      },
     };
   }
 
@@ -53,6 +61,34 @@ export class AppConfigService {
       cookieSecure: this.configService.get('AUTH_COOKIE_SECURE', {
         infer: true,
       }),
+    };
+  }
+
+  get auth() {
+    return {
+      // Self-service registration is on unless explicitly disabled.
+      registrationEnabled:
+        this.configService.get('AUTH_REGISTRATION_ENABLED', { infer: true }) !==
+        false,
+    };
+  }
+
+  get seedAdmin() {
+    return {
+      email: this.configService.get('SEED_ADMIN_EMAIL', { infer: true }),
+      password: this.configService.get('SEED_ADMIN_PASSWORD', { infer: true }),
+    };
+  }
+
+  get mailer() {
+    return {
+      smtpUrl: this.configService.get('SMTP_URL', { infer: true }),
+      from:
+        this.configService.get('MAIL_FROM', { infer: true }) ??
+        'no-reply@localhost',
+      previewDir:
+        this.configService.get('MAIL_PREVIEW_DIR', { infer: true }) ??
+        'tmp/mail',
     };
   }
 

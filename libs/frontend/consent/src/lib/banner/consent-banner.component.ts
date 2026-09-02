@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
-import { RouterLink } from '@angular/router';
 import { CONSENT_CONFIG } from '../consent.config';
 import { ConsentService } from '../consent.service';
 import { ConsentPreferences } from '../preferences/consent-preferences.component';
@@ -16,7 +15,7 @@ import { ConsentPreferences } from '../preferences/consent-preferences.component
  */
 @Component({
   selector: 'lib-consent-banner',
-  imports: [MatButtonModule, RouterLink],
+  imports: [MatButtonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (consent.bannerVisible()) {
@@ -24,7 +23,9 @@ import { ConsentPreferences } from '../preferences/consent-preferences.component
         <p class="consent__text">
           We use strictly necessary cookies to run the site, and — with your
           consent — optional ones. See our
-          <a [routerLink]="config.legal.cookiePolicyRoute">cookie policy</a>.
+          <a [href]="config.legal.cookiePolicyRoute" target="_blank" rel="noopener">
+            cookie policy</a
+          >.
         </p>
         <div class="consent__actions">
           <button mat-stroked-button (click)="customize()">Customise</button>

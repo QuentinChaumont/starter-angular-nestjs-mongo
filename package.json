@@ -2,7 +2,9 @@
   "name": "@org/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "seed:admin": "nx run @org/backend:seed-admin"
+  },
   "private": true,
   "engines": {
     "node": ">=22"

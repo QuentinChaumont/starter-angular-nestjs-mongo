@@ -13,6 +13,13 @@
 @use '@angular/material' as mat;
 @use 'tokens';
 
+// Web fonts: Inter (referenced by `--app-font-family` in `_tokens.scss`) and
+// the Material Icons font that `<mat-icon>` needs to render glyphs instead of
+// literal text. Loaded from Google Fonts for a zero-config start; self-host
+// them for production (see DESIGN.md).
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
 html {
   // "system" by default; step 24's ThemeService forces `light` / `dark`
   // by setting `color-scheme` on this element.

@@ -4,11 +4,16 @@
   "projectType": "application",
   "prefix": "app",
   "sourceRoot": "apps/frontend/src",
-  "tags": ["scope:frontend", "type:app"],
+  "tags": [
+    "scope:frontend",
+    "type:app"
+  ],
   "targets": {
     "build": {
       "executor": "@angular/build:application",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "defaultConfiguration": "production",
       "options": {
         "outputPath": "dist/apps/frontend",
@@ -21,7 +26,9 @@
             "input": "apps/frontend/public"
           }
         ],
-        "styles": ["apps/frontend/src/styles.scss"]
+        "styles": [
+          "apps/frontend/src/styles.scss"
+        ]
       },
       "configurations": {
         "production": {
@@ -37,7 +44,12 @@
               "maximumError": "8kb"
             }
           ],
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "optimization": {
+            "scripts": true,
+            "styles": true,
+            "fonts": { "inline": false }
+          }
         },
         "development": {
           "optimization": false,
@@ -57,6 +69,10 @@
         "development": {
           "buildTarget": "frontend:build:development"
         }
+      },
+      "options": {
+        "port": 4200,
+        "proxyConfig": "apps/frontend/proxy.conf.json"
       }
     },
     "lint": {
@@ -64,7 +80,9 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{projectRoot}/test-output/jest/coverage"],
+      "outputs": [
+        "{projectRoot}/test-output/jest/coverage"
+      ],
       "options": {
         "jestConfig": "apps/frontend/jest.config.cts",
         "tsConfig": "apps/frontend/tsconfig.spec.json"

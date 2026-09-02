@@ -1,8 +1,28 @@
 import { ConfigService } from '@nestjs/config';
 import { AppConfigService } from './app-config.service';
-import { EnvironmentVariables } from './environment-variables';
+import {
+  ENVIRONMENT_VARIABLE_NAMES,
+  EnvironmentVariables,
+} from './environment-variables';
 
 describe('AppConfigService', () => {
+  // `ConfigService.get()` falls back to `process.env`, into which Nx injects
+  // the repo-root `.env`. Clear the app's variables so a local `.env` can't
+  // make an "undefined when not configured" assertion fail.
+  const savedEnv: Record<string, string | undefined> = {};
+  beforeEach(() => {
+    for (const name of ENVIRONMENT_VARIABLE_NAMES) {
+      savedEnv[name] = process.env[name];
+      delete process.env[name];
+    }
+  });
+  afterEach(() => {
+    for (const name of ENVIRONMENT_VARIABLE_NAMES) {
+      if (savedEnv[name] === undefined) delete process.env[name];
+      else process.env[name] = savedEnv[name];
+    }
+  });
+
   function createService(env: EnvironmentVariables): AppConfigService {
     const configService = new ConfigService<EnvironmentVariables, true>(env);
     return new AppConfigService(configService);
@@ -43,7 +63,30 @@ describe('AppConfigService', () => {
 
     expect(service.security).toEqual({
       rateLimit: { ttlSeconds: 30, limit: 10 },
+      authRateLimit: { ttlSeconds: 60, limit: 10 },
     });
+  });
+
+  it('reads the stricter auth rate limit, defaulting to 10 / 60s', () => {
+    const base = {
+      NODE_ENV: 'development' as const,
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
+    };
+
+    expect(createService(base).security.authRateLimit).toEqual({
+      ttlSeconds: 60,
+      limit: 10,
+    });
+    expect(
+      createService({
+        ...base,
+        AUTH_RATE_LIMIT_TTL_SECONDS: 30,
+        AUTH_RATE_LIMIT_LIMIT: 5,
+      }).security.authRateLimit,
+    ).toEqual({ ttlSeconds: 30, limit: 5 });
   });
 
   it('exposes mongo.uri and jwt fields as undefined when not configured', () => {
@@ -104,6 +147,53 @@ describe('AppConfigService', () => {
     expect(service.session).toEqual({
       refreshExpiresIn: '7d',
       cookieSecure: false,
+    });
+  });
+
+  it('reports registration as enabled unless explicitly disabled', () => {
+    const base = {
+      NODE_ENV: 'development' as const,
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
+    };
+
+    expect(createService(base).auth).toEqual({ registrationEnabled: true });
+    expect(
+      createService({ ...base, AUTH_REGISTRATION_ENABLED: true }).auth,
+    ).toEqual({ registrationEnabled: true });
+    expect(
+      createService({ ...base, AUTH_REGISTRATION_ENABLED: false }).auth,
+    ).toEqual({ registrationEnabled: false });
+  });
+
+  it('exposes mailer config with console-transport defaults', () => {
+    const base = {
+      NODE_ENV: 'development' as const,
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
+    };
+
+    expect(createService(base).mailer).toEqual({
+      smtpUrl: undefined,
+      from: 'no-reply@localhost',
+      previewDir: 'tmp/mail',
+    });
+
+    expect(
+      createService({
+        ...base,
+        SMTP_URL: 'smtp://localhost:1025',
+        MAIL_FROM: 'hello@example.test',
+        MAIL_PREVIEW_DIR: 'tmp/outbox',
+      }).mailer,
+    ).toEqual({
+      smtpUrl: 'smtp://localhost:1025',
+      from: 'hello@example.test',
+      previewDir: 'tmp/outbox',
     });
   });
 

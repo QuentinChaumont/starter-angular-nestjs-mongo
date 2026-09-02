@@ -24,6 +24,7 @@ const APP_CONFIG_PATH = 'apps/frontend/src/app/app.config.ts';
 const APP_ROUTES_PATH = 'apps/frontend/src/app/app.routes.ts';
 
 const LOGIN_ROUTE = "{ path: 'login', component: LoginPage }";
+const REGISTER_ROUTE = "{ path: 'register', component: RegisterPage }";
 const CALLBACK_ROUTE = "{ path: 'auth/callback', component: OidcCallback }";
 
 /**
@@ -92,8 +93,10 @@ export default async function frontendAuthGenerator(
   ensureArrayItem(tree, APP_CONFIG_PATH, 'providers', 'provideAuth()');
 
   ensureNamedImport(tree, APP_ROUTES_PATH, 'LoginPage', '@org/frontend-auth');
+  ensureNamedImport(tree, APP_ROUTES_PATH, 'RegisterPage', '@org/frontend-auth');
   ensureNamedImport(tree, APP_ROUTES_PATH, 'OidcCallback', '@org/frontend-auth');
   ensureRoute(tree, APP_ROUTES_PATH, LOGIN_ROUTE, "path: 'login'");
+  ensureRoute(tree, APP_ROUTES_PATH, REGISTER_ROUTE, "path: 'register'");
   ensureRoute(tree, APP_ROUTES_PATH, CALLBACK_ROUTE, "path: 'auth/callback'");
 
   const tsconfigPath = tree.exists('tsconfig.base.json')

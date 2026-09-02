@@ -27,6 +27,11 @@
       "schema": "./src/generators/security/schema.json",
       "description": "Install the optional HTTP security brick (Helmet, CORS, rate limiting) into the API app."
     },
+    "mailer": {
+      "factory": "./src/generators/mailer/generator",
+      "schema": "./src/generators/mailer/schema.json",
+      "description": "Install the optional transactional-email brick (console transport by default, SMTP via SMTP_URL) into the API app."
+    },
     "health": {
       "factory": "./src/generators/health/generator",
       "schema": "./src/generators/health/schema.json",

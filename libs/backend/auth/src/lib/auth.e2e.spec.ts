@@ -10,7 +10,7 @@ import {
   createValidationPipe,
   useRequestIdMiddleware,
 } from '@org/backend-core';
-import { UserModule } from '@org/backend-features-user';
+import { UserModule, UserService } from '@org/backend-features-user';
 import { listenOnRandomPort, startTestMongo, TestMongo } from '@org/backend-testing';
 import { AuthModule } from './auth.module';
 
@@ -38,6 +38,8 @@ describe('Auth (e2e, real Mongo instance)', () => {
     testMongo = await startTestMongo({
       JWT_SECRET: 'test-secret',
       JWT_EXPIRES_IN: '1h',
+      // this suite fires far more than the default 10 auth calls / minute
+      AUTH_RATE_LIMIT_LIMIT: 1000,
     });
 
     const moduleRef = await Test.createTestingModule({
@@ -59,24 +61,15 @@ describe('Auth (e2e, real Mongo instance)', () => {
     authBaseUrl = `${baseUrl}/auth`;
     usersBaseUrl = `${baseUrl}/users`;
 
-    await fetch(usersBaseUrl, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        ...credentials,
-        firstName: 'Jane',
-        lastName: 'Doe',
-      }),
-    });
-    await fetch(usersBaseUrl, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        ...adminCredentials,
-        firstName: 'Ada',
-        lastName: 'Admin',
-        roles: ['admin'],
-      }),
+    // `POST /users` is admin-only now (global RolesGuard from AuthModule), so
+    // seed the fixtures straight through the service.
+    const users = app.get(UserService);
+    await users.create({ ...credentials, firstName: 'Jane', lastName: 'Doe' });
+    await users.create({
+      ...adminCredentials,
+      firstName: 'Ada',
+      lastName: 'Admin',
+      roles: ['admin'],
     });
   }, 60_000);
 
@@ -93,6 +86,50 @@ describe('Auth (e2e, real Mongo instance)', () => {
     });
     return { response, body: (await response.json()) as any };
   }
+
+  it('exposes registration as enabled by default', async () => {
+    const response = await fetch(`${authBaseUrl}/registration`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ enabled: true });
+  });
+
+  it('registers a new account and returns a session', async () => {
+    const response = await fetch(`${authBaseUrl}/register`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email: 'newcomer@example.com',
+        password: 'Str0ng!Passw0rd',
+        firstName: 'New',
+        lastName: 'Comer',
+      }),
+    });
+    const body: any = await response.json();
+
+    expect(response.status).toBe(201);
+    expect(typeof body.accessToken).toBe('string');
+    expect(body.user).toEqual({ id: expect.any(String), roles: [] });
+    expect(
+      response.headers.getSetCookie().some((c) => c.startsWith('refresh_token=')),
+    ).toBe(true);
+  });
+
+  it('rejects registering an email that already exists (409)', async () => {
+    const response = await fetch(`${authBaseUrl}/register`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        ...credentials,
+        firstName: 'Jane',
+        lastName: 'Doe',
+      }),
+    });
+
+    expect(response.status).toBe(409);
+    expect(((await response.json()) as any).code).toBe(
+      'USER_EMAIL_ALREADY_EXISTS',
+    );
+  });
 
   it('logs in with valid credentials and returns a JWT', async () => {
     const { response, body } = await login(credentials);
@@ -180,6 +217,42 @@ describe('Auth (e2e, real Mongo instance)', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(loginBody.user);
+  });
+
+  describe('admin-only user administration', () => {
+    const newUser = {
+      email: 'created-by-admin@example.com',
+      password: 'Str0ng!Passw0rd',
+      firstName: 'Cee',
+      lastName: 'Ay',
+    };
+
+    function createUser(token?: string) {
+      return fetch(usersBaseUrl, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          ...(token ? { authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(newUser),
+      });
+    }
+
+    it('rejects POST /users without a token (401)', async () => {
+      expect((await createUser()).status).toBe(401);
+    });
+
+    it('rejects POST /users for a non-admin (403)', async () => {
+      const { body } = await login(credentials);
+      expect((await createUser(body.accessToken)).status).toBe(403);
+    });
+
+    it('allows POST /users for an admin (201)', async () => {
+      const { body } = await login(adminCredentials);
+      const response = await createUser(body.accessToken);
+      expect(response.status).toBe(201);
+      expect(((await response.json()) as any).email).toBe(newUser.email);
+    });
   });
 
   describe('refresh, rotation and logout', () => {

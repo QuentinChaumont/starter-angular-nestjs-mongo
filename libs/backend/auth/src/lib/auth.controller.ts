@@ -10,17 +10,24 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiCookieAuth, ApiTags } from '@nestjs/swagger';
-import type { AccessTokenResponse } from '@org/shared-contracts';
+import type {
+  AccessTokenResponse,
+  RegistrationInfo,
+} from '@org/shared-contracts';
 import type { Request, Response } from 'express';
+import {
+  CurrentUser,
+  JwtAuthGuard,
+  Roles,
+  RolesGuard,
+} from '@org/backend-core';
 import { AuthService } from './auth.service';
 import { AuthCookieService } from './cookies/auth-cookie.service';
 import { CsrfGuard } from './csrf/csrf.guard';
-import { CurrentUser } from './decorators/current-user.decorator';
-import { Roles } from './decorators/roles.decorator';
+import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
 import { LoginDto } from './dto/login.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { RolesGuard } from './guards/roles.guard';
-import type { AuthenticatedUser } from './models/authenticated-user';
+import { RegisterDto } from './dto/register.dto';
+import type { AuthenticatedUser } from '@org/backend-core';
 import type { SessionContext } from './refresh/refresh-token.service';
 
 const TOKEN_TYPE = 'Bearer' as const;
@@ -37,6 +44,30 @@ export class AuthController {
     private readonly cookies: AuthCookieService,
   ) {}
 
+  @Get('registration')
+  registration(): RegistrationInfo {
+    return { enabled: this.authService.isRegistrationEnabled() };
+  }
+
+  @UseGuards(AuthThrottlerGuard)
+  @Post('register')
+  async register(
+    @Body() dto: RegisterDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AccessTokenResponse & { user: AuthenticatedUser }> {
+    const result = await this.authService.register(dto, sessionContext(req));
+    this.cookies.setSession(res, result.session);
+
+    return {
+      accessToken: result.accessToken,
+      expiresIn: result.expiresIn,
+      tokenType: TOKEN_TYPE,
+      user: result.user,
+    };
+  }
+
+  @UseGuards(AuthThrottlerGuard)
   @Post('login')
   async login(
     @Body() dto: LoginDto,

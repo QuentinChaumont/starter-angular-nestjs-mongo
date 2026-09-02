@@ -18,6 +18,26 @@ export interface LoginRequest {
 }
 
 /**
+ * Body of `POST /api/auth/register`. On success the response is identical to
+ * `POST /api/auth/login` (access token + user, refresh cookie set), so the
+ * SPA lands the new account straight into an authenticated session.
+ */
+export interface RegisterRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
+/**
+ * Returned by `GET /api/auth/registration` so the frontend knows whether to
+ * render the "create an account" link.
+ */
+export interface RegistrationInfo {
+  enabled: boolean;
+}
+
+/**
  * Body returned by `POST /api/auth/login` and `POST /api/auth/refresh`, and
  * carried in the fragment after the OIDC callback redirect. The access
  * token is short-lived and kept in memory by the SPA — it is never

@@ -120,7 +120,7 @@ failing later at first use.
 | Variable | Required | Default | Notes |
 | --- | --- | --- | --- |
 | `NODE_ENV` | no | `development` | `development` \| `test` \| `production` |
-| `PORT` | no | `3000` | |
+| `PORT` | no | `3000` | Nx injects the root `.env` into every task; `apps/frontend/.env` pins the SPA dev-server to 4200 so it doesn't inherit this. |
 | `CORS_ORIGINS` | no | `http://localhost:4200` | Comma-separated list |
 | `RATE_LIMIT_TTL_SECONDS` | no | `60` | Rate-limit window (security brick) |
 | `RATE_LIMIT_LIMIT` | no | `100` | Max requests per window (security brick) |
@@ -129,6 +129,14 @@ failing later at first use.
 | `JWT_EXPIRES_IN` | no | `15m` | Access-token lifetime |
 | `REFRESH_EXPIRES_IN` | no | `30d` | Refresh-token lifetime (auth brick) |
 | `AUTH_COOKIE_SECURE` | no | `true` in prod, else `false` | Allows http cookies in dev |
+| `AUTH_REGISTRATION_ENABLED` | no | `true` | Self-service `POST /api/auth/register` + the `/register` page |
+| `AUTH_RATE_LIMIT_LIMIT` | no | `10` | Attempts per window for `/auth/login` + `/auth/register` |
+| `AUTH_RATE_LIMIT_TTL_SECONDS` | no | `60` | That window, in seconds |
+| `SEED_ADMIN_EMAIL` | only for `seed:admin` | — | Bootstrap admin account |
+| `SEED_ADMIN_PASSWORD` | only for `seed:admin` | — | |
+| `SMTP_URL` | no | — | Set to deliver mail over SMTP (needs `nodemailer`); otherwise console + `.eml` previews |
+| `MAIL_FROM` | no | `no-reply@localhost` | `From` address for the mailer brick |
+| `MAIL_PREVIEW_DIR` | no | `tmp/mail` | Where the console transport writes `.eml` previews |
 | `OIDC_ISSUER` | only to enable OIDC | — | Discovery URL |
 | `OIDC_CLIENT_ID` | only to enable OIDC | — | |
 | `OIDC_REDIRECT_URI` | only to enable OIDC | — | `.../api/auth/oidc/callback` |
@@ -140,8 +148,9 @@ failing later at first use.
 | `OIDC_ROLES_CLAIM` | no | — | Dot-path to a `string[]` claim → user roles |
 
 Access config only through `AppConfigService` (e.g. `config.app.port`,
-`config.mongo.uri`, `config.session.*`, `config.oidc.*`) — never read
-`process.env` directly outside `libs/backend/core/config`.
+`config.mongo.uri`, `config.session.*`, `config.auth.*`, `config.mailer.*`,
+`config.oidc.*`) —
+never read `process.env` directly outside `libs/backend/core/config`.
 
 ## Naming conventions
 
@@ -190,12 +199,25 @@ entity with `--crud` — `AuthModule` logs users in against it. Provides:
 - `POST /auth/login` — email + password → short-lived **access token** in
   the JSON body, plus an `httpOnly` `refresh_token` cookie and a
   non-httpOnly `csrf-token` cookie.
+- `POST /auth/register` — self-service sign-up (email, password, first/last
+  name); creates the account with no roles and returns the same session as
+  login. `GET /auth/registration` → `{ enabled }`. Turn both off with
+  `AUTH_REGISTRATION_ENABLED=false` (then OIDC or an admin-created account
+  is the only way in).
 - `POST /auth/refresh` — rotates the refresh token (old one revoked;
   replaying it revokes the whole family) and returns a new access token.
   Guarded by a **double-submit CSRF** check (`csrf-token` cookie must match
   the `X-CSRF-Token` header). Same for `POST /auth/logout` (`204`).
-- `GET /auth/me`, `JwtAuthGuard`, `RolesGuard` + `@Roles(...)`,
-  `@CurrentUser()`.
+- `login` + `register` also carry a **dedicated rate limit** (`AuthThrottlerGuard`,
+  default 10 / 60s per IP → `429`), separate from the global throttler.
+- `GET /auth/me`, plus the authz primitives (now in `@org/backend-core`):
+  `JwtAuthGuard`, `RolesGuard` + `@Roles(...)`, `@CurrentUser()`. `AuthModule`
+  binds a lenient JWT guard + `RolesGuard` **globally**, so any controller
+  restricts a route to a role just by adding `@Roles('admin')` — that's how
+  `POST/GET/PATCH/DELETE /users` become **admin-only** once auth is installed.
+- **First admin**: `SEED_ADMIN_EMAIL` + `SEED_ADMIN_PASSWORD` then
+  `pnpm seed:admin` (idempotent — creates the account or promotes an
+  existing one).
 - **OIDC login** (inert until `OIDC_ISSUER`/`OIDC_CLIENT_ID`/
   `OIDC_REDIRECT_URI` are set): `GET /auth/oidc/{provider,login,callback}`.
   Authorization Code + PKCE via `openid-client`; the provider's tokens
@@ -213,6 +235,20 @@ npx nx g @org/starter-plugin:security
 
 Wires Helmet, CORS, and rate limiting into the app (`main.ts` +
 `app.module.ts`).
+
+### Mailer
+
+```bash
+npx nx g @org/starter-plugin:mailer
+```
+
+Adds `MailerService` and a pluggable `MailTransport`. By default the
+**console** transport logs each message and writes an `.eml` preview under
+`MAIL_PREVIEW_DIR` — zero network, zero external dependency. Set `SMTP_URL`
+(and `pnpm add nodemailer`) to deliver over SMTP instead. Ships typed
+templates (`renderPasswordReset`, `renderEmailVerification`,
+`renderWelcome`) and `InMemoryMailTransport` for tests. See
+`libs/backend/mailer/README.md`.
 
 ### Healthchecks
 
@@ -270,9 +306,11 @@ persisted in `localStorage`, never touching the committed charter.
   `/auth/refresh` and `/auth/logout`. All requests go out
   `withCredentials: true`.
 - `LoginPage` shows the "Sign in with SSO" button only when
-  `GET /auth/oidc/provider` reports it enabled; `OidcCallback` (`/auth/callback`)
-  consumes the token from the URL fragment, scrubs it, loads the profile
-  and forwards.
+  `GET /auth/oidc/provider` reports it enabled, and the "Create an account"
+  link only when `GET /auth/registration` reports it enabled; `RegisterPage`
+  (`/register`) posts to `POST /auth/register` and lands straight into the
+  session. `OidcCallback` (`/auth/callback`) consumes the token from the URL
+  fragment, scrubs it, loads the profile and forwards.
 - API base URL is `API_BASE_URL` (from `@org/frontend-core`, default
   `/api`). In local dev: `provideApiBaseUrl('http://localhost:3000/api')`.
 

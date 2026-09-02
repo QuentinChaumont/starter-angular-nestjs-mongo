@@ -12,5 +12,7 @@ export function setupSecurity(app: INestApplication): void {
   app.use(helmet());
 
   const config = app.get(AppConfigService);
-  app.enableCors({ origin: config.http.corsOrigins });
+  // `credentials: true` so the browser sends the httpOnly refresh cookie on
+  // cross-origin calls (SPA and API on different hosts).
+  app.enableCors({ origin: config.http.corsOrigins, credentials: true });
 }

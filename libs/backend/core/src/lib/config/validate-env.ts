@@ -63,6 +63,24 @@ function parsePositiveInt(
   return value;
 }
 
+function parseOptionalPositiveInt(
+  key: string,
+  raw: unknown,
+  errors: string[],
+): number | undefined {
+  if (raw === undefined || raw === '') {
+    return undefined;
+  }
+
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 1) {
+    errors.push(`${key} must be a positive integer, received "${String(raw)}"`);
+    return undefined;
+  }
+
+  return value;
+}
+
 function parseCorsOrigins(raw: unknown): string[] {
   if (raw === undefined || raw === '') {
     return DEFAULT_CORS_ORIGINS;
@@ -141,6 +159,16 @@ export function validateEnv(
     DEFAULT_RATE_LIMIT_LIMIT,
     errors,
   );
+  const AUTH_RATE_LIMIT_TTL_SECONDS = parseOptionalPositiveInt(
+    'AUTH_RATE_LIMIT_TTL_SECONDS',
+    rawEnv['AUTH_RATE_LIMIT_TTL_SECONDS'],
+    errors,
+  );
+  const AUTH_RATE_LIMIT_LIMIT = parseOptionalPositiveInt(
+    'AUTH_RATE_LIMIT_LIMIT',
+    rawEnv['AUTH_RATE_LIMIT_LIMIT'],
+    errors,
+  );
   const MONGO_URI = parseOptionalString('MONGO_URI', rawEnv['MONGO_URI'], errors);
   const JWT_SECRET = parseOptionalString('JWT_SECRET', rawEnv['JWT_SECRET'], errors);
   const JWT_EXPIRES_IN = parseOptionalString(
@@ -156,6 +184,21 @@ export function validateEnv(
   const AUTH_COOKIE_SECURE = parseOptionalBoolean(
     'AUTH_COOKIE_SECURE',
     rawEnv['AUTH_COOKIE_SECURE'],
+    errors,
+  );
+  const AUTH_REGISTRATION_ENABLED = parseOptionalBoolean(
+    'AUTH_REGISTRATION_ENABLED',
+    rawEnv['AUTH_REGISTRATION_ENABLED'],
+    errors,
+  );
+  const SEED_ADMIN_EMAIL = parseOptionalString(
+    'SEED_ADMIN_EMAIL',
+    rawEnv['SEED_ADMIN_EMAIL'],
+    errors,
+  );
+  const SEED_ADMIN_PASSWORD = parseOptionalString(
+    'SEED_ADMIN_PASSWORD',
+    rawEnv['SEED_ADMIN_PASSWORD'],
     errors,
   );
 
@@ -205,6 +248,18 @@ export function validateEnv(
     errors,
   );
 
+  const SMTP_URL = parseOptionalString('SMTP_URL', rawEnv['SMTP_URL'], errors);
+  const MAIL_FROM = parseOptionalString(
+    'MAIL_FROM',
+    rawEnv['MAIL_FROM'],
+    errors,
+  );
+  const MAIL_PREVIEW_DIR = parseOptionalString(
+    'MAIL_PREVIEW_DIR',
+    rawEnv['MAIL_PREVIEW_DIR'],
+    errors,
+  );
+
   if (errors.length > 0) {
     throw new Error(
       `Invalid environment configuration:\n${errors.map((error) => `  - ${error}`).join('\n')}`,
@@ -217,11 +272,20 @@ export function validateEnv(
     CORS_ORIGINS,
     RATE_LIMIT_TTL_SECONDS,
     RATE_LIMIT_LIMIT,
+    ...(AUTH_RATE_LIMIT_TTL_SECONDS !== undefined
+      ? { AUTH_RATE_LIMIT_TTL_SECONDS }
+      : {}),
+    ...(AUTH_RATE_LIMIT_LIMIT !== undefined ? { AUTH_RATE_LIMIT_LIMIT } : {}),
     ...(MONGO_URI !== undefined ? { MONGO_URI } : {}),
     ...(JWT_SECRET !== undefined ? { JWT_SECRET } : {}),
     ...(JWT_EXPIRES_IN !== undefined ? { JWT_EXPIRES_IN } : {}),
     ...(REFRESH_EXPIRES_IN !== undefined ? { REFRESH_EXPIRES_IN } : {}),
     ...(AUTH_COOKIE_SECURE !== undefined ? { AUTH_COOKIE_SECURE } : {}),
+    ...(AUTH_REGISTRATION_ENABLED !== undefined
+      ? { AUTH_REGISTRATION_ENABLED }
+      : {}),
+    ...(SEED_ADMIN_EMAIL !== undefined ? { SEED_ADMIN_EMAIL } : {}),
+    ...(SEED_ADMIN_PASSWORD !== undefined ? { SEED_ADMIN_PASSWORD } : {}),
     ...(OIDC_ISSUER !== undefined ? { OIDC_ISSUER } : {}),
     ...(OIDC_CLIENT_ID !== undefined ? { OIDC_CLIENT_ID } : {}),
     ...(OIDC_CLIENT_SECRET !== undefined ? { OIDC_CLIENT_SECRET } : {}),
@@ -235,5 +299,8 @@ export function validateEnv(
       ? { OIDC_REQUIRE_VERIFIED_EMAIL }
       : {}),
     ...(OIDC_ROLES_CLAIM !== undefined ? { OIDC_ROLES_CLAIM } : {}),
+    ...(SMTP_URL !== undefined ? { SMTP_URL } : {}),
+    ...(MAIL_FROM !== undefined ? { MAIL_FROM } : {}),
+    ...(MAIL_PREVIEW_DIR !== undefined ? { MAIL_PREVIEW_DIR } : {}),
   };
 }

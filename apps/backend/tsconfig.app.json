@@ -29,6 +29,9 @@
       "path": "../../libs/backend/core/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/backend/mailer/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/backend/database/mongo/tsconfig.lib.json"
     }
   ]

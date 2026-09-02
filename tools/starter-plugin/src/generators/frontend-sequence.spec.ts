@@ -112,6 +112,7 @@ describe('frontend brick sequence', () => {
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
     for (const marker of [
       "path: 'login'",
+      "path: 'register'",
       "path: 'auth/callback'",
       "component: DashboardShell",
       "redirectTo: 'app'",

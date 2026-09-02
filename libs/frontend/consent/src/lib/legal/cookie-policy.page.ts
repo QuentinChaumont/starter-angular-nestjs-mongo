@@ -1,5 +1,9 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { Location } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { Router } from '@angular/router';
 
 /**
  * TEMPLATE — replace the bracketed placeholders with this project's real
@@ -8,10 +12,13 @@ import { MatCardModule } from '@angular/material/card';
  */
 @Component({
   selector: 'lib-cookie-policy',
-  imports: [MatCardModule],
+  imports: [MatCardModule, MatButtonModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <mat-card class="legal">
+      <button mat-button class="legal__back" (click)="back()">
+        <mat-icon>arrow_back</mat-icon> Back
+      </button>
       <h1>Cookie Policy</h1>
       <p><em>Last updated: [DATE]</em></p>
 
@@ -60,6 +67,9 @@ import { MatCardModule } from '@angular/material/card';
       margin: 32px auto;
       padding: 32px;
     }
+    .legal__back {
+      margin-bottom: 8px;
+    }
     .legal table {
       width: 100%;
       border-collapse: collapse;
@@ -73,4 +83,17 @@ import { MatCardModule } from '@angular/material/card';
     }
   `,
 })
-export class CookiePolicy {}
+export class CookiePolicy {
+  private readonly location = inject(Location);
+  private readonly router = inject(Router);
+
+  /** Go back if we got here from within the app; otherwise (direct link /
+   * new tab, where `history.length` is 1) head to the app root. */
+  protected back(): void {
+    if (history.length > 1) {
+      this.location.back();
+    } else {
+      void this.router.navigateByUrl('/');
+    }
+  }
+}

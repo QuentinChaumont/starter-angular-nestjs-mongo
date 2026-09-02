@@ -27,6 +27,7 @@ describe('LoginPage', () => {
 
     const http = TestBed.inject(HttpTestingController);
     http.expectOne('/api/auth/oidc/provider').flush({ enabled: false, loginUrl: '' });
+    http.expectOne('/api/auth/registration').flush({ enabled: false });
     fixture.detectChanges();
 
     const html = fixture.nativeElement as HTMLElement;
@@ -44,9 +45,28 @@ describe('LoginPage', () => {
     http
       .expectOne('/api/auth/oidc/provider')
       .flush({ enabled: true, loginUrl: '/api/auth/oidc/login' });
+    http.expectOne('/api/auth/registration').flush({ enabled: false });
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('SSO');
+    http.verify();
+  });
+
+  it('shows the "create an account" link when registration is enabled', () => {
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+
+    const http = TestBed.inject(HttpTestingController);
+    http
+      .expectOne('/api/auth/oidc/provider')
+      .flush({ enabled: false, loginUrl: '' });
+    http.expectOne('/api/auth/registration').flush({ enabled: true });
+    fixture.detectChanges();
+
+    const link = (fixture.nativeElement as HTMLElement).querySelector(
+      'a[href^="/register"]',
+    );
+    expect(link).not.toBeNull();
     http.verify();
   });
 });

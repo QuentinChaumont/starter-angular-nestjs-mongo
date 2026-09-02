@@ -6,6 +6,8 @@ import {
   AuthenticatedUserDto,
   LoginRequest,
   OidcProviderInfo,
+  RegisterRequest,
+  RegistrationInfo,
 } from '@org/shared-contracts';
 import {
   Observable,
@@ -46,6 +48,32 @@ export class AuthService {
           this.store.reset();
           return throwError(() => err);
         }),
+      );
+  }
+
+  register(payload: RegisterRequest): Observable<AuthenticatedUserDto> {
+    this.store.markAuthenticating();
+    return this.http
+      .post<LoginResponse>(`${this.base}/auth/register`, payload, {
+        withCredentials: true,
+      })
+      .pipe(
+        tap((res) => this.store.setSession(res.accessToken, res.user)),
+        map((res) => res.user),
+        catchError((err) => {
+          this.store.reset();
+          return throwError(() => err);
+        }),
+      );
+  }
+
+  /** Whether self-service registration is offered (drives the login link). */
+  registrationEnabled(): Observable<boolean> {
+    return this.http
+      .get<RegistrationInfo>(`${this.base}/auth/registration`)
+      .pipe(
+        map((info) => info.enabled),
+        catchError(() => of(false)),
       );
   }
 

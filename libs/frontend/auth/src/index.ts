@@ -6,4 +6,5 @@ export { authGuard, roleGuard } from './lib/auth.guard';
 export { authInterceptor } from './lib/auth.interceptor';
 export { csrfInterceptor } from './lib/csrf.interceptor';
 export { LoginPage } from './lib/login/login-page';
+export { RegisterPage } from './lib/register/register-page';
 export { OidcCallback } from './lib/callback/oidc-callback';
