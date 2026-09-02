@@ -1,40 +1,47 @@
 import { buildTestConfig } from '@org/backend-testing';
-import { resolveOidcConfig } from './resolve-oidc-config';
+import {
+  resolveOidcProvider,
+  resolveOidcProviders,
+} from './resolve-oidc-config';
 
-describe('resolveOidcConfig', () => {
-  it('returns null when the mandatory trio is incomplete', () => {
-    expect(resolveOidcConfig(buildTestConfig())).toBeNull();
+describe('resolveOidcProviders', () => {
+  it('returns [] when the mandatory trio is incomplete', () => {
+    expect(resolveOidcProviders(buildTestConfig())).toEqual([]);
     expect(
-      resolveOidcConfig(
+      resolveOidcProviders(
         buildTestConfig({ OIDC_ISSUER: 'https://idp', OIDC_CLIENT_ID: 'c' }),
       ),
-    ).toBeNull();
+    ).toEqual([]);
   });
 
-  it('applies defaults once issuer + clientId + redirectUri are set', () => {
-    const resolved = resolveOidcConfig(
+  it('exposes the generic provider once issuer + clientId + redirectUri are set', () => {
+    const providers = resolveOidcProviders(
       buildTestConfig({
         OIDC_ISSUER: 'https://idp.example',
         OIDC_CLIENT_ID: 'client-1',
-        OIDC_REDIRECT_URI: 'https://api.example/api/auth/oidc/callback',
+        OIDC_REDIRECT_URI: 'https://api.example/api/auth/oidc/generic/callback',
       }),
     );
 
-    expect(resolved).toEqual({
-      issuer: 'https://idp.example',
-      clientId: 'client-1',
-      clientSecret: undefined,
-      redirectUri: 'https://api.example/api/auth/oidc/callback',
-      scopes: 'openid profile email',
-      frontendUrl: 'http://localhost:4200',
-      postLoginRedirect: '/app',
-      requireVerifiedEmail: true,
-      rolesClaim: undefined,
-    });
+    expect(providers).toEqual([
+      {
+        id: 'generic',
+        label: 'SSO',
+        issuer: 'https://idp.example',
+        clientId: 'client-1',
+        clientSecret: undefined,
+        redirectUri: 'https://api.example/api/auth/oidc/generic/callback',
+        scopes: 'openid profile email',
+        frontendUrl: 'http://localhost:4200',
+        postLoginRedirect: '/app',
+        requireVerifiedEmail: true,
+        rolesClaim: undefined,
+      },
+    ]);
   });
 
   it('honours overrides', () => {
-    const resolved = resolveOidcConfig(
+    const [generic] = resolveOidcProviders(
       buildTestConfig({
         OIDC_ISSUER: 'https://idp.example',
         OIDC_CLIENT_ID: 'client-1',
@@ -48,7 +55,7 @@ describe('resolveOidcConfig', () => {
       }),
     );
 
-    expect(resolved).toMatchObject({
+    expect(generic).toMatchObject({
       clientSecret: 'shh',
       scopes: 'openid email',
       frontendUrl: 'https://app.example',
@@ -56,5 +63,22 @@ describe('resolveOidcConfig', () => {
       requireVerifiedEmail: false,
       rolesClaim: 'realm_access.roles',
     });
+  });
+});
+
+describe('resolveOidcProvider', () => {
+  const configured = buildTestConfig({
+    OIDC_ISSUER: 'https://idp.example',
+    OIDC_CLIENT_ID: 'client-1',
+    OIDC_REDIRECT_URI: 'https://api.example/cb',
+  });
+
+  it('returns the provider matching the id', () => {
+    expect(resolveOidcProvider(configured, 'generic')?.id).toBe('generic');
+  });
+
+  it('returns null for an unknown id', () => {
+    expect(resolveOidcProvider(configured, 'nope')).toBeNull();
+    expect(resolveOidcProvider(buildTestConfig(), 'generic')).toBeNull();
   });
 });

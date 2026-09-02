@@ -96,6 +96,7 @@ describe('AuthCookieService', () => {
     const service = new AuthCookieService(buildTestConfig());
     const res = fakeResponse();
     const tx = {
+      providerId: 'generic',
       state: 'st',
       nonce: 'no',
       codeVerifier: 'cv',

@@ -12,9 +12,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PasswordRevealButton } from '@org/frontend-ui';
-import { isApiError } from '@org/shared-contracts';
+import { isApiError, OidcProviderInfo } from '@org/shared-contracts';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 import { AuthService } from '../auth.service';
 import { sanitizeRedirect } from '../sanitize-redirect';
 
@@ -75,8 +74,10 @@ import { sanitizeRedirect } from '../sanitize-redirect';
       </form>
       <a routerLink="/forgot-password">Forgot your password?</a>
 
-      @if (oidcEnabled()) {
-        <a mat-stroked-button [href]="oidcUrl()">Sign in with SSO</a>
+      @for (provider of oidcProviders(); track provider.id) {
+        <a mat-stroked-button [href]="oidcUrl(provider)">
+          Sign in with {{ provider.label }}
+        </a>
       }
 
       @if (registrationEnabled()) {
@@ -124,18 +125,17 @@ export class LoginPage {
     this.route.snapshot.queryParamMap.get('redirectTo'),
   );
 
-  protected readonly oidcEnabled = toSignal(
-    this.auth.oidcProvider().pipe(map((info) => info.enabled)),
-    { initialValue: false },
-  );
+  protected readonly oidcProviders = toSignal(this.auth.oidcProviders(), {
+    initialValue: [] as OidcProviderInfo[],
+  });
 
   protected readonly registrationEnabled = toSignal(
     this.auth.registrationEnabled(),
     { initialValue: false },
   );
 
-  protected oidcUrl(): string {
-    return this.auth.oidcLoginUrl(this.redirectTo);
+  protected oidcUrl(provider: OidcProviderInfo): string {
+    return this.auth.oidcLoginUrl(provider, this.redirectTo);
   }
 
   protected submit(): void {

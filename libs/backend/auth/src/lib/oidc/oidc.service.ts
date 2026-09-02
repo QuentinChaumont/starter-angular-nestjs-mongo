@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { AppConfigService, UnauthorizedError } from '@org/backend-core';
+import { AppConfigService, NotFoundError } from '@org/backend-core';
 import { Issuer, generators } from 'openid-client';
 import type { Client } from 'openid-client';
 import { OidcClaims } from './oidc-claims';
-import { ResolvedOidcConfig, resolveOidcConfig } from './resolve-oidc-config';
+import {
+  ResolvedOidcProvider,
+  resolveOidcProvider,
+  resolveOidcProviders,
+} from './resolve-oidc-config';
 
 export interface OidcAuthRequest {
   /** Provider URL to redirect the browser to. */
@@ -23,74 +27,81 @@ const asString = (value: unknown): string | undefined =>
   typeof value === 'string' ? value : undefined;
 
 /**
- * Thin wrapper around `openid-client`: lazy provider discovery (cached),
- * PKCE Authorization-Code request building, and the callback exchange. The
- * provider's own tokens never leave this class — only the mapped
- * {@link OidcClaims}.
+ * Thin wrapper around `openid-client`: lazy provider discovery (cached per
+ * provider id), PKCE Authorization-Code request building, and the callback
+ * exchange. The provider's own tokens never leave this class — only the
+ * mapped {@link OidcClaims}.
  */
 @Injectable()
 export class OidcService {
-  private clientPromise?: Promise<Client>;
+  private readonly clients = new Map<string, Promise<Client>>();
 
   constructor(private readonly config: AppConfigService) {}
 
-  isEnabled(): boolean {
-    return resolveOidcConfig(this.config) !== null;
+  /** Active providers, as `{ id, label }` — the login page renders one button each. */
+  listProviders(): { id: string; label: string }[] {
+    return resolveOidcProviders(this.config).map(({ id, label }) => ({
+      id,
+      label,
+    }));
   }
 
-  private requireConfig(): ResolvedOidcConfig {
-    const resolved = resolveOidcConfig(this.config);
-    if (!resolved) {
-      throw new UnauthorizedError(
-        'OIDC_NOT_CONFIGURED',
-        'OIDC login is not enabled',
+  requireProvider(providerId: string): ResolvedOidcProvider {
+    const provider = resolveOidcProvider(this.config, providerId);
+    if (!provider) {
+      throw new NotFoundError(
+        'OIDC_PROVIDER_UNKNOWN',
+        `No active OIDC provider "${providerId}"`,
       );
     }
-    return resolved;
+    return provider;
   }
 
-  private getClient(): Promise<Client> {
-    if (!this.clientPromise) {
-      this.clientPromise = this.discoverClient();
+  private getClient(provider: ResolvedOidcProvider): Promise<Client> {
+    let client = this.clients.get(provider.id);
+    if (!client) {
+      client = this.discoverClient(provider);
+      this.clients.set(provider.id, client);
     }
-    return this.clientPromise;
+    return client;
   }
 
-  private async discoverClient(): Promise<Client> {
-    const cfg = this.requireConfig();
+  private async discoverClient(
+    provider: ResolvedOidcProvider,
+  ): Promise<Client> {
     try {
-      const issuer = await Issuer.discover(cfg.issuer);
-      if (cfg.clientSecret) {
+      const issuer = await Issuer.discover(provider.issuer);
+      if (provider.clientSecret) {
         return new issuer.Client({
-          client_id: cfg.clientId,
-          client_secret: cfg.clientSecret,
-          redirect_uris: [cfg.redirectUri],
+          client_id: provider.clientId,
+          client_secret: provider.clientSecret,
+          redirect_uris: [provider.redirectUri],
           response_types: ['code'],
         });
       }
       return new issuer.Client({
-        client_id: cfg.clientId,
+        client_id: provider.clientId,
         token_endpoint_auth_method: 'none',
-        redirect_uris: [cfg.redirectUri],
+        redirect_uris: [provider.redirectUri],
         response_types: ['code'],
       });
     } catch (error) {
       // A failed discovery must not be cached forever.
-      this.clientPromise = undefined;
+      this.clients.delete(provider.id);
       throw error;
     }
   }
 
-  async createAuthRequest(): Promise<OidcAuthRequest> {
-    const cfg = this.requireConfig();
-    const client = await this.getClient();
+  async createAuthRequest(providerId: string): Promise<OidcAuthRequest> {
+    const provider = this.requireProvider(providerId);
+    const client = await this.getClient(provider);
 
     const codeVerifier = generators.codeVerifier();
     const state = generators.state();
     const nonce = generators.nonce();
 
     const url = client.authorizationUrl({
-      scope: cfg.scopes,
+      scope: provider.scopes,
       state,
       nonce,
       code_challenge: generators.codeChallenge(codeVerifier),
@@ -101,14 +112,15 @@ export class OidcService {
   }
 
   async exchange(
+    providerId: string,
     params: { code: string; state: string },
     checks: OidcCallbackChecks,
   ): Promise<OidcClaims> {
-    const cfg = this.requireConfig();
-    const client = await this.getClient();
+    const provider = this.requireProvider(providerId);
+    const client = await this.getClient(provider);
 
     const tokenSet = await client.callback(
-      cfg.redirectUri,
+      provider.redirectUri,
       { code: params.code, state: params.state },
       {
         state: checks.state,

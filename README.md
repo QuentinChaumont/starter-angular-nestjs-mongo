@@ -142,7 +142,7 @@ failing later at first use.
 | `MAIL_PREVIEW_DIR`             | no                         | `tmp/mail`                   | Where the console transport writes `.eml` previews                                                                           |
 | `OIDC_ISSUER`                  | only to enable OIDC        | —                            | Discovery URL                                                                                                                |
 | `OIDC_CLIENT_ID`               | only to enable OIDC        | —                            |                                                                                                                              |
-| `OIDC_REDIRECT_URI`            | only to enable OIDC        | —                            | `.../api/auth/oidc/callback`                                                                                                 |
+| `OIDC_REDIRECT_URI`            | only to enable OIDC        | —                            | `.../api/auth/oidc/generic/callback`                                                                                         |
 | `OIDC_CLIENT_SECRET`           | no                         | —                            | Omit for a public client (PKCE only)                                                                                         |
 | `OIDC_SCOPES`                  | no                         | `openid profile email`       |                                                                                                                              |
 | `OIDC_FRONTEND_URL`            | no                         | `http://localhost:4200`      | Base of the post-login redirect                                                                                              |
@@ -224,7 +224,9 @@ entity with `--crud` — `AuthModule` logs users in against it. Provides:
   `pnpm seed:admin` (idempotent — creates the account or promotes an
   existing one).
 - **OIDC login** (inert until `OIDC_ISSUER`/`OIDC_CLIENT_ID`/
-  `OIDC_REDIRECT_URI` are set): `GET /auth/oidc/{provider,login,callback}`.
+  `OIDC_REDIRECT_URI` are set): `GET /auth/oidc/providers` +
+  `GET /auth/oidc/:providerId/{login,callback}` (multi-provider registry —
+  `generic` today, Google/Keycloak presets land in V2.2 steps 40/41).
   Authorization Code + PKCE via `openid-client`; the provider's tokens
   never leave the backend — the user is linked **by verified email** and
   gets our own access token + session cookies, then the browser is sent to
@@ -327,8 +329,8 @@ persisted in `localStorage`, never touching the committed charter.
 - `csrfInterceptor` copies the `csrf-token` cookie into `X-CSRF-Token` on
   `/auth/refresh` and `/auth/logout`. All requests go out
   `withCredentials: true`.
-- `LoginPage` shows the "Sign in with SSO" button only when
-  `GET /auth/oidc/provider` reports it enabled, and the "Create an account"
+- `LoginPage` renders one "Sign in with {label}" button per provider
+  returned by `GET /auth/oidc/providers`, and the "Create an account"
   link only when `GET /auth/registration` reports it enabled; `RegisterPage`
   (`/register`) posts to `POST /auth/register` and lands straight into the
   session. `OidcCallback` (`/auth/callback`) consumes the token from the URL

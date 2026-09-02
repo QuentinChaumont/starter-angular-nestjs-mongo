@@ -45,16 +45,21 @@ no `cookie-parser` dependency, nothing to wire into `main.ts`.
 ## OIDC login (optional)
 
 Ships with the brick, **inert until configured**. Set `OIDC_ISSUER`,
-`OIDC_CLIENT_ID` and `OIDC_REDIRECT_URI` to enable it — local login keeps
-working alongside.
+`OIDC_CLIENT_ID` and `OIDC_REDIRECT_URI` to enable the built-in `generic`
+provider — local login keeps working alongside.
 
-- `GET /auth/oidc/provider` → `{ enabled, loginUrl }`; the SPA shows the
-  "sign in with OIDC" button only when `enabled`.
-- `GET /auth/oidc/login?redirectTo=/app/...` → Authorization Code + PKCE
-  redirect. `state` / `nonce` / `code_verifier` are stored in a short-lived
-  httpOnly `oidc_tx` cookie.
-- `GET /auth/oidc/callback` → validates `state`, exchanges the code
-  (`openid-client`), links the user **by verified email**
+The routes are **per provider** (`:providerId` = `generic` today; Google /
+Keycloak presets plug in at V2.2 steps 40/41 without touching the engine):
+
+- `GET /auth/oidc/providers` → `{ id, label, loginUrl }[]`; the SPA renders
+  one "Sign in with {label}" button per entry (empty list → no button).
+- `GET /auth/oidc/:providerId/login?redirectTo=/app/...` → Authorization
+  Code + PKCE redirect. `providerId` / `state` / `nonce` / `code_verifier`
+  are stored in a short-lived httpOnly `oidc_tx` cookie. Unknown id → 404
+  `OIDC_PROVIDER_UNKNOWN`.
+- `GET /auth/oidc/:providerId/callback` → checks the cookie's `providerId`
+  and `state`, exchanges the code (`openid-client`), links the user
+  **by verified email**
   (`OidcUserLinker`: reuse an existing account, else create a passwordless
   one), issues the same access token + session cookies as local login,
   then redirects to `OIDC_FRONTEND_URL + redirectTo` with
@@ -67,7 +72,7 @@ constrained to a single-slash relative path.
 | ----------------------------- | --------- | ----------------------- | ------------------------------------------- |
 | `OIDC_ISSUER`                 | to enable | —                       | Discovery URL                               |
 | `OIDC_CLIENT_ID`              | to enable | —                       |                                             |
-| `OIDC_REDIRECT_URI`           | to enable | —                       | `.../api/auth/oidc/callback`                |
+| `OIDC_REDIRECT_URI`           | to enable | —                       | `.../api/auth/oidc/generic/callback`        |
 | `OIDC_CLIENT_SECRET`          | no        | —                       | Omit for a public client (PKCE only)        |
 | `OIDC_SCOPES`                 | no        | `openid profile email`  |                                             |
 | `OIDC_FRONTEND_URL`           | no        | `http://localhost:4200` | Base of the post-login redirect             |

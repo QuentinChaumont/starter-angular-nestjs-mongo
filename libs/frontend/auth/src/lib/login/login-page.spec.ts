@@ -21,34 +21,44 @@ describe('LoginPage', () => {
     });
   });
 
-  it('renders the sign-in form and hides the SSO button when OIDC is disabled', () => {
+  it('renders the sign-in form and no SSO button when no OIDC provider is active', () => {
     const fixture = TestBed.createComponent(LoginPage);
     fixture.detectChanges();
 
     const http = TestBed.inject(HttpTestingController);
-    http.expectOne('/api/auth/oidc/provider').flush({ enabled: false, loginUrl: '' });
+    http.expectOne('/api/auth/oidc/providers').flush([]);
     http.expectOne('/api/auth/registration').flush({ enabled: false });
     fixture.detectChanges();
 
     const html = fixture.nativeElement as HTMLElement;
     expect(html.querySelector('input[type="email"]')).not.toBeNull();
     expect(html.querySelector('input[type="password"]')).not.toBeNull();
-    expect(html.textContent).not.toContain('SSO');
+    expect(html.textContent).not.toContain('Sign in with');
     http.verify();
   });
 
-  it('shows the SSO button when the provider is enabled', () => {
+  it('shows one button per active OIDC provider', () => {
     const fixture = TestBed.createComponent(LoginPage);
     fixture.detectChanges();
 
     const http = TestBed.inject(HttpTestingController);
-    http
-      .expectOne('/api/auth/oidc/provider')
-      .flush({ enabled: true, loginUrl: '/api/auth/oidc/login' });
+    http.expectOne('/api/auth/oidc/providers').flush([
+      { id: 'generic', label: 'SSO', loginUrl: '/auth/oidc/generic/login' },
+      { id: 'google', label: 'Google', loginUrl: '/auth/oidc/google/login' },
+    ]);
     http.expectOne('/api/auth/registration').flush({ enabled: false });
     fixture.detectChanges();
 
-    expect((fixture.nativeElement as HTMLElement).textContent).toContain('SSO');
+    const links = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('a[href*="oidc"]'),
+    );
+    expect(links.map((a) => a.textContent?.trim())).toEqual([
+      'Sign in with SSO',
+      'Sign in with Google',
+    ]);
+    expect(links[0].getAttribute('href')).toContain(
+      '/api/auth/oidc/generic/login',
+    );
     http.verify();
   });
 
@@ -57,9 +67,7 @@ describe('LoginPage', () => {
     fixture.detectChanges();
 
     const http = TestBed.inject(HttpTestingController);
-    http
-      .expectOne('/api/auth/oidc/provider')
-      .flush({ enabled: false, loginUrl: '' });
+    http.expectOne('/api/auth/oidc/providers').flush([]);
     http.expectOne('/api/auth/registration').flush({ enabled: true });
     fixture.detectChanges();
 

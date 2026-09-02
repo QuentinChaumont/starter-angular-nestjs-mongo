@@ -128,14 +128,15 @@ export class AuthService {
     );
   }
 
-  oidcProvider(): Observable<OidcProviderInfo> {
+  /** Active OIDC providers — one login button each (empty when none). */
+  oidcProviders(): Observable<OidcProviderInfo[]> {
     return this.http
-      .get<OidcProviderInfo>(`${this.base}/auth/oidc/provider`)
-      .pipe(catchError(() => of({ enabled: false, loginUrl: '' })));
+      .get<OidcProviderInfo[]>(`${this.base}/auth/oidc/providers`)
+      .pipe(catchError(() => of([] as OidcProviderInfo[])));
   }
 
-  oidcLoginUrl(redirectTo?: string): string {
-    const url = `${this.base}/auth/oidc/login`;
+  oidcLoginUrl(provider: OidcProviderInfo, redirectTo?: string): string {
+    const url = `${this.base}${provider.loginUrl}`;
     return redirectTo
       ? `${url}?redirectTo=${encodeURIComponent(redirectTo)}`
       : url;

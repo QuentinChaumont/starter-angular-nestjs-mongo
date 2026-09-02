@@ -18,6 +18,8 @@ export interface SessionCookies {
 }
 
 export interface OidcTransaction {
+  /** Which provider started this flow — the callback route must match it. */
+  providerId: string;
   state: string;
   nonce: string;
   codeVerifier: string;
@@ -104,6 +106,7 @@ export class AuthCookieService {
         Buffer.from(raw, 'base64url').toString('utf-8'),
       ) as Partial<OidcTransaction>;
       if (
+        typeof parsed.providerId === 'string' &&
         typeof parsed.state === 'string' &&
         typeof parsed.nonce === 'string' &&
         typeof parsed.codeVerifier === 'string' &&

@@ -7,7 +7,7 @@ import {
 import { UserService } from '@org/backend-features-user';
 import { generateOpaqueToken } from '../refresh/opaque-token';
 import { OidcClaims, extractRoles } from './oidc-claims';
-import { resolveOidcConfig } from './resolve-oidc-config';
+import { resolveOidcProvider } from './resolve-oidc-config';
 
 function splitName(name: string | undefined): [string, string] {
   const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
@@ -25,7 +25,10 @@ function splitName(name: string | undefined): [string, string] {
  * **verified email**: an existing account with the same email is reused
  * (account linking), otherwise a passwordless account is created. The
  * provider is trusted only for a `email_verified` address — unless
- * `OIDC_REQUIRE_VERIFIED_EMAIL=false` relaxes that.
+ * `requireVerifiedEmail` is relaxed for that provider.
+ *
+ * The `identities` collection (V2.2 step 42) will replace the email lookup
+ * with an explicit `(provider, subject)` link — untouched here.
  */
 @Injectable()
 export class OidcUserLinker {
@@ -34,12 +37,15 @@ export class OidcUserLinker {
     private readonly config: AppConfigService,
   ) {}
 
-  async linkFromClaims(claims: OidcClaims): Promise<AuthenticatedUser> {
-    const cfg = resolveOidcConfig(this.config);
-    if (!cfg) {
+  async linkFromClaims(
+    providerId: string,
+    claims: OidcClaims,
+  ): Promise<AuthenticatedUser> {
+    const provider = resolveOidcProvider(this.config, providerId);
+    if (!provider) {
       throw new UnauthorizedError(
-        'OIDC_NOT_CONFIGURED',
-        'OIDC login is not enabled',
+        'OIDC_PROVIDER_UNKNOWN',
+        `No active OIDC provider "${providerId}"`,
       );
     }
 
@@ -49,7 +55,7 @@ export class OidcUserLinker {
         'The identity provider did not return an email address',
       );
     }
-    if (cfg.requireVerifiedEmail && !claims.emailVerified) {
+    if (provider.requireVerifiedEmail && !claims.emailVerified) {
       throw new UnauthorizedError(
         'OIDC_EMAIL_NOT_VERIFIED',
         'The identity provider has not verified this email address',
@@ -73,7 +79,7 @@ export class OidcUserLinker {
       password: generateOpaqueToken(),
       firstName,
       lastName,
-      roles: extractRoles(claims.raw, cfg.rolesClaim),
+      roles: extractRoles(claims.raw, provider.rolesClaim),
     });
 
     return { id: created._id.toString(), roles: created.roles };

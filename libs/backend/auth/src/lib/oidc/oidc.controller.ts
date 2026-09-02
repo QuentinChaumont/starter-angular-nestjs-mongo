@@ -1,10 +1,6 @@
-import { Controller, Get, Query, Req, Res } from '@nestjs/common';
+import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
-import {
-  AppConfigService,
-  NotFoundError,
-  UnauthorizedError,
-} from '@org/backend-core';
+import { UnauthorizedError } from '@org/backend-core';
 import type { OidcProviderInfo } from '@org/shared-contracts';
 import type { Request, Response } from 'express';
 import { AuthService } from '../auth.service';
@@ -12,10 +8,11 @@ import { AuthCookieService } from '../cookies/auth-cookie.service';
 import { OidcClaims } from './oidc-claims';
 import { OidcUserLinker } from './oidc-user.linker';
 import { OidcService } from './oidc.service';
-import { resolveOidcConfig } from './resolve-oidc-config';
 import { sanitizeRelativePath } from './sanitize-relative-path';
 
-const LOGIN_PATH = '/api/auth/oidc/login';
+/** Base-relative (no `/api` prefix): the SPA prepends its configured API base. */
+const loginPath = (providerId: string): string =>
+  `/auth/oidc/${providerId}/login`;
 
 @ApiTags('auth')
 @Controller('auth')
@@ -25,39 +22,42 @@ export class OidcController {
     private readonly linker: OidcUserLinker,
     private readonly auth: AuthService,
     private readonly cookies: AuthCookieService,
-    private readonly config: AppConfigService,
   ) {}
 
-  @Get('oidc/provider')
-  provider(): OidcProviderInfo {
-    return { enabled: this.oidc.isEnabled(), loginUrl: LOGIN_PATH };
+  @Get('oidc/providers')
+  providers(): OidcProviderInfo[] {
+    return this.oidc.listProviders().map(({ id, label }) => ({
+      id,
+      label,
+      loginUrl: loginPath(id),
+    }));
   }
 
   @ApiExcludeEndpoint()
-  @Get('oidc/login')
+  @Get('oidc/:providerId/login')
   async login(
+    @Param('providerId') providerId: string,
     @Query('redirectTo') redirectTo: string | undefined,
     @Res() res: Response,
   ): Promise<void> {
-    const cfg = resolveOidcConfig(this.config);
-    if (!cfg) {
-      throw new NotFoundError('OIDC_NOT_CONFIGURED', 'OIDC login is not enabled');
-    }
+    const provider = this.oidc.requireProvider(providerId);
 
-    const authRequest = await this.oidc.createAuthRequest();
+    const authRequest = await this.oidc.createAuthRequest(provider.id);
     this.cookies.setOidcTransaction(res, {
+      providerId: provider.id,
       state: authRequest.state,
       nonce: authRequest.nonce,
       codeVerifier: authRequest.codeVerifier,
-      redirectTo: sanitizeRelativePath(redirectTo, cfg.postLoginRedirect),
+      redirectTo: sanitizeRelativePath(redirectTo, provider.postLoginRedirect),
     });
 
     res.redirect(authRequest.url);
   }
 
   @ApiExcludeEndpoint()
-  @Get('oidc/callback')
+  @Get('oidc/:providerId/callback')
   async callback(
+    @Param('providerId') providerId: string,
     @Query('code') code: string | undefined,
     @Query('state') state: string | undefined,
     @Query('error') error: string | undefined,
@@ -66,14 +66,16 @@ export class OidcController {
   ): Promise<void> {
     const tx = this.cookies.readOidcTransaction(req);
     this.cookies.clearOidcTransaction(res);
-    const cfg = resolveOidcConfig(this.config);
 
-    if (!cfg || !tx) {
+    if (!tx || tx.providerId !== providerId) {
       throw new UnauthorizedError(
         'OIDC_STATE_INVALID',
         'OIDC login session is missing or has expired',
       );
     }
+
+    const provider = this.oidc.requireProvider(providerId);
+
     if (error) {
       throw new UnauthorizedError(
         'OIDC_PROVIDER_ERROR',
@@ -87,6 +89,7 @@ export class OidcController {
     let claims: OidcClaims;
     try {
       claims = await this.oidc.exchange(
+        provider.id,
         { code, state },
         { state: tx.state, nonce: tx.nonce, codeVerifier: tx.codeVerifier },
       );
@@ -97,7 +100,7 @@ export class OidcController {
       );
     }
 
-    const user = await this.linker.linkFromClaims(claims);
+    const user = await this.linker.linkFromClaims(provider.id, claims);
     const result = await this.auth.issueSession(user, {
       userAgent: req.headers['user-agent'],
       ip: req.ip,
@@ -107,7 +110,10 @@ export class OidcController {
     // Always land on the SPA's dedicated callback route; it consumes the
     // token from the fragment, scrubs the URL, then forwards to
     // `redirect_to`.
-    const callbackUrl = new URL('/auth/callback', cfg.frontendUrl).toString();
+    const callbackUrl = new URL(
+      '/auth/callback',
+      provider.frontendUrl,
+    ).toString();
     const fragment =
       `access_token=${encodeURIComponent(result.accessToken)}` +
       `&expires_in=${result.expiresIn}` +

@@ -68,7 +68,7 @@ describe('OidcUserLinker', () => {
       password: 'x',
     });
 
-    const result = await linker.linkFromClaims(claims());
+    const result = await linker.linkFromClaims('generic', claims());
 
     expect(result).toEqual({ id: 'existing', roles: ['admin'] });
     expect(users.users).toHaveLength(1);
@@ -78,6 +78,7 @@ describe('OidcUserLinker', () => {
     const { linker, users } = buildLinker({ OIDC_ROLES_CLAIM: 'roles' });
 
     const result = await linker.linkFromClaims(
+      'generic',
       claims({
         givenName: 'Jane',
         familyName: 'Doe',
@@ -99,7 +100,7 @@ describe('OidcUserLinker', () => {
   it('derives names from a single "name" claim', async () => {
     const { linker, users } = buildLinker();
 
-    await linker.linkFromClaims(claims({ name: 'Ada Lovelace' }));
+    await linker.linkFromClaims('generic', claims({ name: 'Ada Lovelace' }));
 
     expect(users.users[0]).toMatchObject({
       firstName: 'Ada',
@@ -111,7 +112,7 @@ describe('OidcUserLinker', () => {
     const { linker } = buildLinker();
 
     await expect(
-      linker.linkFromClaims(claims({ emailVerified: false })),
+      linker.linkFromClaims('generic', claims({ emailVerified: false })),
     ).rejects.toThrow(/not verified/i);
   });
 
@@ -120,7 +121,7 @@ describe('OidcUserLinker', () => {
       OIDC_REQUIRE_VERIFIED_EMAIL: false,
     });
 
-    await linker.linkFromClaims(claims({ emailVerified: false }));
+    await linker.linkFromClaims('generic', claims({ emailVerified: false }));
 
     expect(users.users).toHaveLength(1);
   });
@@ -129,7 +130,15 @@ describe('OidcUserLinker', () => {
     const { linker } = buildLinker();
 
     await expect(
-      linker.linkFromClaims(claims({ email: undefined })),
+      linker.linkFromClaims('generic', claims({ email: undefined })),
     ).rejects.toThrow(/did not return an email/i);
+  });
+
+  it('rejects an unknown provider id', async () => {
+    const { linker } = buildLinker();
+
+    await expect(linker.linkFromClaims('nope', claims())).rejects.toThrow(
+      /OIDC provider "nope"/,
+    );
   });
 });

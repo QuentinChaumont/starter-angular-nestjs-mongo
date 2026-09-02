@@ -98,7 +98,7 @@ export interface VerifyEmailRequest {
 /** Body returned by `GET /api/auth/me`. */
 export type MeResponse = AuthenticatedUserDto;
 
-/** Query accepted by `GET /api/auth/oidc/login`. */
+/** Query accepted by `GET /api/auth/oidc/:providerId/login`. */
 export interface OidcAuthorizeQuery {
   /**
    * Relative path to land on after a successful login. Absolute URLs and
@@ -108,11 +108,18 @@ export interface OidcAuthorizeQuery {
 }
 
 /**
- * Returned by `GET /api/auth/oidc/provider` so the frontend knows whether
- * to render the "sign in with OIDC" button, and where it points.
+ * One active OIDC provider, as listed by `GET /api/auth/oidc/providers`.
+ * The frontend renders one login button per entry; an empty list means no
+ * provider is configured (no button at all).
  */
 export interface OidcProviderInfo {
-  enabled: boolean;
-  /** URL that starts the OIDC login flow (`GET /api/auth/oidc/login`). */
+  /** Stable id used in the login/callback route (`generic`, `google`, …). */
+  id: string;
+  /** Button label — rendered as `Sign in with {label}`. */
+  label: string;
+  /**
+   * Path that starts this provider's login flow, relative to the API base
+   * (`/auth/oidc/:id/login`) — the SPA prepends its configured API base.
+   */
   loginUrl: string;
 }

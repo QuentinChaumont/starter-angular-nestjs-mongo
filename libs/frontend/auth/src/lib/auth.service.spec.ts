@@ -104,19 +104,26 @@ describe('AuthService', () => {
     expect(store.isAuthenticated()).toBe(false);
   });
 
-  it('oidcProvider falls back to disabled on error', () => {
-    let info: unknown;
-    service.oidcProvider().subscribe((i) => (info = i));
+  it('oidcProviders falls back to an empty list on error', () => {
+    let list: unknown;
+    service.oidcProviders().subscribe((l) => (list = l));
     http
-      .expectOne(`${BASE}/auth/oidc/provider`)
+      .expectOne(`${BASE}/auth/oidc/providers`)
       .flush(null, { status: 500, statusText: 'x' });
-    expect(info).toEqual({ enabled: false, loginUrl: '' });
+    expect(list).toEqual([]);
   });
 
-  it('oidcLoginUrl encodes redirectTo', () => {
-    expect(service.oidcLoginUrl('/app/x')).toBe(
-      `${BASE}/auth/oidc/login?redirectTo=%2Fapp%2Fx`,
+  it('oidcLoginUrl prepends the API base and encodes redirectTo', () => {
+    const provider = {
+      id: 'generic',
+      label: 'SSO',
+      loginUrl: '/auth/oidc/generic/login',
+    };
+    expect(service.oidcLoginUrl(provider, '/app/x')).toBe(
+      `${BASE}/auth/oidc/generic/login?redirectTo=%2Fapp%2Fx`,
     );
-    expect(service.oidcLoginUrl()).toBe(`${BASE}/auth/oidc/login`);
+    expect(service.oidcLoginUrl(provider)).toBe(
+      `${BASE}/auth/oidc/generic/login`,
+    );
   });
 });

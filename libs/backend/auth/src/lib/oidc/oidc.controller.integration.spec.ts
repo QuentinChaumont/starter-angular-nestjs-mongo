@@ -6,6 +6,7 @@ import {
   AppHttpModule,
   GlobalExceptionFilter,
   LoggerModule,
+  NotFoundError,
   useRequestIdMiddleware,
 } from '@org/backend-core';
 import { buildTestConfig, listenOnRandomPort } from '@org/backend-testing';
@@ -22,10 +23,27 @@ const AUTH_REQUEST = {
   codeVerifier: 'verifier-123',
 };
 
+const PROVIDER = {
+  id: 'generic',
+  label: 'SSO',
+  frontendUrl: 'http://localhost:4200',
+  postLoginRedirect: '/app',
+};
+
 const fakeOidcService = {
-  isEnabled: () => true,
+  listProviders: () => [{ id: PROVIDER.id, label: PROVIDER.label }],
+  requireProvider: (providerId: string) => {
+    if (providerId !== PROVIDER.id) {
+      throw new NotFoundError(
+        'OIDC_PROVIDER_UNKNOWN',
+        `No active OIDC provider "${providerId}"`,
+      );
+    }
+    return PROVIDER;
+  },
   createAuthRequest: async () => AUTH_REQUEST,
   exchange: async (
+    _providerId: string,
     _params: { code: string; state: string },
     checks: { state: string },
   ) => {
@@ -58,9 +76,10 @@ const fakeAuthService = {
   }),
 };
 
-function txCookie(redirectTo = '/app'): string {
+function txCookie(redirectTo = '/app', providerId = 'generic'): string {
   const value = Buffer.from(
     JSON.stringify({
+      providerId,
       state: AUTH_REQUEST.state,
       nonce: AUTH_REQUEST.nonce,
       codeVerifier: AUTH_REQUEST.codeVerifier,
@@ -97,7 +116,7 @@ describe('OidcController (integration)', () => {
         buildTestConfig({
           OIDC_ISSUER: 'https://idp.example',
           OIDC_CLIENT_ID: 'client-1',
-          OIDC_REDIRECT_URI: 'http://localhost/api/auth/oidc/callback',
+          OIDC_REDIRECT_URI: 'http://localhost/api/auth/oidc/generic/callback',
           OIDC_FRONTEND_URL: 'http://localhost:4200',
         }),
       )
@@ -113,28 +132,42 @@ describe('OidcController (integration)', () => {
     await app.close();
   });
 
-  it('reports the provider as enabled', async () => {
-    const response = await fetch(`${baseUrl}/provider`);
+  it('lists the active providers', async () => {
+    const response = await fetch(`${baseUrl}/providers`);
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({
-      enabled: true,
-      loginUrl: '/api/auth/oidc/login',
-    });
+    expect(await response.json()).toEqual([
+      { id: 'generic', label: 'SSO', loginUrl: '/auth/oidc/generic/login' },
+    ]);
   });
 
   it('redirects to the provider and stores the transaction cookie', async () => {
-    const response = await fetch(`${baseUrl}/login?redirectTo=/app/reports`, {
-      redirect: 'manual',
-    });
+    const response = await fetch(
+      `${baseUrl}/generic/login?redirectTo=/app/reports`,
+      { redirect: 'manual' },
+    );
 
     expect(response.status).toBe(302);
     expect(response.headers.get('location')).toBe(AUTH_REQUEST.url);
-    expect(setCookie(response, 'oidc_tx')).toMatch(/HttpOnly/i);
+    const raw = setCookie(response, 'oidc_tx') as string;
+    expect(raw).toMatch(/HttpOnly/i);
+    const tx = JSON.parse(
+      Buffer.from(raw.split(';')[0].split('=')[1], 'base64url').toString('utf-8'),
+    );
+    expect(tx.providerId).toBe('generic');
+  });
+
+  it('404s for an unknown provider id', async () => {
+    const response = await fetch(`${baseUrl}/unknown/login`, {
+      redirect: 'manual',
+    });
+
+    expect(response.status).toBe(404);
+    expect(((await response.json()) as any).code).toBe('OIDC_PROVIDER_UNKNOWN');
   });
 
   it('falls back to the default redirect for an unsafe redirectTo', async () => {
-    const response = await fetch(`${baseUrl}/login?redirectTo=//evil.com`, {
+    const response = await fetch(`${baseUrl}/generic/login?redirectTo=//evil.com`, {
       redirect: 'manual',
     });
 
@@ -145,10 +178,13 @@ describe('OidcController (integration)', () => {
   });
 
   it('completes the callback: sets session cookies and redirects to the front with the token in the fragment', async () => {
-    const response = await fetch(`${baseUrl}/callback?code=the-code&state=state-xyz`, {
-      redirect: 'manual',
-      headers: { cookie: txCookie('/app') },
-    });
+    const response = await fetch(
+      `${baseUrl}/generic/callback?code=the-code&state=state-xyz`,
+      {
+        redirect: 'manual',
+        headers: { cookie: txCookie('/app') },
+      },
+    );
 
     expect(response.status).toBe(302);
     expect(response.headers.get('location')).toBe(
@@ -159,20 +195,37 @@ describe('OidcController (integration)', () => {
     expect(setCookie(response, 'oidc_tx')).toBeDefined(); // cleared
   });
 
+  it('rejects a callback whose provider does not match the cookie (401)', async () => {
+    const response = await fetch(
+      `${baseUrl}/generic/callback?code=c&state=state-xyz`,
+      {
+        redirect: 'manual',
+        headers: { cookie: txCookie('/app', 'google') },
+      },
+    );
+
+    expect(response.status).toBe(401);
+    expect(((await response.json()) as any).code).toBe('OIDC_STATE_INVALID');
+  });
+
   it('rejects a callback whose state does not match the cookie (401)', async () => {
-    const response = await fetch(`${baseUrl}/callback?code=c&state=wrong`, {
-      redirect: 'manual',
-      headers: { cookie: txCookie('/app') },
-    });
+    const response = await fetch(
+      `${baseUrl}/generic/callback?code=c&state=wrong`,
+      {
+        redirect: 'manual',
+        headers: { cookie: txCookie('/app') },
+      },
+    );
 
     expect(response.status).toBe(401);
     expect(((await response.json()) as any).code).toBe('OIDC_STATE_INVALID');
   });
 
   it('rejects a callback with no transaction cookie (401)', async () => {
-    const response = await fetch(`${baseUrl}/callback?code=c&state=state-xyz`, {
-      redirect: 'manual',
-    });
+    const response = await fetch(
+      `${baseUrl}/generic/callback?code=c&state=state-xyz`,
+      { redirect: 'manual' },
+    );
 
     expect(response.status).toBe(401);
     expect(((await response.json()) as any).code).toBe('OIDC_STATE_INVALID');

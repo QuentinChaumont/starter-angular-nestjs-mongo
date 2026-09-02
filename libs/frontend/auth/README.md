@@ -11,7 +11,7 @@ backend `auth` brick).
 | --- | --- |
 | `provideAuth()` | Spread into `app.config.ts` — `HttpClient` + interceptors + bootstrap silent refresh. |
 | `AuthStore` | Signals `user()`, `status()`, `token()`, `isAuthenticated()`. |
-| `AuthService` | `login()`, `logout()`, `refresh()`, `loadMe()`, `silentRefresh()`, `oidcProvider()`, `oidcLoginUrl()`. |
+| `AuthService` | `login()`, `logout()`, `refresh()`, `loadMe()`, `silentRefresh()`, `oidcProviders()`, `oidcLoginUrl()`. |
 | `authGuard`, `roleGuard(...roles)` | `CanActivateFn` route guards. |
 | `LoginPage`, `OidcCallback` | Standalone route components (`/login`, `/auth/callback`). |
 | `authInterceptor`, `csrfInterceptor` | Exported for apps that own `provideHttpClient` themselves. |
@@ -30,9 +30,10 @@ backend `auth` brick).
 
 ## OIDC
 
-`LoginPage` calls `GET /auth/oidc/provider` and shows the "Sign in with
-SSO" link only when `enabled`. The link is a full-page navigation to
-`GET /api/auth/oidc/login`. The provider redirects back to
+`LoginPage` calls `GET /auth/oidc/providers` and renders one "Sign in with
+{label}" link per active provider (none → no link). Each link is a
+full-page navigation to `GET /api/auth/oidc/{id}/login`. The provider
+redirects back to
 `/auth/callback#access_token=…&redirect_to=…`; `OidcCallback` stores the
 token, scrubs the fragment (`history.replaceState`), loads the profile and
 forwards to `redirect_to`.
