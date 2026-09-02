@@ -177,6 +177,16 @@ describe('validateEnv', () => {
     expect(result.OIDC_REQUIRE_VERIFIED_EMAIL).toBe(false);
   });
 
+  it('passes the Google preset credentials through', () => {
+    const result = validateEnv({
+      OIDC_GOOGLE_CLIENT_ID: 'g-id',
+      OIDC_GOOGLE_CLIENT_SECRET: 'g-secret',
+    });
+
+    expect(result.OIDC_GOOGLE_CLIENT_ID).toBe('g-id');
+    expect(result.OIDC_GOOGLE_CLIENT_SECRET).toBe('g-secret');
+  });
+
   it('passes through optional variables when present', () => {
     const result = validateEnv({
       MONGO_URI: 'mongodb://localhost:27017/app',

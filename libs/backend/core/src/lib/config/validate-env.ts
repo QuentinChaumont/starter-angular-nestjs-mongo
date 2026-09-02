@@ -275,6 +275,16 @@ export function validateEnv(
     rawEnv['OIDC_ROLES_CLAIM'],
     errors,
   );
+  const OIDC_GOOGLE_CLIENT_ID = parseOptionalString(
+    'OIDC_GOOGLE_CLIENT_ID',
+    rawEnv['OIDC_GOOGLE_CLIENT_ID'],
+    errors,
+  );
+  const OIDC_GOOGLE_CLIENT_SECRET = parseOptionalString(
+    'OIDC_GOOGLE_CLIENT_SECRET',
+    rawEnv['OIDC_GOOGLE_CLIENT_SECRET'],
+    errors,
+  );
 
   const SMTP_URL = parseOptionalString('SMTP_URL', rawEnv['SMTP_URL'], errors);
   const MAIL_FROM = parseOptionalString(
@@ -339,6 +349,10 @@ export function validateEnv(
       ? { OIDC_REQUIRE_VERIFIED_EMAIL }
       : {}),
     ...(OIDC_ROLES_CLAIM !== undefined ? { OIDC_ROLES_CLAIM } : {}),
+    ...(OIDC_GOOGLE_CLIENT_ID !== undefined ? { OIDC_GOOGLE_CLIENT_ID } : {}),
+    ...(OIDC_GOOGLE_CLIENT_SECRET !== undefined
+      ? { OIDC_GOOGLE_CLIENT_SECRET }
+      : {}),
     ...(SMTP_URL !== undefined ? { SMTP_URL } : {}),
     ...(MAIL_FROM !== undefined ? { MAIL_FROM } : {}),
     ...(MAIL_PREVIEW_DIR !== undefined ? { MAIL_PREVIEW_DIR } : {}),

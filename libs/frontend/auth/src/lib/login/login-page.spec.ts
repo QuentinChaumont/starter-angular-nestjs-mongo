@@ -59,6 +59,9 @@ describe('LoginPage', () => {
     expect(links[0].getAttribute('href')).toContain(
       '/api/auth/oidc/generic/login',
     );
+    // The Google button carries the branded logo; the generic one does not.
+    expect(links[0].querySelector('svg')).toBeNull();
+    expect(links[1].querySelector('svg')).not.toBeNull();
     http.verify();
   });
 

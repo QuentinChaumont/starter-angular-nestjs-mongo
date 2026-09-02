@@ -42,6 +42,11 @@ export interface EnvironmentVariables {
   OIDC_FRONTEND_URL?: string;
   OIDC_REQUIRE_VERIFIED_EMAIL?: boolean;
   OIDC_ROLES_CLAIM?: string;
+  /** Google sign-in preset (issuer + scopes are fixed). Active only when
+   * both id and secret are set. The callback origin is taken from
+   * `OIDC_REDIRECT_URI` (segment swapped to `google`). */
+  OIDC_GOOGLE_CLIENT_ID?: string;
+  OIDC_GOOGLE_CLIENT_SECRET?: string;
   /** SMTP connection string. When set, the `mailer` brick delivers over
    * SMTP (needs the optional `nodemailer` package); otherwise it logs to
    * the console and writes `.eml` previews. */
@@ -88,6 +93,8 @@ export const ENVIRONMENT_VARIABLE_NAMES: readonly (keyof EnvironmentVariables)[]
     'OIDC_FRONTEND_URL',
     'OIDC_REQUIRE_VERIFIED_EMAIL',
     'OIDC_ROLES_CLAIM',
+    'OIDC_GOOGLE_CLIENT_ID',
+    'OIDC_GOOGLE_CLIENT_SECRET',
     'SMTP_URL',
     'MAIL_FROM',
     'MAIL_PREVIEW_DIR',

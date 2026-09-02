@@ -149,6 +149,8 @@ failing later at first use.
 | `OIDC_POST_LOGIN_REDIRECT`     | no                         | `/app`                       | Default relative landing path                                                                                                |
 | `OIDC_REQUIRE_VERIFIED_EMAIL`  | no                         | `true`                       | Reject unverified provider emails                                                                                            |
 | `OIDC_ROLES_CLAIM`             | no                         | —                            | Dot-path to a `string[]` claim → user roles                                                                                  |
+| `OIDC_GOOGLE_CLIENT_ID`        | only to enable Google      | —                            | OAuth client id (Google Cloud Console). Needs `OIDC_REDIRECT_URI` set for the callback origin                                 |
+| `OIDC_GOOGLE_CLIENT_SECRET`    | only to enable Google      | —                            | OAuth client secret; both id + secret required for the Google button to appear                                               |
 
 Access config only through `AppConfigService` (e.g. `config.app.port`,
 `config.mongo.uri`, `config.session.*`, `config.auth.*`, `config.mailer.*`,
@@ -225,8 +227,8 @@ entity with `--crud` — `AuthModule` logs users in against it. Provides:
   existing one).
 - **OIDC login** (inert until `OIDC_ISSUER`/`OIDC_CLIENT_ID`/
   `OIDC_REDIRECT_URI` are set): `GET /auth/oidc/providers` +
-  `GET /auth/oidc/:providerId/{login,callback}` (multi-provider registry —
-  `generic` today, Google/Keycloak presets land in V2.2 steps 40/41).
+  `GET /auth/oidc/:providerId/{login,callback}` (multi-provider registry:
+  `generic` + a `google` preset via `OIDC_GOOGLE_*`; Keycloak at V2.2 step 41).
   Authorization Code + PKCE via `openid-client`; the provider's tokens
   never leave the backend — the user is linked **by verified email** and
   gets our own access token + session cookies, then the browser is sent to

@@ -131,4 +131,16 @@ export class AppConfigService {
       rolesClaim: this.configService.get('OIDC_ROLES_CLAIM', { infer: true }),
     };
   }
+
+  /** Google sign-in preset credentials (see {@link oidc} for the shared bits). */
+  get oidcGoogle() {
+    return {
+      clientId: this.configService.get('OIDC_GOOGLE_CLIENT_ID', {
+        infer: true,
+      }),
+      clientSecret: this.configService.get('OIDC_GOOGLE_CLIENT_SECRET', {
+        infer: true,
+      }),
+    };
+  }
 }

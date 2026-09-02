@@ -1,8 +1,9 @@
 import type { AppConfigService } from '@org/backend-core';
-
-const DEFAULT_SCOPES = 'openid profile email';
-const DEFAULT_POST_LOGIN_REDIRECT = '/app';
-const DEFAULT_FRONTEND_URL = 'http://localhost:4200';
+import {
+  DEFAULT_SCOPES,
+  sharedProviderConfig,
+} from './oidc-provider-defaults';
+import { resolveGoogleProvider } from './providers/google';
 
 /** Stable id of the built-in generic provider (`OIDC_ISSUER` / `OIDC_CLIENT_ID`). */
 export const GENERIC_PROVIDER_ID = 'generic';
@@ -38,17 +39,8 @@ export interface ResolvedOidcProvider extends ResolvedOidcConfig {
 function resolveGenericProvider(
   config: AppConfigService,
 ): ResolvedOidcProvider | null {
-  const {
-    issuer,
-    clientId,
-    clientSecret,
-    redirectUri,
-    scopes,
-    postLoginRedirect,
-    frontendUrl,
-    requireVerifiedEmail,
-    rolesClaim,
-  } = config.oidc;
+  const { issuer, clientId, clientSecret, redirectUri, scopes, rolesClaim } =
+    config.oidc;
 
   if (!issuer || !clientId || !redirectUri) {
     return null;
@@ -62,10 +54,8 @@ function resolveGenericProvider(
     clientSecret: clientSecret || undefined,
     redirectUri,
     scopes: scopes ?? DEFAULT_SCOPES,
-    frontendUrl: frontendUrl ?? DEFAULT_FRONTEND_URL,
-    postLoginRedirect: postLoginRedirect ?? DEFAULT_POST_LOGIN_REDIRECT,
-    requireVerifiedEmail: requireVerifiedEmail ?? true,
     rolesClaim: rolesClaim || undefined,
+    ...sharedProviderConfig(config),
   };
 }
 
@@ -74,9 +64,8 @@ function resolveGenericProvider(
  * its own issuer/clientId and its own login/callback routes; a project that
  * configures none gets an empty array (local login stays untouched).
  *
- * Today only the generic provider (`OIDC_*`) is wired here — concrete
- * presets (Google, Keycloak) plug in at steps 40/41 by appending their own
- * entry.
+ * Fixed slots (V2.2): the generic provider (`OIDC_*`) then the Google
+ * preset (`OIDC_GOOGLE_*`). Keycloak joins at step 41.
  */
 export function resolveOidcProviders(
   config: AppConfigService,
@@ -86,6 +75,11 @@ export function resolveOidcProviders(
   const generic = resolveGenericProvider(config);
   if (generic) {
     providers.push(generic);
+  }
+
+  const google = resolveGoogleProvider(config);
+  if (google) {
+    providers.push(google);
   }
 
   return providers;

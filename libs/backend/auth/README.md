@@ -48,8 +48,8 @@ Ships with the brick, **inert until configured**. Set `OIDC_ISSUER`,
 `OIDC_CLIENT_ID` and `OIDC_REDIRECT_URI` to enable the built-in `generic`
 provider — local login keeps working alongside.
 
-The routes are **per provider** (`:providerId` = `generic` today; Google /
-Keycloak presets plug in at V2.2 steps 40/41 without touching the engine):
+The routes are **per provider** (`:providerId` ∈ `generic`, `google`;
+Keycloak joins at V2.2 step 41):
 
 - `GET /auth/oidc/providers` → `{ id, label, loginUrl }[]`; the SPA renders
   one "Sign in with {label}" button per entry (empty list → no button).
@@ -78,7 +78,35 @@ constrained to a single-slash relative path.
 | `OIDC_FRONTEND_URL`           | no        | `http://localhost:4200` | Base of the post-login redirect             |
 | `OIDC_POST_LOGIN_REDIRECT`    | no        | `/app`                  | Default relative landing path               |
 | `OIDC_REQUIRE_VERIFIED_EMAIL` | no        | `true`                  | Reject unverified provider emails           |
-| `OIDC_ROLES_CLAIM`            | no        | —                       | Dot-path to a `string[]` claim → user roles |
+| `OIDC_ROLES_CLAIM`           | no        | —                       | Dot-path to a `string[]` claim → user roles |
+
+### Google preset
+
+Google is a **preset**: issuer (`https://accounts.google.com`) and scopes
+(`openid profile email`) are fixed, you only bring an OAuth client.
+
+| Variable                    | Required     | Notes                                                        |
+| --------------------------- | ------------ | ----------------------------------------------------------- |
+| `OIDC_GOOGLE_CLIENT_ID`     | to enable    | Both id + secret needed, else no Google button              |
+| `OIDC_GOOGLE_CLIENT_SECRET` | to enable    |                                                            |
+
+The callback URI is derived from `OIDC_REDIRECT_URI` (id segment swapped to
+`google`), so `OIDC_REDIRECT_URI` must be set even for a Google-only setup.
+
+**Google Cloud Console** → _APIs & Services_ → _Credentials_ →
+_Create credentials_ → _OAuth client ID_:
+
+1. Application type **Web application**.
+2. _Authorized JavaScript origins_: your API origin (e.g.
+   `http://localhost:3000`).
+3. _Authorized redirect URIs_: `<origin>/api/auth/oidc/google/callback`
+   (e.g. `http://localhost:3000/api/auth/oidc/google/callback`).
+4. Copy the generated client id + secret into `OIDC_GOOGLE_CLIENT_ID` /
+   `OIDC_GOOGLE_CLIENT_SECRET`.
+
+Google always asserts `email_verified`, so the shared
+`OIDC_REQUIRE_VERIFIED_EMAIL` default (on) applies unchanged. No E2E — the
+flow needs a real Google account (test manually once).
 
 ## Config
 

@@ -257,4 +257,29 @@ describe('AppConfigService', () => {
     expect(configured.oidc.issuer).toBe('https://idp.example');
     expect(configured.oidc.clientId).toBe('client-1');
   });
+
+  it('exposes the Google preset credentials', () => {
+    const bare = createService({
+      NODE_ENV: 'development',
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
+    });
+    expect(bare.oidcGoogle.clientId).toBeUndefined();
+
+    const configured = createService({
+      NODE_ENV: 'development',
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
+      OIDC_GOOGLE_CLIENT_ID: 'g-id',
+      OIDC_GOOGLE_CLIENT_SECRET: 'g-secret',
+    });
+    expect(configured.oidcGoogle).toEqual({
+      clientId: 'g-id',
+      clientSecret: 'g-secret',
+    });
+  });
 });

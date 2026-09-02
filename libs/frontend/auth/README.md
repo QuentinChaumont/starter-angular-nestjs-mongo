@@ -31,8 +31,10 @@ backend `auth` brick).
 ## OIDC
 
 `LoginPage` calls `GET /auth/oidc/providers` and renders one "Sign in with
-{label}" link per active provider (none → no link). Each link is a
-full-page navigation to `GET /api/auth/oidc/{id}/login`. The provider
+{label}" link per active provider (none → no link); the `google` provider
+also gets the official multicolour "G" mark (not recoloured, per Google's
+branding guidelines). Each link is a full-page navigation to
+`GET /api/auth/oidc/{id}/login`. The provider
 redirects back to
 `/auth/callback#access_token=…&redirect_to=…`; `OidcCallback` stores the
 token, scrubs the fragment (`history.replaceState`), loads the profile and
