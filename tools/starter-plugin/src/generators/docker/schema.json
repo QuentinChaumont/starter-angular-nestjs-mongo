@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "Docker",
+  "title": "Add Docker packaging (Dockerfiles + nginx + compose)",
+  "type": "object",
+  "properties": {}
+}

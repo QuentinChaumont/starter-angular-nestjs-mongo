@@ -117,38 +117,38 @@ Read and validated once at startup (`libs/backend/core/config`) — an
 invalid value stops the app immediately with a readable error instead of
 failing later at first use.
 
-| Variable | Required | Default | Notes |
-| --- | --- | --- | --- |
-| `NODE_ENV` | no | `development` | `development` \| `test` \| `production` |
-| `PORT` | no | `3000` | Nx injects the root `.env` into every task; `apps/frontend/.env` pins the SPA dev-server to 4200 so it doesn't inherit this. |
-| `CORS_ORIGINS` | no | `http://localhost:4200` | Comma-separated list |
-| `RATE_LIMIT_TTL_SECONDS` | no | `60` | Rate-limit window (security brick) |
-| `RATE_LIMIT_LIMIT` | no | `100` | Max requests per window (security brick) |
-| `MONGO_URI` | only if Mongo is installed | — | `mongodb://...` or `mongodb+srv://...` |
-| `JWT_SECRET` | only if auth is installed | — | Access token signing key |
-| `JWT_EXPIRES_IN` | no | `15m` | Access-token lifetime |
-| `REFRESH_EXPIRES_IN` | no | `30d` | Refresh-token lifetime (auth brick) |
-| `AUTH_COOKIE_SECURE` | no | `true` in prod, else `false` | Allows http cookies in dev |
-| `AUTH_REGISTRATION_ENABLED` | no | `true` | Self-service `POST /api/auth/register` + the `/register` page |
-| `AUTH_RATE_LIMIT_LIMIT` | no | `10` | Attempts per window for `/auth/login` + `/auth/register` |
-| `AUTH_RATE_LIMIT_TTL_SECONDS` | no | `60` | That window, in seconds |
-| `SEED_ADMIN_EMAIL` | only for `seed:admin` | — | Bootstrap admin account |
-| `SEED_ADMIN_PASSWORD` | only for `seed:admin` | — | |
-| `AUTH_REQUIRE_VERIFIED_EMAIL` | no | `false` | `true` → `POST /auth/login` returns `403` until the email is verified (`auth-reset` brick) |
-| `RESET_TOKEN_TTL_MINUTES` | no | `60` | Password-reset link lifetime |
-| `VERIFICATION_TOKEN_TTL_HOURS` | no | `24` | Email-verification link lifetime |
-| `SMTP_URL` | no | — | Set to deliver mail over SMTP (needs `nodemailer`); otherwise console + `.eml` previews |
-| `MAIL_FROM` | no | `no-reply@localhost` | `From` address for the mailer brick |
-| `MAIL_PREVIEW_DIR` | no | `tmp/mail` | Where the console transport writes `.eml` previews |
-| `OIDC_ISSUER` | only to enable OIDC | — | Discovery URL |
-| `OIDC_CLIENT_ID` | only to enable OIDC | — | |
-| `OIDC_REDIRECT_URI` | only to enable OIDC | — | `.../api/auth/oidc/callback` |
-| `OIDC_CLIENT_SECRET` | no | — | Omit for a public client (PKCE only) |
-| `OIDC_SCOPES` | no | `openid profile email` | |
-| `OIDC_FRONTEND_URL` | no | `http://localhost:4200` | Base of the post-login redirect |
-| `OIDC_POST_LOGIN_REDIRECT` | no | `/app` | Default relative landing path |
-| `OIDC_REQUIRE_VERIFIED_EMAIL` | no | `true` | Reject unverified provider emails |
-| `OIDC_ROLES_CLAIM` | no | — | Dot-path to a `string[]` claim → user roles |
+| Variable                       | Required                   | Default                      | Notes                                                                                                                        |
+| ------------------------------ | -------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                     | no                         | `development`                | `development` \| `test` \| `production`                                                                                      |
+| `PORT`                         | no                         | `3000`                       | Nx injects the root `.env` into every task; `apps/frontend/.env` pins the SPA dev-server to 4200 so it doesn't inherit this. |
+| `CORS_ORIGINS`                 | no                         | `http://localhost:4200`      | Comma-separated list                                                                                                         |
+| `RATE_LIMIT_TTL_SECONDS`       | no                         | `60`                         | Rate-limit window (security brick)                                                                                           |
+| `RATE_LIMIT_LIMIT`             | no                         | `100`                        | Max requests per window (security brick)                                                                                     |
+| `MONGO_URI`                    | only if Mongo is installed | —                            | `mongodb://...` or `mongodb+srv://...`                                                                                       |
+| `JWT_SECRET`                   | only if auth is installed  | —                            | Access token signing key                                                                                                     |
+| `JWT_EXPIRES_IN`               | no                         | `15m`                        | Access-token lifetime                                                                                                        |
+| `REFRESH_EXPIRES_IN`           | no                         | `30d`                        | Refresh-token lifetime (auth brick)                                                                                          |
+| `AUTH_COOKIE_SECURE`           | no                         | `true` in prod, else `false` | Allows http cookies in dev                                                                                                   |
+| `AUTH_REGISTRATION_ENABLED`    | no                         | `true`                       | Self-service `POST /api/auth/register` + the `/register` page                                                                |
+| `AUTH_RATE_LIMIT_LIMIT`        | no                         | `10`                         | Attempts per window for `/auth/login` + `/auth/register`                                                                     |
+| `AUTH_RATE_LIMIT_TTL_SECONDS`  | no                         | `60`                         | That window, in seconds                                                                                                      |
+| `SEED_ADMIN_EMAIL`             | only for `seed:admin`      | —                            | Bootstrap admin account                                                                                                      |
+| `SEED_ADMIN_PASSWORD`          | only for `seed:admin`      | —                            |                                                                                                                              |
+| `AUTH_REQUIRE_VERIFIED_EMAIL`  | no                         | `false`                      | `true` → `POST /auth/login` returns `403` until the email is verified (`auth-reset` brick)                                   |
+| `RESET_TOKEN_TTL_MINUTES`      | no                         | `60`                         | Password-reset link lifetime                                                                                                 |
+| `VERIFICATION_TOKEN_TTL_HOURS` | no                         | `24`                         | Email-verification link lifetime                                                                                             |
+| `SMTP_URL`                     | no                         | —                            | Set to deliver mail over SMTP (needs `nodemailer`); otherwise console + `.eml` previews                                      |
+| `MAIL_FROM`                    | no                         | `no-reply@localhost`         | `From` address for the mailer brick                                                                                          |
+| `MAIL_PREVIEW_DIR`             | no                         | `tmp/mail`                   | Where the console transport writes `.eml` previews                                                                           |
+| `OIDC_ISSUER`                  | only to enable OIDC        | —                            | Discovery URL                                                                                                                |
+| `OIDC_CLIENT_ID`               | only to enable OIDC        | —                            |                                                                                                                              |
+| `OIDC_REDIRECT_URI`            | only to enable OIDC        | —                            | `.../api/auth/oidc/callback`                                                                                                 |
+| `OIDC_CLIENT_SECRET`           | no                         | —                            | Omit for a public client (PKCE only)                                                                                         |
+| `OIDC_SCOPES`                  | no                         | `openid profile email`       |                                                                                                                              |
+| `OIDC_FRONTEND_URL`            | no                         | `http://localhost:4200`      | Base of the post-login redirect                                                                                              |
+| `OIDC_POST_LOGIN_REDIRECT`     | no                         | `/app`                       | Default relative landing path                                                                                                |
+| `OIDC_REQUIRE_VERIFIED_EMAIL`  | no                         | `true`                       | Reject unverified provider emails                                                                                            |
+| `OIDC_ROLES_CLAIM`             | no                         | —                            | Dot-path to a `string[]` claim → user roles                                                                                  |
 
 Access config only through `AppConfigService` (e.g. `config.app.port`,
 `config.mongo.uri`, `config.session.*`, `config.auth.*`, `config.mailer.*`,
@@ -396,3 +396,38 @@ short: `buildTestConfig(overrides)`, `startTestMongo()`,
 `nonExistentObjectId()`. See its README for details. (`backend-core`'s own
 specs can't depend on it — that would be circular — and use an internal
 equivalent at `libs/backend/core/src/testing/` instead.)
+
+## CI
+
+`.github/workflows/ci.yml` runs on every push to `main` and every PR,
+self-contained (no Nx Cloud token, so it stays green on a fork):
+
+- `npm ci`, then `nx sync:check` + `nx format:check`;
+- `nx affected -t lint test build typecheck` (base/head from
+  `nrwl/nx-set-shas`) — a docs-only change runs almost nothing;
+- the Nx computation cache is persisted with `actions/cache` on `.nx/cache`;
+- a separate **`e2e`** job (PRs only) runs `nx affected -t e2e` — the
+  Playwright suite lands in V2.1 step 38.
+
+## Docker
+
+```bash
+npx nx g @org/starter-plugin:docker
+docker compose up --build      # SPA on http://localhost:8080
+```
+
+Opt-in. Adds:
+
+- **`apps/backend/Dockerfile`** — multi-stage: full install + `nx build` +
+  `nx prune` in the builder, then `node:22-alpine` with **prod deps only**
+  (`main.js` bundles the `@org/*` libs; the pruned `package.json` pulls
+  just the runtime npm packages). `HEALTHCHECK` on `/api/health/live`,
+  runs as `node`.
+- **`apps/frontend/Dockerfile` + `nginx.conf`** — `nx build frontend` then
+  `nginx:alpine`: SPA fallback to `index.html`, `/api` reverse-proxied to
+  the `backend` service, hashed assets cached hard.
+- **`docker-compose.yml`** — `mongo:7` (named volume + healthcheck),
+  `backend` (waits for Mongo; config from the shell / an optional root
+  `.env`), `frontend` on `:8080`. No secret is baked into an image;
+  `JWT_SECRET` comes from the environment (a throwaway default lets
+  `compose up` boot for a smoke test).

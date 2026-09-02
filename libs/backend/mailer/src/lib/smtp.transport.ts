@@ -19,7 +19,7 @@ interface NodemailerLike {
 /**
  * SMTP delivery via `nodemailer`, active only when `SMTP_URL` is configured.
  * `nodemailer` is an **optional** dependency of this brick: install it
- * (`pnpm add nodemailer`) to use SMTP. The first `send()` resolves the
+ * (`npm add nodemailer`) to use SMTP. The first `send()` resolves the
  * module and fails with an actionable message if it is missing.
  */
 export class SmtpMailTransport implements MailTransport {
@@ -59,12 +59,11 @@ export class SmtpMailTransport implements MailTransport {
     let nodemailer: NodemailerLike;
     try {
       const imported = (await import(/* webpackIgnore: true */ moduleName)) as
-        | NodemailerLike
-        | { default: NodemailerLike };
+        NodemailerLike | { default: NodemailerLike };
       nodemailer = 'default' in imported ? imported.default : imported;
     } catch {
       throw new Error(
-        'SMTP_URL is set but the optional "nodemailer" package is not installed. Run `pnpm add nodemailer` to enable SMTP delivery.',
+        'SMTP_URL is set but the optional "nodemailer" package is not installed. Run `npm add nodemailer` to enable SMTP delivery.',
       );
     }
 

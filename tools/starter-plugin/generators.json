@@ -71,6 +71,11 @@
       "factory": "./src/generators/frontend-feature/generator",
       "schema": "./src/generators/frontend-feature/schema.json",
       "description": "Generate a lazy-loaded business feature under the /app shell (signals store, typed HTTP service, list + detail pages), wired via loadChildren + a DASHBOARD_NAV entry."
+    },
+    "docker": {
+      "factory": "./src/generators/docker/generator",
+      "schema": "./src/generators/docker/schema.json",
+      "description": "Add Docker packaging: multi-stage Dockerfiles for the API and the SPA (nginx), plus a docker-compose.yml wiring both to mongo:7."
     }
   }
 }

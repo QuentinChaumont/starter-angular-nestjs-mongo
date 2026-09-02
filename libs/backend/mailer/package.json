@@ -30,9 +30,7 @@
     "@nestjs/common": "^11.0.0",
     "@org/backend-core": "0.0.1"
   },
-  "optionalDependencies": {
-    "nodemailer": "^6.9.0"
-  },
+  "//": "SMTP delivery needs `nodemailer` — install it yourself (`npm add nodemailer`) when you set SMTP_URL. It is deliberately not a dependency here so the brick, and `npm ci`, stay lean without it.",
   "devDependencies": {
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.0",

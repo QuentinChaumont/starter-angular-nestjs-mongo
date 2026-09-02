@@ -1,0 +1,16 @@
+.git
+.github
+.nx
+.vscode
+.idea
+**/node_modules
+**/dist
+dist
+**/out-tsc
+**/test-output
+**/.angular
+tmp
+*.log
+.env
+.env.*
+!.env.example

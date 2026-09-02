@@ -22,7 +22,7 @@ export class MailerService implements OnApplicationBootstrap {
   onApplicationBootstrap(): void {
     if (!this.config.mailer.smtpUrl) {
       this.logger.warn(
-        'Mailer configuration incomplete: SMTP_URL is not set, so email is only logged and written to .eml previews — nothing is delivered. Set SMTP_URL (and `pnpm add nodemailer`) before production.',
+        'Mailer configuration incomplete: SMTP_URL is not set, so email is only logged and written to .eml previews — nothing is delivered. Set SMTP_URL (and `npm add nodemailer`) before production.',
         'MailerService',
       );
     }
