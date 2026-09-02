@@ -1,0 +1,43 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { API_BASE_URL } from '@org/frontend-core';
+import type {
+  PaginatedResponse,
+  PaginationQuery,
+} from '@org/shared-contracts';
+import { Observable } from 'rxjs';
+import type { <%= className %> } from './<%= fileName %>.model';
+
+/**
+ * Typed HTTP access to the `<%= fileName %>` resource. Points at
+ * `${API_BASE_URL}/<%= fileName %>` — align the routes with the backend
+ * `<%= fileName %>` entity (`nx g @org/starter-plugin:entity <%= fileName %> --crud`).
+ */
+@Injectable({ providedIn: 'root' })
+export class <%= className %>Service {
+  private readonly http = inject(HttpClient);
+  private readonly base = `${inject(API_BASE_URL)}/<%= fileName %>`;
+
+  list(query: PaginationQuery = {}): Observable<PaginatedResponse<<%= className %>>> {
+    let params = new HttpParams();
+    if (query.page) params = params.set('page', query.page);
+    if (query.pageSize) params = params.set('pageSize', query.pageSize);
+    return this.http.get<PaginatedResponse<<%= className %>>>(this.base, { params });
+  }
+
+  get(id: string): Observable<<%= className %>> {
+    return this.http.get<<%= className %>>(`${this.base}/${id}`);
+  }
+
+  create(input: Partial<<%= className %>>): Observable<<%= className %>> {
+    return this.http.post<<%= className %>>(this.base, input);
+  }
+
+  update(id: string, input: Partial<<%= className %>>): Observable<<%= className %>> {
+    return this.http.patch<<%= className %>>(`${this.base}/${id}`, input);
+  }
+
+  remove(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/${id}`);
+  }
+}

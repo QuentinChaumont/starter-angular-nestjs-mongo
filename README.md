@@ -188,7 +188,9 @@ npx nx g @org/starter-plugin:entity product --crud
 
 Generates `libs/backend/features/product` with a Mongo-backed schema,
 repository, service, and (with `--crud`) a REST controller — requires
-Mongo to already be installed.
+Mongo to already be installed. Add `--frontend` to also drop a shared
+`libs/shared/contracts` type and a lazy frontend feature (see
+[`frontend-feature`](#frontend-feature--lazy-business-modules) below).
 
 ### Auth
 
@@ -362,6 +364,29 @@ hooks. The decision (categories + `policyVersion`) is stored in
 fill the `[PLACEHOLDERS]` before going live. "Manage cookies" appears in
 the dashboard user-menu automatically (via a neutral `CONSENT_MANAGER`
 hook — the dashboard doesn't depend on the consent brick).
+
+### `frontend-feature` — lazy business modules
+
+```bash
+npx nx g @org/starter-plugin:frontend-feature reports --crud
+npx nx g @org/starter-plugin:frontend-feature reports --roles admin --icon insights
+```
+
+Scaffolds `libs/frontend/features/<name>/` — a **lazy-loaded** feature
+mounted at `/app/<name>`: a signal store, a typed HTTP service on
+`${API_BASE_URL}/<name>`, a paginated list page and a detail page (`--crud`
+adds an edit form + `new`/`:id/edit` routes). Wires a `loadChildren` child
+route, a `DASHBOARD_NAV` entry and the `tsconfig` path — nothing static is
+added to `app.config.ts` / `app.ts`, so it lands in its own bundle chunk.
+Re-running is a no-op (it only re-applies the wiring, never touches the
+generated files). Requires `frontend-design` + `frontend-dashboard`.
+
+**Convention**: `libs/frontend/features/<x>` = lazy business feature;
+`libs/frontend/<x>` = eager infra brick.
+
+`nx g @org/starter-plugin:entity <name> --crud --frontend` runs this
+generator right after the backend entity and drops a matching
+`libs/shared/contracts` type both ends share.
 
 ## Testing
 

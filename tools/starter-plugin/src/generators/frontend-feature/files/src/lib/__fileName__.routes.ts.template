@@ -1,0 +1,20 @@
+import { Route } from '@angular/router';
+import { <%= className %>DetailPage } from './<%= fileName %>-detail.page';
+import { <%= className %>ListPage } from './<%= fileName %>-list.page';
+<% if (crud) { -%>
+import { <%= className %>FormPage } from './<%= fileName %>-form.page';
+<% } -%>
+
+/**
+ * Lazy route group for the `<%= fileName %>` feature, mounted at
+ * `/app/<%= fileName %>` by the generator (`loadChildren`). Export only —
+ * never imported statically, so it stays in its own chunk.
+ */
+export const <%= constantName %>_ROUTES: Route[] = [
+  { path: '', component: <%= className %>ListPage },
+<% if (crud) { -%>
+  { path: 'new', component: <%= className %>FormPage },
+  { path: ':id/edit', component: <%= className %>FormPage },
+<% } -%>
+  { path: ':id', component: <%= className %>DetailPage },
+];

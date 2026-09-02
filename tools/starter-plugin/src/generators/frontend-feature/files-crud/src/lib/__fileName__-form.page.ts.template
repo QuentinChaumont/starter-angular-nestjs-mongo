@@ -1,0 +1,112 @@
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { ActivatedRoute, Router } from '@angular/router';
+import { <%= className %>Service } from './<%= fileName %>.service';
+
+/**
+ * Create / edit form for a <%= className %>. Add the resource's real fields
+ * to `form` and the template — `name` is here only as a starting point.
+ */
+@Component({
+  selector: 'lib-<%= fileName %>-form',
+  imports: [
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatButtonModule,
+    MatProgressBarModule,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <section class="<%= fileName %>-form">
+      @if (saving()) {
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      }
+      <h1>{{ id ? 'Edit' : 'New' }} <%= className %></h1>
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+
+        @if (error()) {
+          <p role="alert">{{ error() }}</p>
+        }
+
+        <div class="<%= fileName %>-form__actions">
+          <button
+            mat-flat-button
+            color="primary"
+            type="submit"
+            [disabled]="form.invalid || saving()"
+          >
+            Save
+          </button>
+          <button mat-button type="button" (click)="cancel()">Cancel</button>
+        </div>
+      </form>
+    </section>
+  `,
+  styles: `
+    .<%= fileName %>-form {
+      padding: 24px;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .<%= fileName %>-form form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+  `,
+})
+export class <%= className %>FormPage implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  private readonly service = inject(<%= className %>Service);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  protected readonly id = this.route.snapshot.paramMap.get('id');
+  protected readonly saving = signal(false);
+  protected readonly error = signal<string | null>(null);
+
+  protected readonly form = this.fb.nonNullable.group({
+    name: ['', [Validators.required]],
+  });
+
+  ngOnInit(): void {
+    if (this.id) {
+      this.service.get(this.id).subscribe((item) => this.form.patchValue(item));
+    }
+  }
+
+  protected submit(): void {
+    if (this.form.invalid || this.saving()) {
+      return;
+    }
+    this.saving.set(true);
+    this.error.set(null);
+    const value = this.form.getRawValue();
+    const request$ = this.id
+      ? this.service.update(this.id, value)
+      : this.service.create(value);
+    request$.subscribe({
+      next: () => this.router.navigate(['/app/<%= fileName %>']),
+      error: () => {
+        this.saving.set(false);
+        this.error.set('Could not save. Check the form and try again.');
+      },
+    });
+  }
+
+  protected cancel(): void {
+    this.router.navigate(['/app/<%= fileName %>']);
+  }
+}

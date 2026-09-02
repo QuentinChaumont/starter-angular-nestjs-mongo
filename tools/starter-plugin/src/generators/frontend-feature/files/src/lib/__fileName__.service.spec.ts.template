@@ -1,0 +1,56 @@
+import { provideHttpClient } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { API_BASE_URL } from '@org/frontend-core';
+import { <%= className %>Service } from './<%= fileName %>.service';
+
+describe('<%= className %>Service', () => {
+  let service: <%= className %>Service;
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: API_BASE_URL, useValue: '/api' },
+      ],
+    });
+    service = TestBed.inject(<%= className %>Service);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  it('lists with pagination params', () => {
+    service.list({ page: 2, pageSize: 10 }).subscribe();
+    const req = http.expectOne('/api/<%= fileName %>?page=2&pageSize=10');
+    expect(req.request.method).toBe('GET');
+    req.flush({ items: [], total: 0, page: 2, pageSize: 10 });
+  });
+
+  it('gets one by id', () => {
+    service.get('abc').subscribe();
+    http.expectOne('/api/<%= fileName %>/abc').flush({ id: 'abc', name: 'x' });
+  });
+
+  it('creates, updates and removes', () => {
+    service.create({ name: 'new' }).subscribe();
+    const created = http.expectOne('/api/<%= fileName %>');
+    expect(created.request.method).toBe('POST');
+    created.flush({ id: '1', name: 'new' });
+
+    service.update('abc', { name: 'edit' }).subscribe();
+    const updated = http.expectOne('/api/<%= fileName %>/abc');
+    expect(updated.request.method).toBe('PATCH');
+    updated.flush({ id: 'abc', name: 'edit' });
+
+    service.remove('abc').subscribe();
+    const removed = http.expectOne('/api/<%= fileName %>/abc');
+    expect(removed.request.method).toBe('DELETE');
+    removed.flush(null);
+  });
+});

@@ -1,0 +1,64 @@
+import { JsonPipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { <%= className %>Store } from './<%= fileName %>.store';
+
+@Component({
+  selector: 'lib-<%= fileName %>-detail',
+  imports: [
+    JsonPipe,
+    RouterLink,
+    MatCardModule,
+    MatButtonModule,
+    MatProgressBarModule,
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <section class="<%= fileName %>-detail">
+      @if (store.loading()) {
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      }
+      @if (store.selected(); as item) {
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>{{ item.name }}</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <!-- Render the real fields of a <%= className %> here. -->
+            <pre>{{ item | json }}</pre>
+          </mat-card-content>
+          <mat-card-actions>
+            <a mat-button routerLink="..">Back</a>
+<% if (crud) { -%>
+            <a mat-button [routerLink]="['..', item.id, 'edit']">Edit</a>
+<% } -%>
+          </mat-card-actions>
+        </mat-card>
+      } @else if (store.error(); as error) {
+        <p role="alert">{{ error }}</p>
+      }
+    </section>
+  `,
+  styles: `
+    .<%= fileName %>-detail {
+      padding: 24px;
+    }
+    .<%= fileName %>-detail pre {
+      white-space: pre-wrap;
+    }
+  `,
+})
+export class <%= className %>DetailPage implements OnInit {
+  protected readonly store = inject(<%= className %>Store);
+  private readonly route = inject(ActivatedRoute);
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.store.select(id);
+    }
+  }
+}

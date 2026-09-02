@@ -18,6 +18,11 @@
       "description": "Also generate a REST controller and DTOs wired to the service.",
       "default": false,
       "x-prompt": "Generate a REST controller and DTOs (--crud)?"
+    },
+    "frontend": {
+      "type": "boolean",
+      "description": "Also generate a shared front/back contract and a lazy frontend feature (calls frontend-feature).",
+      "default": false
     }
   },
   "required": ["name"]

@@ -1,0 +1,14 @@
+<% if (hasContract) { -%>
+export type { <%= className %> } from '@org/shared-contracts';
+<% } else { -%>
+/**
+ * PLACEHOLDER shape for a <%= className %>. Replace these fields with the
+ * real ones — or generate a shared front/back contract with
+ * `nx g @org/starter-plugin:entity <%= fileName %> --frontend`, which makes
+ * this file re-export `@org/shared-contracts` instead.
+ */
+export interface <%= className %> {
+  id: string;
+  name: string;
+}
+<% } -%>

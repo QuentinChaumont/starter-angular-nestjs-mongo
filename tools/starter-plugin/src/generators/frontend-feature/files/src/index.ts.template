@@ -1,0 +1,4 @@
+export { <%= constantName %>_ROUTES } from './lib/<%= fileName %>.routes';
+export { <%= className %>Service } from './lib/<%= fileName %>.service';
+export { <%= className %>Store } from './lib/<%= fileName %>.store';
+export type { <%= className %> } from './lib/<%= fileName %>.model';

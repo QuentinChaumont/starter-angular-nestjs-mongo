@@ -10,7 +10,7 @@
     "entity": {
       "factory": "./src/generators/entity/generator",
       "schema": "./src/generators/entity/schema.json",
-      "description": "Generate a Mongo-backed backend entity library at libs/backend/features/<name>, with an optional REST controller (--crud)."
+      "description": "Generate a Mongo-backed backend entity library at libs/backend/features/<name>, with an optional REST controller (--crud) and an optional shared contract + lazy frontend feature (--frontend)."
     },
     "mongo": {
       "factory": "./src/generators/mongo/generator",
@@ -66,6 +66,11 @@
       "factory": "./src/generators/frontend-consent/generator",
       "schema": "./src/generators/frontend-consent/schema.json",
       "description": "Install the consent brick: first-visit cookie banner, preferences dialog, /legal routes and legal-page templates."
+    },
+    "frontend-feature": {
+      "factory": "./src/generators/frontend-feature/generator",
+      "schema": "./src/generators/frontend-feature/schema.json",
+      "description": "Generate a lazy-loaded business feature under the /app shell (signals store, typed HTTP service, list + detail pages), wired via loadChildren + a DASHBOARD_NAV entry."
     }
   }
 }

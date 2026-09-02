@@ -4,6 +4,7 @@ import frontendAuthGenerator from './frontend-auth/generator';
 import frontendConsentGenerator from './frontend-consent/generator';
 import frontendDashboardGenerator from './frontend-dashboard/generator';
 import frontendDesignGenerator from './frontend-design/generator';
+import frontendFeatureGenerator from './frontend-feature/generator';
 import frontendFeedbackGenerator from './frontend-feedback/generator';
 
 const APP_CONFIG = 'apps/frontend/src/app/app.config.ts';
@@ -160,6 +161,36 @@ describe('frontend brick sequence', () => {
     expect(tree.read(APP_COMPONENT, 'utf-8')).toBe(before.component);
     expect(tree.read(APP_TEMPLATE, 'utf-8')).toBe(before.template);
     expect(tree.read(STYLES, 'utf-8')).toBe(before.styles);
+  });
+
+  it('scaffolds a lazy frontend-feature on top of the full sequence', async () => {
+    await runFrontendSequence(tree);
+    await frontendFeatureGenerator(tree, { name: 'reports', crud: true });
+
+    const root = 'libs/frontend/features/reports';
+    expect(tree.exists(`${root}/project.json`)).toBe(true);
+    expect(tree.exists(`${root}/src/lib/reports.routes.ts`)).toBe(true);
+    expect(tree.exists(`${root}/src/lib/reports-form.page.ts`)).toBe(true);
+
+    // wired as a lazy child of /app, no static import of the feature
+    const routes = tree.read(APP_ROUTES, 'utf-8') as string;
+    expect(routes).toContain("import('@org/frontend-features-reports')");
+    expect(routes).toContain('m.REPORTS_ROUTES');
+    expect(routes).not.toMatch(/^import .*frontend-features-reports/m);
+
+    // nav entry + tsconfig path
+    expect(
+      tree.read('apps/frontend/src/app/dashboard-nav.ts', 'utf-8'),
+    ).toContain("route: 'reports'");
+    const paths = readJson(tree, 'tsconfig.base.json').compilerOptions.paths;
+    expect(paths['@org/frontend-features-reports']).toEqual([
+      './libs/frontend/features/reports/src/index.ts',
+    ]);
+
+    // re-run is a no-op
+    const before = tree.read(APP_ROUTES, 'utf-8');
+    await frontendFeatureGenerator(tree, { name: 'reports', crud: true });
+    expect(tree.read(APP_ROUTES, 'utf-8')).toBe(before);
   });
 
   it('each frontend generator refuses when its prerequisite is missing', async () => {

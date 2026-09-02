@@ -1,0 +1,58 @@
+import { Injectable, computed, inject, signal } from '@angular/core';
+import type { PaginationQuery } from '@org/shared-contracts';
+import type { <%= className %> } from './<%= fileName %>.model';
+import { <%= className %>Service } from './<%= fileName %>.service';
+
+/**
+ * Signal-based state for the `<%= fileName %>` list + detail pages. A thin
+ * layer over `<%= className %>Service` — swap it for `@ngrx/signals` or
+ * whatever the project standardises on if it outgrows this.
+ */
+@Injectable({ providedIn: 'root' })
+export class <%= className %>Store {
+  private readonly service = inject(<%= className %>Service);
+
+  private readonly _items = signal<<%= className %>[]>([]);
+  private readonly _total = signal(0);
+  private readonly _selected = signal<<%= className %> | null>(null);
+  private readonly _loading = signal(false);
+  private readonly _error = signal<string | null>(null);
+
+  readonly items = this._items.asReadonly();
+  readonly total = this._total.asReadonly();
+  readonly selected = this._selected.asReadonly();
+  readonly loading = this._loading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly isEmpty = computed(() => !this._loading() && this._items().length === 0);
+
+  load(query: PaginationQuery = {}): void {
+    this._loading.set(true);
+    this._error.set(null);
+    this.service.list(query).subscribe({
+      next: (page) => {
+        this._items.set(page.items);
+        this._total.set(page.total);
+        this._loading.set(false);
+      },
+      error: () => {
+        this._error.set('Could not load <%= fileName %>.');
+        this._loading.set(false);
+      },
+    });
+  }
+
+  select(id: string): void {
+    this._loading.set(true);
+    this._selected.set(null);
+    this.service.get(id).subscribe({
+      next: (item) => {
+        this._selected.set(item);
+        this._loading.set(false);
+      },
+      error: () => {
+        this._error.set('Could not load this <%= fileName %>.');
+        this._loading.set(false);
+      },
+    });
+  }
+}
