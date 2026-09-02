@@ -32,7 +32,9 @@ Optional JWT auth brick. Install it with `nx g @org/starter-plugin:auth`
   (`REFRESH_TOKEN_REUSED`).
 - **CSRF**: `refresh`/`logout` rely only on the cookie, so they're
   protected by a double-submit token — a non-`httpOnly` `csrf-token`
-  cookie the SPA copies into the `X-CSRF-Token` header.
+  cookie (path `/`, so the SPA can read it from any route) the SPA copies
+  into the `X-CSRF-Token` header. A missing/mismatched token is a `401`
+  (`CSRF_TOKEN_INVALID`).
 - **Cleanup**: a Mongo TTL index drops expired rows; rotation also prunes
   the current user's expired rows.
 
@@ -61,26 +63,26 @@ working alongside.
 The provider's own tokens never leave the backend. `redirectTo` is
 constrained to a single-slash relative path.
 
-| Variable | Required | Default | Notes |
-| --- | --- | --- | --- |
-| `OIDC_ISSUER` | to enable | — | Discovery URL |
-| `OIDC_CLIENT_ID` | to enable | — | |
-| `OIDC_REDIRECT_URI` | to enable | — | `.../api/auth/oidc/callback` |
-| `OIDC_CLIENT_SECRET` | no | — | Omit for a public client (PKCE only) |
-| `OIDC_SCOPES` | no | `openid profile email` | |
-| `OIDC_FRONTEND_URL` | no | `http://localhost:4200` | Base of the post-login redirect |
-| `OIDC_POST_LOGIN_REDIRECT` | no | `/app` | Default relative landing path |
-| `OIDC_REQUIRE_VERIFIED_EMAIL` | no | `true` | Reject unverified provider emails |
-| `OIDC_ROLES_CLAIM` | no | — | Dot-path to a `string[]` claim → user roles |
+| Variable                      | Required  | Default                 | Notes                                       |
+| ----------------------------- | --------- | ----------------------- | ------------------------------------------- |
+| `OIDC_ISSUER`                 | to enable | —                       | Discovery URL                               |
+| `OIDC_CLIENT_ID`              | to enable | —                       |                                             |
+| `OIDC_REDIRECT_URI`           | to enable | —                       | `.../api/auth/oidc/callback`                |
+| `OIDC_CLIENT_SECRET`          | no        | —                       | Omit for a public client (PKCE only)        |
+| `OIDC_SCOPES`                 | no        | `openid profile email`  |                                             |
+| `OIDC_FRONTEND_URL`           | no        | `http://localhost:4200` | Base of the post-login redirect             |
+| `OIDC_POST_LOGIN_REDIRECT`    | no        | `/app`                  | Default relative landing path               |
+| `OIDC_REQUIRE_VERIFIED_EMAIL` | no        | `true`                  | Reject unverified provider emails           |
+| `OIDC_ROLES_CLAIM`            | no        | —                       | Dot-path to a `string[]` claim → user roles |
 
 ## Config
 
-| Variable | Required | Default | Notes |
-| --- | --- | --- | --- |
-| `JWT_SECRET` | yes (when installed) | — | |
-| `JWT_EXPIRES_IN` | no | `15m` | Access-token lifetime |
-| `REFRESH_EXPIRES_IN` | no | `30d` | Refresh-token lifetime |
-| `AUTH_COOKIE_SECURE` | no | `true` in production, else `false` | Allows http in dev |
+| Variable             | Required             | Default                            | Notes                  |
+| -------------------- | -------------------- | ---------------------------------- | ---------------------- |
+| `JWT_SECRET`         | yes (when installed) | —                                  |                        |
+| `JWT_EXPIRES_IN`     | no                   | `15m`                              | Access-token lifetime  |
+| `REFRESH_EXPIRES_IN` | no                   | `30d`                              | Refresh-token lifetime |
+| `AUTH_COOKIE_SECURE` | no                   | `true` in production, else `false` | Allows http in dev     |
 
 ## Running unit tests
 

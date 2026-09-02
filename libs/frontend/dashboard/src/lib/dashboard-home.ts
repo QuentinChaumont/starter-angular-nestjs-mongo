@@ -11,7 +11,7 @@ import { AuthStore } from '@org/frontend-auth';
   imports: [MatCardModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <mat-card>
+    <mat-card data-testid="dashboard-home">
       <mat-card-header>
         <mat-card-title>You're signed in</mat-card-title>
       </mat-card-header>

@@ -54,8 +54,12 @@ export class AuthCookieService {
       httpOnly: true,
       expires: session.refreshExpiresAt,
     });
+    // The CSRF cookie must be readable by the SPA from *any* route
+    // (double-submit — the interceptor copies it into a header), so it
+    // gets `path: '/'` rather than the refresh cookie's `/api/auth`.
     res.cookie(CSRF_COOKIE_NAME, session.csrfToken, {
       ...this.baseOptions(),
+      path: '/',
       httpOnly: false,
       expires: session.refreshExpiresAt,
     });
@@ -68,6 +72,7 @@ export class AuthCookieService {
     });
     res.clearCookie(CSRF_COOKIE_NAME, {
       ...this.baseOptions(),
+      path: '/',
       httpOnly: false,
     });
   }
@@ -77,7 +82,9 @@ export class AuthCookieService {
   }
 
   setOidcTransaction(res: Response, tx: OidcTransaction): void {
-    const value = Buffer.from(JSON.stringify(tx), 'utf-8').toString('base64url');
+    const value = Buffer.from(JSON.stringify(tx), 'utf-8').toString(
+      'base64url',
+    );
     res.cookie(OIDC_TX_COOKIE_NAME, value, {
       path: OIDC_COOKIE_PATH,
       sameSite: 'lax',

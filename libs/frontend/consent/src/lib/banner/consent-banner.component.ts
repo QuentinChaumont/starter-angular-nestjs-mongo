@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { CONSENT_CONFIG } from '../consent.config';
@@ -19,11 +24,21 @@ import { ConsentPreferences } from '../preferences/consent-preferences.component
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (consent.bannerVisible()) {
-      <aside class="consent" role="region" aria-label="Cookie consent" aria-live="polite">
+      <aside
+        class="consent"
+        data-testid="consent-banner"
+        role="region"
+        aria-label="Cookie consent"
+        aria-live="polite"
+      >
         <p class="consent__text">
           We use strictly necessary cookies to run the site, and — with your
           consent — optional ones. See our
-          <a [href]="config.legal.cookiePolicyRoute" target="_blank" rel="noopener">
+          <a
+            [href]="config.legal.cookiePolicyRoute"
+            target="_blank"
+            rel="noopener"
+          >
             cookie policy</a
           >.
         </p>

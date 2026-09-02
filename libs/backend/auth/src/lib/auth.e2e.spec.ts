@@ -342,21 +342,21 @@ describe('Auth (e2e, real Mongo instance)', () => {
       );
     });
 
-    it('rejects refresh with no cookies at all (CSRF guard, 403)', async () => {
+    it('rejects refresh with no cookies at all (CSRF guard, 401)', async () => {
       const response = await fetch(`${authBaseUrl}/refresh`, {
         method: 'POST',
         headers: { 'x-csrf-token': 'anything' },
       });
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
     });
 
-    it('rejects refresh without a matching X-CSRF-Token header (403)', async () => {
+    it('rejects refresh without a matching X-CSRF-Token header (401)', async () => {
       const jar = await loginWithJar();
 
       const response = await refresh(jar, false);
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(401);
       expect(((await response.json()) as any).code).toBe('CSRF_TOKEN_INVALID');
     });
 

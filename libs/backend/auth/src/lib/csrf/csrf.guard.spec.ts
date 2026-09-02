@@ -1,4 +1,5 @@
 import { ExecutionContext } from '@nestjs/common';
+import { UnauthorizedError } from '@org/backend-core';
 import { CsrfGuard } from './csrf.guard';
 
 function buildContext(
@@ -40,5 +41,10 @@ describe('CsrfGuard', () => {
   it('rejects when the two tokens differ', () => {
     const context = buildContext('csrf-token=tok123', 'nope');
     expect(() => guard.canActivate(context)).toThrow(/CSRF token/);
+  });
+
+  it('rejects with a 401 (UnauthorizedError), not a 403', () => {
+    const context = buildContext(undefined, undefined);
+    expect(() => guard.canActivate(context)).toThrow(UnauthorizedError);
   });
 });

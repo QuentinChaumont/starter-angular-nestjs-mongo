@@ -5,6 +5,11 @@ dist
 tmp
 out-tsc
 
+# Playwright (V2.1 step 38)
+playwright-report
+test-results
+/playwright/.cache
+
 # dependencies
 node_modules
 

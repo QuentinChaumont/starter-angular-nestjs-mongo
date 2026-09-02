@@ -435,6 +435,29 @@ short: `buildTestConfig(overrides)`, `startTestMongo()`,
 specs can't depend on it — that would be circular — and use an internal
 equivalent at `libs/backend/core/src/testing/` instead.)
 
+### Browser E2E — `apps/frontend-e2e`
+
+Playwright (chromium only, 1 worker). Run it with `nx e2e frontend-e2e`
+(or `nx run frontend-e2e:e2e`). It builds the backend, then in
+`src/support/global-setup.ts`:
+
+- starts an in-memory Mongo (`mongodb-memory-server`) on a fixed
+  non-default port (`27077`, so a local `mongod` / Compass can keep
+  running);
+- boots the built backend against it (it can't be a Playwright `webServer`:
+  it blocks on its Mongo connection at startup, and `webServer`s must be
+  ready _before_ `global-setup` runs — only `nx serve frontend` is one);
+- waits for `/api/health/ready` and seeds a user via the API;
+- tears both down after the suite.
+
+The specs (`auth`, `consent`, `dashboard`) cover register/reload/logout,
+the login error path, the consent banner + cookie-policy tab, the
+protected-route redirect and the role guard. Failures keep a Playwright
+trace (`trace: 'retain-on-failure'`); in CI the HTML report and
+`test-results/` are uploaded as an artifact. Chromium needs a one-off
+`npx playwright install chromium` locally (the executor runs with
+`skipInstall: true`).
+
 ## CI
 
 `.github/workflows/ci.yml` runs on every push to `main` and every PR,
@@ -444,8 +467,9 @@ self-contained (no Nx Cloud token, so it stays green on a fork):
 - `nx affected -t lint test build typecheck` (base/head from
   `nrwl/nx-set-shas`) — a docs-only change runs almost nothing;
 - the Nx computation cache is persisted with `actions/cache` on `.nx/cache`;
-- a separate **`e2e`** job (PRs only) runs `nx affected -t e2e` — the
-  Playwright suite lands in V2.1 step 38.
+- a separate **`e2e`** job (PRs only) installs chromium and runs
+  `nx affected -t e2e` (the Playwright suite, see above); the HTML report
+  and traces are uploaded as an artifact on failure.
 
 ## Docker
 

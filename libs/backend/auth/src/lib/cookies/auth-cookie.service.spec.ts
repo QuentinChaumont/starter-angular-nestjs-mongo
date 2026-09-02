@@ -19,12 +19,11 @@ const session = {
 };
 
 describe('AuthCookieService', () => {
-  it('sets an httpOnly refresh cookie and a readable csrf cookie, scoped to /api/auth', () => {
+  it('sets an httpOnly refresh cookie (/api/auth) and a root-path readable csrf cookie', () => {
     const res = fakeResponse();
-    new AuthCookieService(buildTestConfig({ NODE_ENV: 'production' })).setSession(
-      res,
-      session,
-    );
+    new AuthCookieService(
+      buildTestConfig({ NODE_ENV: 'production' }),
+    ).setSession(res, session);
 
     expect(res.cookie).toHaveBeenCalledWith(
       'refresh_token',
@@ -40,16 +39,15 @@ describe('AuthCookieService', () => {
     expect(res.cookie).toHaveBeenCalledWith(
       'csrf-token',
       'csrf-def',
-      expect.objectContaining({ httpOnly: false, secure: true }),
+      expect.objectContaining({ httpOnly: false, secure: true, path: '/' }),
     );
   });
 
   it('defaults secure to false outside production', () => {
     const res = fakeResponse();
-    new AuthCookieService(buildTestConfig({ NODE_ENV: 'development' })).setSession(
-      res,
-      session,
-    );
+    new AuthCookieService(
+      buildTestConfig({ NODE_ENV: 'development' }),
+    ).setSession(res, session);
 
     expect(res.cookie).toHaveBeenCalledWith(
       'refresh_token',
@@ -81,7 +79,7 @@ describe('AuthCookieService', () => {
     );
     expect(res.clearCookie).toHaveBeenCalledWith(
       'csrf-token',
-      expect.objectContaining({ path: '/api/auth', httpOnly: false }),
+      expect.objectContaining({ path: '/', httpOnly: false }),
     );
   });
 

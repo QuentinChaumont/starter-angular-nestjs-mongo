@@ -62,6 +62,9 @@
     },
     {
       "path": "./libs/frontend/features/admin-users"
+    },
+    {
+      "path": "./apps/frontend-e2e"
     }
   ],
   "compilerOptions": {}
