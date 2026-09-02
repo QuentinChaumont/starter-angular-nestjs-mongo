@@ -406,6 +406,26 @@ generated files). Requires `frontend-design` + `frontend-dashboard`.
 generator right after the backend entity and drops a matching
 `libs/shared/contracts` type both ends share.
 
+### `frontend-admin-users` — user admin console
+
+```bash
+npx nx g @org/starter-plugin:frontend-admin-users
+```
+
+Turns the dashboard's placeholder `/app/admin` route into a real console
+(needs the dashboard + feedback bricks) — lazy-loaded, still behind the
+route's `roleGuard('admin')`:
+
+- `GET /api/users?page=&pageSize=&search=` → **server-side** paginated
+  `UserSummary` list, newest first, search on email/name.
+- `PATCH /api/users/:id/roles` — grant/revoke roles; removing `admin` from
+  the **last** admin is refused (`400 LAST_ADMIN`).
+- `PATCH /api/users/:id/status` `{ active }` — a disabled account can no
+  longer `login` or `refresh` (`403 ACCOUNT_DISABLED`, `disabledAt` set).
+  No hard delete — disable instead.
+
+Sensitive actions go through a `DialogService.confirm()`.
+
 ## Testing
 
 `libs/backend/testing` (`@org/backend-testing`) exists to keep spec files

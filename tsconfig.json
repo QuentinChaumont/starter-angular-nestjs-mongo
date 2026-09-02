@@ -59,6 +59,9 @@
     },
     {
       "path": "./libs/frontend/features/profile"
+    },
+    {
+      "path": "./libs/frontend/features/admin-users"
     }
   ],
   "compilerOptions": {}

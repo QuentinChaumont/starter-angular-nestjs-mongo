@@ -72,6 +72,11 @@
       "schema": "./src/generators/frontend-feature/schema.json",
       "description": "Generate a lazy-loaded business feature under the /app shell (signals store, typed HTTP service, list + detail pages), wired via loadChildren + a DASHBOARD_NAV entry."
     },
+    "frontend-admin-users": {
+      "factory": "./src/generators/frontend-admin-users/generator",
+      "schema": "./src/generators/frontend-admin-users/schema.json",
+      "description": "Replace the /app/admin placeholder with the user admin console (paginated list, role toggles, enable/disable). Needs the dashboard + feedback bricks."
+    },
     "docker": {
       "factory": "./src/generators/docker/generator",
       "schema": "./src/generators/docker/schema.json",

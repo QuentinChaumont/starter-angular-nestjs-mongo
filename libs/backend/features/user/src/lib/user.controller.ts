@@ -8,13 +8,19 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser, JwtAuthGuard, Roles } from '@org/backend-core';
 import type { AuthenticatedUser } from '@org/backend-core';
-import type { UserProfile } from '@org/shared-contracts';
+import type {
+  PaginatedResponse,
+  UserProfile,
+  UserSummary,
+} from '@org/shared-contracts';
 import { UserService } from './user.service';
+import { UpdateRolesDto, UpdateStatusDto } from './dto/admin-user.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { DeleteAccountDto } from './dto/delete-account.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -70,14 +76,39 @@ export class UserController {
     return this.service.create(dto);
   }
 
+  /** Admin console list — paginated, newest first, `?search=` on email/name. */
   @Get()
-  findAll() {
-    return this.service.findAll();
+  listUsers(
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string,
+    @Query('search') search?: string,
+  ): Promise<PaginatedResponse<UserSummary>> {
+    return this.service.listUsers({
+      page: page ? Number(page) : undefined,
+      pageSize: pageSize ? Number(pageSize) : undefined,
+      search,
+    });
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findById(id);
+  }
+
+  @Patch(':id/roles')
+  setRoles(
+    @Param('id') id: string,
+    @Body() dto: UpdateRolesDto,
+  ): Promise<UserSummary> {
+    return this.service.setRoles(id, dto.roles);
+  }
+
+  @Patch(':id/status')
+  setStatus(
+    @Param('id') id: string,
+    @Body() dto: UpdateStatusDto,
+  ): Promise<UserSummary> {
+    return this.service.setStatus(id, dto.active);
   }
 
   @Patch(':id')

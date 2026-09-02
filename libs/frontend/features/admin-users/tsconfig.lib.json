@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/lib",
+    "rootDir": "src",
+    "declaration": true,
+    "types": [],
+    "tsBuildInfoFile": "./out-tsc/lib/tsconfig.lib.tsbuildinfo"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "jest.config.ts",
+    "jest.config.cts",
+    "src/test-setup.ts"
+  ],
+  "references": [
+    { "path": "../../core/tsconfig.lib.json" },
+    { "path": "../../feedback/tsconfig.lib.json" },
+    { "path": "../../../shared/contracts/tsconfig.lib.json" }
+  ]
+}

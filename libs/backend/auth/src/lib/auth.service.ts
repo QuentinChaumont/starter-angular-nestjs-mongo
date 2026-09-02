@@ -72,6 +72,13 @@ export class AuthService {
       );
     }
 
+    if (user.disabledAt) {
+      throw new ForbiddenError(
+        'ACCOUNT_DISABLED',
+        'This account has been disabled',
+      );
+    }
+
     if (this.config.auth.requireVerifiedEmail && !user.emailVerifiedAt) {
       throw new ForbiddenError(
         'EMAIL_NOT_VERIFIED',
@@ -228,16 +235,20 @@ export class AuthService {
   }
 
   private async currentRoles(userId: string): Promise<string[]> {
-    try {
-      const user = await this.users.findById(userId);
-      return user.roles;
-    } catch {
+    const user = await this.users.findById(userId).catch(() => {
       // The account was removed between issuing the refresh token and now.
       throw new UnauthorizedError(
         'REFRESH_TOKEN_INVALID',
         'Account no longer exists',
       );
+    });
+    if (user.disabledAt) {
+      throw new ForbiddenError(
+        'ACCOUNT_DISABLED',
+        'This account has been disabled',
+      );
     }
+    return user.roles;
   }
 
   private signAccessToken(user: AuthenticatedUser): Promise<string> {

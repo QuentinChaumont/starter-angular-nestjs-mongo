@@ -30,7 +30,10 @@ export const appRoutes: Route[] = [
       {
         path: 'admin',
         canActivate: [roleGuard('admin')],
-        component: DashboardHome,
+        loadChildren: () =>
+          import('@org/frontend-features-admin-users').then(
+            (m) => m.ADMIN_USERS_ROUTES,
+          ),
       },
       {
         path: 'profile',

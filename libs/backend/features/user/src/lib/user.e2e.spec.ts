@@ -1,6 +1,10 @@
 import { INestApplication, Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { getConnectionToken, getModelToken, MongooseModule } from '@nestjs/mongoose';
+import {
+  getConnectionToken,
+  getModelToken,
+  MongooseModule,
+} from '@nestjs/mongoose';
 import {
   AppConfigModule,
   AppHttpModule,
@@ -70,7 +74,7 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
     lastName: validPayload.lastName,
   };
 
-  async function createUser(payload = validPayload) {
+  async function createUser(payload: Record<string, unknown> = validPayload) {
     const response = await fetch(baseUrl, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -97,14 +101,76 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
     expect(await response.json()).toMatchObject(publicFields);
   });
 
-  it('lists users', async () => {
+  it('lists users, paginated and newest-first', async () => {
     await createUser();
     await createUser({ ...validPayload, email: 'other@example.com' });
 
-    const response = await fetch(baseUrl);
-
+    const response = await fetch(`${baseUrl}?page=1&pageSize=1`);
     expect(response.status).toBe(200);
-    expect(await response.json()).toHaveLength(2);
+    const body: any = await response.json();
+    expect(body).toMatchObject({ total: 2, page: 1, pageSize: 1 });
+    expect(body.items).toHaveLength(1);
+    expect(body.items[0].email).toBe('other@example.com'); // newest first
+    expect(body.items[0]).toHaveProperty('disabledAt', null);
+  });
+
+  it('searches users by email / name', async () => {
+    await createUser();
+    await createUser({
+      ...validPayload,
+      email: 'zoe@example.com',
+      firstName: 'Zoe',
+    });
+
+    const body: any = await (await fetch(`${baseUrl}?search=zoe`)).json();
+    expect(body.total).toBe(1);
+    expect(body.items[0].email).toBe('zoe@example.com');
+  });
+
+  it('sets roles but refuses to drop the last admin', async () => {
+    const { body: admin } = await createUser({
+      ...validPayload,
+      email: 'boss@example.com',
+      roles: ['admin'],
+    });
+
+    const strip = () =>
+      fetch(`${baseUrl}/${admin._id}/roles`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ roles: [] }),
+      });
+
+    const refused = await strip();
+    expect(refused.status).toBe(400);
+    expect(((await refused.json()) as any).code).toBe('LAST_ADMIN');
+
+    // a second admin lifts the guard
+    await createUser({
+      ...validPayload,
+      email: 'boss2@example.com',
+      roles: ['admin'],
+    });
+    const ok = await strip();
+    expect(ok.status).toBe(200);
+    expect(((await ok.json()) as any).roles).toEqual([]);
+  });
+
+  it('disables and re-enables an account', async () => {
+    const { body: user } = await createUser();
+
+    const setStatus = (active: boolean) =>
+      fetch(`${baseUrl}/${user._id}/status`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ active }),
+      });
+
+    const disabled: any = await (await setStatus(false)).json();
+    expect(typeof disabled.disabledAt).toBe('string');
+
+    const enabled: any = await (await setStatus(true)).json();
+    expect(enabled.disabledAt).toBeNull();
   });
 
   it('updates a user', async () => {
@@ -144,9 +210,7 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
   });
 
   it('returns 404 for an unknown user', async () => {
-    const response = await fetch(
-      `${baseUrl}/${nonExistentObjectId()}`,
-    );
+    const response = await fetch(`${baseUrl}/${nonExistentObjectId()}`);
 
     expect(response.status).toBe(404);
     const body: any = await response.json();
@@ -165,7 +229,11 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
     const response = await fetch(baseUrl, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: 'not-an-email', firstName: '', lastName: 'Doe' }),
+      body: JSON.stringify({
+        email: 'not-an-email',
+        firstName: '',
+        lastName: 'Doe',
+      }),
     });
 
     expect(response.status).toBe(400);

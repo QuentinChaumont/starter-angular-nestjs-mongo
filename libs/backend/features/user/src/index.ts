@@ -9,3 +9,4 @@ export * from './lib/dto/create-user.dto';
 export * from './lib/dto/update-user.dto';
 export * from './lib/dto/update-profile.dto';
 export * from './lib/dto/delete-account.dto';
+export * from './lib/dto/admin-user.dto';

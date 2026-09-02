@@ -638,4 +638,64 @@ describe('Auth (e2e, real Mongo instance)', () => {
       expect(withNew.status).toBe(201);
     });
   });
+
+  describe('admin console — disable an account', () => {
+    const cookie = (response: Response, name: string): string => {
+      const line = response.headers
+        .getSetCookie()
+        .find((c) => c.startsWith(`${name}=`));
+      return line ? line.slice(name.length + 1).split(';')[0] : '';
+    };
+
+    it('a disabled account cannot login or refresh (403 ACCOUNT_DISABLED)', async () => {
+      const email = 'to-be-disabled@example.com';
+      const password = 'Str0ng!Passw0rd';
+      const created = await app
+        .get(UserService)
+        .create({ email, password, firstName: 'Dis', lastName: 'Abled' });
+
+      // open a session, then have an admin disable the account
+      const session = await fetch(`${authBaseUrl}/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const refresh = cookie(session, 'refresh_token');
+      const csrf = cookie(session, 'csrf-token');
+
+      const { body: adminBody } = await login(adminCredentials);
+      const disable = await fetch(
+        `${usersBaseUrl}/${created._id.toString()}/status`,
+        {
+          method: 'PATCH',
+          headers: {
+            'content-type': 'application/json',
+            authorization: `Bearer ${adminBody.accessToken}`,
+          },
+          body: JSON.stringify({ active: false }),
+        },
+      );
+      expect(disable.status).toBe(200);
+
+      // refresh is refused
+      const refreshRes = await fetch(`${authBaseUrl}/refresh`, {
+        method: 'POST',
+        headers: {
+          cookie: `refresh_token=${refresh}; csrf-token=${csrf}`,
+          'x-csrf-token': csrf,
+        },
+      });
+      expect(refreshRes.status).toBe(403);
+      expect(((await refreshRes.json()) as any).code).toBe('ACCOUNT_DISABLED');
+
+      // and so is a fresh login
+      const relogin = await fetch(`${authBaseUrl}/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      expect(relogin.status).toBe(403);
+      expect(((await relogin.json()) as any).code).toBe('ACCOUNT_DISABLED');
+    });
+  });
 });

@@ -57,6 +57,7 @@ export abstract class BaseRepository<TRawDoc, TCreateInput = Partial<TRawDoc>> {
   async findPage(
     filter: QueryFilter<TRawDoc> = {},
     pagination: PaginationQuery = {},
+    sort?: Record<string, 1 | -1>,
   ): Promise<PaginatedResponse<HydratedDocument<TRawDoc>>> {
     const page =
       pagination.page && pagination.page > 0 ? pagination.page : DEFAULT_PAGE;
@@ -66,8 +67,13 @@ export abstract class BaseRepository<TRawDoc, TCreateInput = Partial<TRawDoc>> {
         : DEFAULT_PAGE_SIZE;
     const skip = (page - 1) * pageSize;
 
+    const query = this.model.find(filter).skip(skip).limit(pageSize);
+    if (sort) {
+      query.sort(sort);
+    }
+
     const [items, total] = await Promise.all([
-      this.model.find(filter).skip(skip).limit(pageSize).exec(),
+      query.exec(),
       this.model.countDocuments(filter).exec(),
     ]);
 
@@ -75,9 +81,7 @@ export abstract class BaseRepository<TRawDoc, TCreateInput = Partial<TRawDoc>> {
   }
 
   async create(input: TCreateInput): Promise<HydratedDocument<TRawDoc>> {
-    const created = await this.model.create(
-      input as Partial<TRawDoc>,
-    );
+    const created = await this.model.create(input as Partial<TRawDoc>);
     return created as HydratedDocument<TRawDoc>;
   }
 

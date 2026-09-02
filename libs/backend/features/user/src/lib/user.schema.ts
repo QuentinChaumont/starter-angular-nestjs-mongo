@@ -14,7 +14,7 @@ import { HydratedDocument } from 'mongoose';
   timestamps: true,
   toJSON: {
     transform: (_doc, ret: Record<string, unknown>) => {
-      delete ret["password"];
+      delete ret['password'];
       return ret;
     },
   },
@@ -39,6 +39,11 @@ export class User {
    * Written by the `auth-reset` brick (V2.1 step 33). */
   @Prop()
   emailVerifiedAt?: Date;
+
+  /** Set when an admin disables the account (V2.1 step 35). A disabled
+   * account can't `login` or `refresh`. */
+  @Prop()
+  disabledAt?: Date;
 
   createdAt!: Date;
   updatedAt!: Date;

@@ -9,6 +9,7 @@ export interface UserModel {
   lastName: string;
   roles: string[];
   emailVerifiedAt?: Date;
+  disabledAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

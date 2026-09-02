@@ -19,6 +19,9 @@
       "path": "../../libs/frontend/features/profile/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/frontend/features/admin-users/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/frontend/feedback/tsconfig.lib.json"
     },
     {

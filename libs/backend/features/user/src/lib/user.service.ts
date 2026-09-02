@@ -6,10 +6,16 @@ import {
   hashPassword,
   verifyPassword,
 } from '@org/backend-core';
-import type { UserProfile } from '@org/shared-contracts';
+import type {
+  PaginatedResponse,
+  UserProfile,
+  UserSummary,
+} from '@org/shared-contracts';
 import { UserEvents } from './user-events';
 import { UserRepository } from './user.repository';
 import { User, UserDocument } from './user.schema';
+
+const ADMIN_ROLE = 'admin';
 
 /** Maps a persisted user to the profile contract shared with the frontend. */
 export function toUserProfile(user: UserDocument): UserProfile {
@@ -24,6 +30,18 @@ export function toUserProfile(user: UserDocument): UserProfile {
       : null,
     createdAt: user.createdAt.toISOString(),
   };
+}
+
+/** The admin-list row: `UserProfile` plus `disabledAt`. */
+export function toUserSummary(user: UserDocument): UserSummary {
+  return {
+    ...toUserProfile(user),
+    disabledAt: user.disabledAt ? user.disabledAt.toISOString() : null,
+  };
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 const MONGO_DUPLICATE_KEY_CODE = 11000;
@@ -133,6 +151,67 @@ export class UserService {
 
   async findAll(): Promise<UserDocument[]> {
     return this.repository.findMany();
+  }
+
+  /* ---- admin console (V2.1 step 35) ---- */
+
+  /** Paginated user list, newest first, optional email/name search. */
+  async listUsers(query: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+  }): Promise<PaginatedResponse<UserSummary>> {
+    const search = query.search?.trim();
+    const filter = search
+      ? {
+          $or: (['email', 'firstName', 'lastName'] as const).map((field) => ({
+            [field]: { $regex: escapeRegex(search), $options: 'i' },
+          })),
+        }
+      : {};
+
+    const page = await this.repository.findPage(
+      filter,
+      { page: query.page, pageSize: query.pageSize },
+      { createdAt: -1 },
+    );
+    return { ...page, items: page.items.map(toUserSummary) };
+  }
+
+  /** Sets a user's roles. Refuses to remove `admin` from the last admin. */
+  async setRoles(id: string, roles: string[]): Promise<UserSummary> {
+    const user = await this.findById(id);
+
+    const losesAdmin =
+      user.roles.includes(ADMIN_ROLE) && !roles.includes(ADMIN_ROLE);
+    if (
+      losesAdmin &&
+      (await this.repository.count({ roles: ADMIN_ROLE })) <= 1
+    ) {
+      throw new ValidationError(
+        'LAST_ADMIN',
+        'Cannot remove the last administrator',
+      );
+    }
+
+    user.roles = [...new Set(roles)];
+    await user.save();
+    return toUserSummary(user);
+  }
+
+  /** Enables / disables an account. A disabled account can't `login` or
+   * `refresh` — see the `403 ACCOUNT_DISABLED` gate in `AuthService`. */
+  async setStatus(id: string, active: boolean): Promise<UserSummary> {
+    const user = await this.findById(id);
+
+    if (active) {
+      user.disabledAt = undefined;
+    } else if (!user.disabledAt) {
+      user.disabledAt = new Date();
+    }
+    await user.save();
+
+    return toUserSummary(user);
   }
 
   async create(input: Partial<User>): Promise<UserDocument> {
