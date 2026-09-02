@@ -414,10 +414,14 @@ npx nx g @org/starter-plugin:frontend-admin-users
 
 Turns the dashboard's placeholder `/app/admin` route into a real console
 (needs the dashboard + feedback bricks) — lazy-loaded, still behind the
-route's `roleGuard('admin')`:
+route's `roleGuard('admin')`. It's built on `<lib-data-table>` (see
+**`frontend-ui`** below): per-column contains filters + sort in the header,
+server-side pagination.
 
-- `GET /api/users?page=&pageSize=&search=` → **server-side** paginated
-  `UserSummary` list, newest first, search on email/name.
+- `GET /api/users?page=&pageSize=&search=&email=&name=&roles=&sort=&dir=`
+  → **server-side** paginated `UserSummary` list. `search` matches
+  email/name at once; `email` / `name` / `roles` are per-column (contains,
+  case-insensitive); `sort` ∈ {email,name,status,verified,createdAt}.
 - `PATCH /api/users/:id/roles` — grant/revoke roles; removing `admin` from
   the **last** admin is refused (`400 LAST_ADMIN`).
 - `PATCH /api/users/:id/status` `{ active }` — a disabled account can no
@@ -425,6 +429,20 @@ route's `roleGuard('admin')`:
   No hard delete — disable instead.
 
 Sensitive actions go through a `DialogService.confirm()`.
+
+### `frontend-ui` — shared UI primitives
+
+Always present (not a brick). No business logic, no HTTP.
+
+- **`<lib-data-table>`** — the default for every list/table: `[columns]` +
+  a `[dataSource]` that turns a `DataQuery`
+  (`{ page, pageSize, sort, dir, filters }`) into `{ items, total }`.
+  Contains-filter and sort live in the column headers; pagination below;
+  the trailing actions cell is projected via `libDataTableRowActions`.
+  Call `.reload()` after a mutation.
+- **`<lib-password-reveal-button>`** — a show/hide toggle dropped in as a
+  `matSuffix` next to any password `<input>` (used on login, register,
+  reset-password and the profile page).
 
 ## Testing
 

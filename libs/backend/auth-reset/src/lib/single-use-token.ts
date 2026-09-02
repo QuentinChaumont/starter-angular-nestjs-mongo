@@ -26,6 +26,18 @@ export abstract class SingleUseTokenRepository<
     return this.findOne({ tokenHash } as QueryFilter<T>);
   }
 
+  /** Issue time of the most recent token for a user (consumed or not), or
+   * `null` if they never had one. Relies on the schema's `timestamps`. */
+  async latestIssuedAt(userId: string): Promise<Date | null> {
+    const row = await this.model
+      .findOne({ userId } as QueryFilter<T>)
+      .sort({ createdAt: -1 })
+      .select('createdAt')
+      .lean<{ createdAt?: Date } | null>()
+      .exec();
+    return row?.createdAt ?? null;
+  }
+
   async consumeById(id: string): Promise<void> {
     await this.updateById(id, {
       consumedAt: new Date(),
@@ -76,5 +88,10 @@ export abstract class SingleUseTokenService<T extends SingleUseTokenFields> {
 
   invalidateAllForUser(userId: string): Promise<void> {
     return this.repository.consumeAllForUser(userId);
+  }
+
+  /** When the last token for this user was issued (for resend cooldowns). */
+  latestIssuedAt(userId: string): Promise<Date | null> {
+    return this.repository.latestIssuedAt(userId);
   }
 }

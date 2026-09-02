@@ -10,7 +10,7 @@ test.describe('authentication', () => {
     await page.getByLabel('First name').fill('Nora');
     await page.getByLabel('Last name').fill('New');
     await page.getByLabel('Email').fill(email);
-    await page.getByLabel('Password').fill('Passw0rd!new');
+    await page.getByLabel('Password', { exact: true }).fill('Passw0rd!new');
     await page.getByRole('button', { name: 'Create account' }).click();
 
     await expect(page).toHaveURL(/\/app$/);

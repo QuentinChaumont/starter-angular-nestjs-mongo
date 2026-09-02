@@ -127,6 +127,40 @@ describe('User CRUD (e2e, real Mongo instance)', () => {
     expect(body.items[0].email).toBe('zoe@example.com');
   });
 
+  it('filters per column (contains, case-insensitive) and sorts', async () => {
+    await createUser({
+      ...validPayload,
+      email: 'ana@example.com',
+      lastName: 'Zephyr',
+    });
+    await createUser({
+      ...validPayload,
+      email: 'bea@example.com',
+      lastName: 'Adams',
+    });
+    await createUser({
+      ...validPayload,
+      email: 'cid@other.test',
+      lastName: 'Marsh',
+    });
+
+    const byEmail: any = await (await fetch(`${baseUrl}?email=EXAMPLE`)).json();
+    expect(byEmail.total).toBe(2);
+
+    const byName: any = await (await fetch(`${baseUrl}?name=adam`)).json();
+    expect(byName.total).toBe(1);
+    expect(byName.items[0].email).toBe('bea@example.com');
+
+    const sorted: any = await (
+      await fetch(`${baseUrl}?sort=email&dir=asc`)
+    ).json();
+    expect(sorted.items.map((u: any) => u.email)).toEqual([
+      'ana@example.com',
+      'bea@example.com',
+      'cid@other.test',
+    ]);
+  });
+
   it('sets roles but refuses to drop the last admin', async () => {
     const { body: admin } = await createUser({
       ...validPayload,

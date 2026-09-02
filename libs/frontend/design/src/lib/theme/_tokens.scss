@@ -5,27 +5,46 @@
 // `_theme.scss` / step 24's ThemeService) flips the whole palette. The
 // runtime settings panel overrides individual properties on
 // `document.documentElement`.
+//
+// Direction: a quiet developer-console surface — neutral chrome, hairline
+// separators, one indigo accent. The accent is reserved for the active
+// nav item, the sorted column, focus rings and primary buttons; never for
+// decoration.
 
 :root {
   // colour — light-dark(<light>, <dark>)
-  --app-color-primary: light-dark(#4f46e5, #a5b4fc);
-  --app-color-on-primary: light-dark(#ffffff, #1e1b4b);
-  --app-color-secondary: light-dark(#0891b2, #67e8f9);
-  --app-color-on-secondary: light-dark(#ffffff, #083344);
-  --app-color-error: light-dark(#dc2626, #f87171);
-  --app-color-on-error: light-dark(#ffffff, #450a0a);
-  --app-color-background: light-dark(#f7f7f8, #131316);
-  --app-color-surface: light-dark(#ffffff, #1c1c20);
-  --app-color-on-surface: light-dark(#1a1a1e, #e8e8ea);
-  --app-color-surface-variant: light-dark(#ececef, #2b2b30);
-  --app-color-outline: light-dark(#c7c7cc, #4a4a52);
+  --app-color-primary: light-dark(#4b57d4, #97a4ff);
+  --app-color-on-primary: light-dark(#ffffff, #10132e);
+  --app-color-secondary: light-dark(#0e7490, #67e8f9);
+  --app-color-on-secondary: light-dark(#ffffff, #062c38);
+  --app-color-error: light-dark(#c22b1f, #f4776a);
+  --app-color-on-error: light-dark(#ffffff, #3a0906);
+  --app-color-background: light-dark(#f4f5f7, #0f1012);
+  --app-color-surface: light-dark(#ffffff, #17181b);
+  --app-color-on-surface: light-dark(#1b1d21, #e4e6e9);
+  --app-color-surface-variant: light-dark(#eef0f3, #212327);
+  --app-color-outline: light-dark(#d6d9de, #2d3036);
 
-  // shape
-  --app-radius-sm: 4px;
-  --app-radius-md: 8px;
-  --app-radius-lg: 16px;
+  // shape — tight; a developer tool, not a marketing card wall
+  --app-radius-sm: 3px;
+  --app-radius-md: 5px;
+  --app-radius-lg: 8px;
   --app-radius-pill: 999px;
 
   // typography
   --app-font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  // Data voice: identifiers, roles, counts, timestamps, keyboard hints.
+  --app-font-mono:
+    'JetBrains Mono', ui-monospace, 'SF Mono', 'Menlo', 'Consolas', monospace;
+
+  // spacing grid — 4px base, referenced by shell + feature pages
+  --app-space-1: 4px;
+  --app-space-2: 8px;
+  --app-space-3: 12px;
+  --app-space-4: 16px;
+  --app-space-5: 20px;
+  --app-space-6: 24px;
+
+  // one elevation only — a hairline, not a shadow
+  --app-border-hairline: 1px solid var(--app-color-outline);
 }

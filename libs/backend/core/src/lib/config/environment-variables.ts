@@ -30,6 +30,9 @@ export interface EnvironmentVariables {
   RESET_TOKEN_TTL_MINUTES?: number;
   /** Email-verification link lifetime, hours (default 24). `auth-reset`. */
   VERIFICATION_TOKEN_TTL_HOURS?: number;
+  /** Min seconds between two manual "resend verification email" requests
+   * for one account (default 300). `auth-reset`. */
+  VERIFICATION_RESEND_COOLDOWN_SECONDS?: number;
   OIDC_ISSUER?: string;
   OIDC_CLIENT_ID?: string;
   OIDC_CLIENT_SECRET?: string;
@@ -75,6 +78,7 @@ export const ENVIRONMENT_VARIABLE_NAMES: readonly (keyof EnvironmentVariables)[]
     'AUTH_REQUIRE_VERIFIED_EMAIL',
     'RESET_TOKEN_TTL_MINUTES',
     'VERIFICATION_TOKEN_TTL_HOURS',
+    'VERIFICATION_RESEND_COOLDOWN_SECONDS',
     'OIDC_ISSUER',
     'OIDC_CLIENT_ID',
     'OIDC_CLIENT_SECRET',

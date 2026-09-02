@@ -26,7 +26,7 @@ import { ThemeSettingsPanel } from '@org/frontend-design';
       <mat-icon>account_circle</mat-icon>
     </button>
 
-    <mat-menu #menu="matMenu">
+    <mat-menu #menu="matMenu" class="user-menu__panel">
       <div class="user-menu__header">{{ roleLabel() }}</div>
       <button mat-menu-item (click)="goProfile()">
         <mat-icon>person</mat-icon>
@@ -50,9 +50,11 @@ import { ThemeSettingsPanel } from '@org/frontend-design';
   `,
   styles: `
     .user-menu__header {
-      padding: 8px 16px;
-      opacity: 0.7;
-      font-size: 0.85rem;
+      padding: 10px 16px 6px;
+      font: 600 0.6875rem/1 var(--app-font-mono);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--app-color-on-surface) 50%, transparent);
     }
   `,
 })

@@ -21,3 +21,19 @@
 - The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
 
 <!-- nx configuration end-->
+
+# Playwright E2E tests
+
+When writing or fixing Playwright E2E tests (`apps/frontend-e2e`):
+
+- Do not explore the application unless necessary.
+- Reuse existing fixtures, page objects and helpers (`src/support/`).
+- Never create test prerequisites through the UI if an API helper exists
+  (`apiRegister`, `promoteToAdmin`, …).
+- Reuse `storageState` for authentication.
+- Prefer `getByTestId()`, `getByRole()` and `getByLabel()`.
+- Never use arbitrary `waitForTimeout()`.
+- Run only the test file being modified.
+- During development use one browser only: Chromium.
+- Do not run the full E2E suite unless explicitly requested.
+- Fix the test with the smallest possible number of browser executions.

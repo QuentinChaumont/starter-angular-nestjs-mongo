@@ -1,15 +1,17 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import {
-  FormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { PasswordRevealButton } from '@org/frontend-ui';
 import { isApiError } from '@org/shared-contracts';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
@@ -25,6 +27,7 @@ import { sanitizeRedirect } from '../sanitize-redirect';
     MatInputModule,
     MatButtonModule,
     MatProgressBarModule,
+    PasswordRevealButton,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -37,17 +40,24 @@ import { sanitizeRedirect } from '../sanitize-redirect';
       <form [formGroup]="form" (ngSubmit)="submit()">
         <mat-form-field appearance="outline">
           <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" autocomplete="username" />
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            autocomplete="username"
+          />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Password</mat-label>
           <input
+            #password
             matInput
             type="password"
             formControlName="password"
             autocomplete="current-password"
           />
+          <lib-password-reveal-button matSuffix [input]="password" />
         </mat-form-field>
 
         @if (error()) {

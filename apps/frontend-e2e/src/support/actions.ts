@@ -6,7 +6,8 @@ export async function submitLogin(
   creds: { email: string; password: string },
 ): Promise<void> {
   await page.getByLabel('Email').fill(creds.email);
-  await page.getByLabel('Password').fill(creds.password);
+  // exact — a "Show password" reveal button shares the substring.
+  await page.getByLabel('Password', { exact: true }).fill(creds.password);
   await page.getByRole('button', { name: 'Sign in' }).click();
 }
 

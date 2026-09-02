@@ -184,6 +184,7 @@ describe('AppConfigService', () => {
       requireVerifiedEmail: false,
       resetTokenTtlMinutes: 60,
       verificationTokenTtlHours: 24,
+      verificationResendCooldownSeconds: 300,
     });
 
     expect(
@@ -192,12 +193,14 @@ describe('AppConfigService', () => {
         AUTH_REQUIRE_VERIFIED_EMAIL: true,
         RESET_TOKEN_TTL_MINUTES: 15,
         VERIFICATION_TOKEN_TTL_HOURS: 48,
+        VERIFICATION_RESEND_COOLDOWN_SECONDS: 60,
       }).auth,
     ).toEqual({
       registrationEnabled: true,
       requireVerifiedEmail: true,
       resetTokenTtlMinutes: 15,
       verificationTokenTtlHours: 48,
+      verificationResendCooldownSeconds: 60,
     });
   });
 

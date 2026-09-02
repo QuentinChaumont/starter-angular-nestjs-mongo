@@ -250,5 +250,26 @@ describe('auth-reset (e2e, real Mongo instance)', () => {
       const token = linkToken(verifyMail?.text ?? '');
       expect((await post('/auth/verify-email', { token })).status).toBe(204);
     });
+
+    it('rate-limits manual resend-verification per account (429)', async () => {
+      const email = 'resend-cooldown@example.com';
+      const register = await post('/auth/register', {
+        email,
+        password,
+        firstName: 'Re',
+        lastName: 'Send',
+      });
+      const { accessToken } = (await register.json()) as {
+        accessToken: string;
+      };
+
+      // an email already went out on sign-up → the immediate manual resend
+      // is inside the cooldown window
+      const blocked = await post('/auth/resend-verification', {}, accessToken);
+      expect(blocked.status).toBe(429);
+      expect((await blocked.json()) as { code: string }).toMatchObject({
+        code: 'VERIFICATION_RESEND_COOLDOWN',
+      });
+    });
   });
 });

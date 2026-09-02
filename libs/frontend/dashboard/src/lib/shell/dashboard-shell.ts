@@ -53,11 +53,19 @@ function writeOpenPref(open: boolean): void {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <mat-toolbar color="primary" class="shell__bar">
-      <button mat-icon-button (click)="toggle()" aria-label="Toggle navigation">
-        <mat-icon>menu</mat-icon>
+    <mat-toolbar class="shell__bar">
+      <button
+        mat-icon-button
+        class="shell__toggle"
+        (click)="toggle()"
+        aria-label="Toggle navigation"
+      >
+        <mat-icon>{{ opened() ? 'menu_open' : 'menu' }}</mat-icon>
       </button>
-      <span class="shell__title">{{ title }}</span>
+      <span class="shell__brand">
+        <span class="shell__mark" aria-hidden="true">◆</span>
+        <span class="shell__title">{{ title }}</span>
+      </span>
       <span class="shell__spacer"></span>
       <lib-user-menu></lib-user-menu>
     </mat-toolbar>
@@ -83,21 +91,52 @@ function writeOpenPref(open: boolean): void {
       flex-direction: column;
       min-height: 100vh;
     }
+    .shell__bar {
+      --mat-toolbar-standard-height: 48px;
+      --mat-toolbar-mobile-height: 48px;
+      block-size: 48px;
+      min-block-size: 48px;
+      padding-inline: 8px 12px;
+      gap: 4px;
+      background: var(--app-color-surface);
+      color: var(--app-color-on-surface);
+      border-block-end: var(--app-border-hairline);
+    }
+    .shell__toggle {
+      color: color-mix(in srgb, var(--app-color-on-surface) 62%, transparent);
+    }
+    .shell__brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .shell__mark {
+      font-size: 0.75rem;
+      color: var(--app-color-primary);
+    }
     .shell__title {
-      font: 500 1.125rem/1 var(--app-font-family);
+      font: 600 0.9375rem/1 var(--app-font-family);
+      letter-spacing: -0.01em;
     }
     .shell__spacer {
       flex: 1;
     }
     .shell__container {
       flex: 1;
+      background: var(--app-color-background);
     }
     .shell__nav {
-      inline-size: 240px;
-      border-inline-end: 1px solid var(--app-color-outline);
+      inline-size: 216px;
+      background: var(--app-color-background);
+      border-inline-end: var(--app-border-hairline);
     }
     .shell__content {
-      padding: 24px;
+      padding: var(--app-space-5);
+    }
+    @media (max-width: 599.98px) {
+      .shell__content {
+        padding: var(--app-space-4) var(--app-space-3);
+      }
     }
   `,
 })

@@ -1,5 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,6 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { isApiError } from '@org/shared-contracts';
+import { PasswordRevealButton } from '@org/frontend-ui';
 import { ResetService } from './reset.service';
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -20,6 +26,7 @@ const MIN_PASSWORD_LENGTH = 8;
     MatInputModule,
     MatButtonModule,
     MatProgressBarModule,
+    PasswordRevealButton,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -39,11 +46,13 @@ const MIN_PASSWORD_LENGTH = 8;
           <mat-form-field appearance="outline">
             <mat-label>New password</mat-label>
             <input
+              #password
               matInput
               type="password"
               formControlName="password"
               autocomplete="new-password"
             />
+            <lib-password-reveal-button matSuffix [input]="password" />
             <mat-hint>At least {{ minPasswordLength }} characters</mat-hint>
           </mat-form-field>
 

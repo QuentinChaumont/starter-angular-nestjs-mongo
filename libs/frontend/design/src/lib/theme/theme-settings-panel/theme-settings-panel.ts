@@ -73,10 +73,10 @@ import {
     }
     .theme-panel__heading {
       margin: 4px 0 0;
-      font: 500 0.75rem/1 var(--app-font-family);
+      font: 600 0.6875rem/1 var(--app-font-mono);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      opacity: 0.7;
+      letter-spacing: 0.08em;
+      color: color-mix(in srgb, var(--app-color-on-surface) 50%, transparent);
     }
     .theme-panel__row {
       display: flex;

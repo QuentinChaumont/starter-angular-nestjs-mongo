@@ -17,6 +17,17 @@ import { User, UserDocument } from './user.schema';
 
 const ADMIN_ROLE = 'admin';
 
+/** Whitelisted `?sort=` values for the admin list → the Mongo field they
+ * order by. Anything else falls back to `createdAt`. */
+export const USER_SORT_FIELDS = {
+  email: 'email',
+  name: 'firstName',
+  status: 'disabledAt',
+  verified: 'emailVerifiedAt',
+  createdAt: 'createdAt',
+} as const;
+type UserSortKey = keyof typeof USER_SORT_FIELDS;
+
 /** Maps a persisted user to the profile contract shared with the frontend. */
 export function toUserProfile(user: UserDocument): UserProfile {
   return {
@@ -155,25 +166,56 @@ export class UserService {
 
   /* ---- admin console (V2.1 step 35) ---- */
 
-  /** Paginated user list, newest first, optional email/name search. */
+  /**
+   * Paginated user list. `search` matches email / first / last name at
+   * once; `filters` is per-column (contains, case-insensitive); `sort` is
+   * one of {@link USER_SORT_FIELDS} with `dir` (default `createdAt` desc).
+   */
   async listUsers(query: {
     page?: number;
     pageSize?: number;
     search?: string;
+    filters?: Partial<Record<'email' | 'name' | 'roles', string>>;
+    sort?: string;
+    dir?: 'asc' | 'desc';
   }): Promise<PaginatedResponse<UserSummary>> {
+    const clauses: Record<string, unknown>[] = [];
+
+    const contains = (value: string) => ({
+      $regex: escapeRegex(value.trim()),
+      $options: 'i',
+    });
+
     const search = query.search?.trim();
-    const filter = search
-      ? {
-          $or: (['email', 'firstName', 'lastName'] as const).map((field) => ({
-            [field]: { $regex: escapeRegex(search), $options: 'i' },
-          })),
-        }
-      : {};
+    if (search) {
+      clauses.push({
+        $or: (['email', 'firstName', 'lastName'] as const).map((field) => ({
+          [field]: contains(search),
+        })),
+      });
+    }
+    if (query.filters?.email?.trim()) {
+      clauses.push({ email: contains(query.filters.email) });
+    }
+    if (query.filters?.name?.trim()) {
+      const name = contains(query.filters.name);
+      clauses.push({ $or: [{ firstName: name }, { lastName: name }] });
+    }
+    if (query.filters?.roles?.trim()) {
+      clauses.push({ roles: contains(query.filters.roles) });
+    }
+
+    const filter = clauses.length ? { $and: clauses } : {};
+    const sortField =
+      USER_SORT_FIELDS[query.sort as UserSortKey] ?? 'createdAt';
+    const sort: Record<string, 1 | -1> = {
+      [sortField]: query.dir === 'asc' ? 1 : -1,
+    };
 
     const page = await this.repository.findPage(
       filter,
       { page: query.page, pageSize: query.pageSize },
-      { createdAt: -1 },
+      sort,
     );
     return { ...page, items: page.items.map(toUserSummary) };
   }

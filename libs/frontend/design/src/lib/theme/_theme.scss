@@ -17,7 +17,7 @@
 // the Material Icons font that `<mat-icon>` needs to render glyphs instead of
 // literal text. Loaded from Google Fonts for a zero-config start; self-host
 // them for production (see DESIGN.md).
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 
 html {
@@ -60,8 +60,35 @@ body {
   background: var(--app-color-background);
   color: var(--app-color-on-surface);
   font-family: var(--app-font-family);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
 * {
   box-sizing: border-box;
+}
+
+// One consistent keyboard-focus ring across the app, tuned to the accent.
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--app-color-primary);
+  outline-offset: 1px;
+  border-radius: var(--app-radius-sm);
+}
+
+// Slim, neutral scrollbars — chrome should recede.
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--app-color-outline) transparent;
+}
+*::-webkit-scrollbar {
+  inline-size: 10px;
+  block-size: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--app-color-outline);
+  border-radius: var(--app-radius-pill);
+  border: 2px solid transparent;
+  background-clip: content-box;
 }

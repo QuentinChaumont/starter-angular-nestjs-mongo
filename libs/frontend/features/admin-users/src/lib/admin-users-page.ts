@@ -2,25 +2,23 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
-  OnInit,
+  TemplateRef,
+  computed,
   inject,
-  signal,
+  viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { MatTableModule } from '@angular/material/table';
 import { isApiError } from '@org/shared-contracts';
 import type { UserSummary } from '@org/shared-contracts';
 import { DialogService, NotificationService } from '@org/frontend-feedback';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import {
+  DataTable,
+  DataTableRowActionsDirective,
+  type DataCellContext,
+  type DataColumn,
+  type DataQuery,
+} from '@org/frontend-ui';
 import { AdminUsersService } from './admin-users.service';
-
-const PAGE_SIZE = 20;
 
 function apiMessage(err: unknown, fallback: string): string {
   const body = err instanceof HttpErrorResponse ? err.error : null;
@@ -29,141 +27,144 @@ function apiMessage(err: unknown, fallback: string): string {
 
 @Component({
   selector: 'lib-admin-users-page',
-  imports: [
-    ReactiveFormsModule,
-    MatTableModule,
-    MatPaginatorModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatProgressBarModule,
-  ],
+  imports: [MatButtonModule, DataTable, DataTableRowActionsDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="admin-users">
-      <h1>Users</h1>
+      <header class="admin-users__toolbar">
+        <div class="admin-users__heading">
+          <h1>Users</h1>
+          <p>Grant roles and enable or disable accounts.</p>
+        </div>
+      </header>
 
-      <mat-form-field appearance="outline" class="admin-users__search">
-        <mat-label>Search by email or name</mat-label>
-        <input matInput [formControl]="search" />
-      </mat-form-field>
+      <ng-template #emailCell let-user let-value="value">
+        <span class="admin-users__email">
+          <span class="mono">{{ value }}</span>
+          @if (!user.emailVerifiedAt) {
+            <span class="admin-users__tag">unverified</span>
+          }
+        </span>
+      </ng-template>
 
-      @if (loading()) {
-        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-      }
-      @if (error(); as e) {
-        <p role="alert">{{ e }}</p>
-      }
-
-      <table mat-table [dataSource]="items()">
-        <ng-container matColumnDef="email">
-          <th mat-header-cell *matHeaderCellDef>Email</th>
-          <td mat-cell *matCellDef="let u">
-            {{ u.email }}
-            @if (!u.emailVerifiedAt) {
-              <span class="admin-users__tag">unverified</span>
-            }
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef>Name</th>
-          <td mat-cell *matCellDef="let u">
-            {{ u.firstName }} {{ u.lastName }}
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="roles">
-          <th mat-header-cell *matHeaderCellDef>Roles</th>
-          <td mat-cell *matCellDef="let u">{{ u.roles.join(', ') || '—' }}</td>
-        </ng-container>
-        <ng-container matColumnDef="status">
-          <th mat-header-cell *matHeaderCellDef>Status</th>
-          <td mat-cell *matCellDef="let u">
-            {{ u.disabledAt ? 'Disabled' : 'Active' }}
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
-          <td mat-cell *matCellDef="let u">
-            <button mat-button (click)="toggleAdmin(u)">
-              {{ isAdmin(u) ? 'Revoke admin' : 'Grant admin' }}
-            </button>
-            <button mat-button color="warn" (click)="toggleStatus(u)">
-              {{ u.disabledAt ? 'Enable' : 'Disable' }}
-            </button>
-          </td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="columns"></tr>
-        <tr mat-row *matRowDef="let row; columns: columns"></tr>
-      </table>
-
-      @if (!loading() && items().length === 0) {
-        <p class="admin-users__empty">No users match.</p>
-      }
-
-      <mat-paginator
-        [length]="total()"
-        [pageSize]="pageSize"
-        [pageIndex]="pageIndex()"
-        [pageSizeOptions]="[10, 20, 50]"
-        (page)="onPage($event)"
-      ></mat-paginator>
+      <lib-data-table
+        [columns]="columns()"
+        [dataSource]="load"
+        [pageSize]="20"
+        emptyMessage="No users match."
+        errorMessage="Could not load users."
+      >
+        <ng-template libDataTableRowActions let-user>
+          <button mat-button (click)="toggleAdmin(user)">
+            {{ isAdmin(user) ? 'Revoke admin' : 'Grant admin' }}
+          </button>
+          <button
+            mat-button
+            class="admin-users__danger"
+            [class.admin-users__danger--off]="user.disabledAt"
+            (click)="toggleStatus(user)"
+          >
+            {{ user.disabledAt ? 'Enable' : 'Disable' }}
+          </button>
+        </ng-template>
+      </lib-data-table>
     </section>
   `,
   styles: `
     .admin-users {
-      padding: 24px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: var(--app-space-4);
+      max-width: 1180px;
     }
-    .admin-users table {
-      width: 100%;
+    .admin-users__toolbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--app-space-4);
+      padding-block-end: var(--app-space-3);
+      border-block-end: var(--app-border-hairline);
     }
-    .admin-users__search {
-      max-width: 360px;
+    .admin-users__heading h1 {
+      margin: 0;
+      font-size: 1.0625rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .admin-users__heading p {
+      margin: 3px 0 0;
+      font-size: 0.8125rem;
+      color: color-mix(in srgb, var(--app-color-on-surface) 58%, transparent);
+    }
+    .admin-users__email {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .admin-users .mono {
+      font-family: var(--app-font-mono);
+      font-size: 0.75rem;
     }
     .admin-users__tag {
-      margin-left: 6px;
-      padding: 1px 6px;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      background: var(--app-color-warn-container, #fff3cd);
-      color: var(--app-color-on-warn-container, #664d03);
+      padding: 1px 5px;
+      border-radius: var(--app-radius-sm);
+      border: var(--app-border-hairline);
+      font: 500 0.6875rem/1.4 var(--app-font-mono);
+      letter-spacing: 0.02em;
+      color: color-mix(in srgb, var(--app-color-on-surface) 58%, transparent);
+    }
+    .admin-users__danger:not(.admin-users__danger--off) {
+      color: var(--app-color-error);
+    }
+    .admin-users ::ng-deep .data-table__actions .mdc-button {
+      --mdc-text-button-container-height: 28px;
+      min-width: 0;
+      padding-inline: 8px;
+      font-size: 0.75rem;
+      letter-spacing: 0;
     }
   `,
 })
-export class AdminUsersPage implements OnInit {
+export class AdminUsersPage {
   private readonly service = inject(AdminUsersService);
   private readonly dialog = inject(DialogService, { optional: true });
   private readonly notify = inject(NotificationService, { optional: true });
 
-  protected readonly pageSize = PAGE_SIZE;
-  protected readonly columns = ['email', 'name', 'roles', 'status', 'actions'];
-  protected readonly search = new FormControl('', { nonNullable: true });
+  private readonly table = viewChild.required(DataTable);
+  private readonly emailCell =
+    viewChild.required<TemplateRef<DataCellContext<UserSummary>>>('emailCell');
 
-  protected readonly items = signal<UserSummary[]>([]);
-  protected readonly total = signal(0);
-  protected readonly pageIndex = signal(0);
-  protected readonly loading = signal(false);
-  protected readonly error = signal<string | null>(null);
+  protected readonly columns = computed<DataColumn<UserSummary>[]>(() => [
+    {
+      key: 'email',
+      label: 'Email',
+      sortable: true,
+      filterable: true,
+      value: (u) => u.email,
+      cell: this.emailCell(),
+    },
+    {
+      key: 'name',
+      label: 'Name',
+      sortable: true,
+      filterable: true,
+      value: (u) => `${u.firstName} ${u.lastName}`.trim(),
+    },
+    {
+      key: 'roles',
+      label: 'Roles',
+      filterable: true,
+      value: (u) => (u.roles.length ? u.roles.join(', ') : '—'),
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      sortable: true,
+      value: (u) => (u.disabledAt ? 'Disabled' : 'Active'),
+    },
+  ]);
 
-  constructor() {
-    this.search.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe(() => {
-        this.pageIndex.set(0);
-        this.load();
-      });
-  }
-
-  ngOnInit(): void {
-    this.load();
-  }
-
-  protected onPage(event: PageEvent): void {
-    this.pageIndex.set(event.pageIndex);
-    this.load(event.pageSize);
-  }
+  protected readonly load = (query: DataQuery) => this.service.list(query);
 
   protected isAdmin(user: UserSummary): boolean {
     return user.roles.includes('admin');
@@ -215,32 +216,10 @@ export class AdminUsersPage implements OnInit {
     request$.subscribe({
       next: () => {
         this.notify?.success('User updated.');
-        this.load();
+        this.table().reload();
       },
       error: (err: unknown) =>
         this.notify?.error(apiMessage(err, 'Could not update the user.')),
     });
-  }
-
-  private load(pageSize = this.pageSize): void {
-    this.loading.set(true);
-    this.error.set(null);
-    this.service
-      .list({
-        page: this.pageIndex() + 1,
-        pageSize,
-        search: this.search.value.trim() || undefined,
-      })
-      .subscribe({
-        next: (page) => {
-          this.items.set(page.items);
-          this.total.set(page.total);
-          this.loading.set(false);
-        },
-        error: () => {
-          this.error.set('Could not load users.');
-          this.loading.set(false);
-        },
-      });
   }
 }

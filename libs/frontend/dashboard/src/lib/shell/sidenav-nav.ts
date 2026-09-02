@@ -17,24 +17,73 @@ import { DASHBOARD_NAV } from '../nav.tokens';
   imports: [MatListModule, MatIconModule, RouterLink, RouterLinkActive],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <mat-nav-list>
-      @for (item of items(); track item.route) {
-        <a
-          mat-list-item
-          [routerLink]="['/app', item.route]"
-          routerLinkActive="active-link"
-          [routerLinkActiveOptions]="{ exact: item.route === '' }"
-          (click)="navigated.emit()"
-        >
-          <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-          <span matListItemTitle>{{ item.label }}</span>
-        </a>
-      }
-    </mat-nav-list>
+    <nav class="nav">
+      <p class="nav__eyebrow">Navigation</p>
+      <mat-nav-list class="nav__list">
+        @for (item of items(); track item.route) {
+          <a
+            mat-list-item
+            class="nav__item"
+            [routerLink]="item.route ? ['/app', item.route] : ['/app']"
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{ exact: item.route === '' }"
+            (click)="navigated.emit()"
+          >
+            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+            <span matListItemTitle>{{ item.label }}</span>
+          </a>
+        }
+      </mat-nav-list>
+    </nav>
   `,
   styles: `
-    .active-link {
-      --mat-list-list-item-container-color: var(--app-color-surface-variant);
+    .nav {
+      padding: var(--app-space-3) var(--app-space-2);
+    }
+    .nav__eyebrow {
+      margin: 4px 0 8px;
+      padding-inline: 10px;
+      font: 600 0.6875rem/1 var(--app-font-mono);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: color-mix(in srgb, var(--app-color-on-surface) 45%, transparent);
+    }
+    .nav__list {
+      --mat-list-list-item-one-line-container-height: 34px;
+      --mat-list-list-item-leading-icon-size: 18px;
+      --mat-list-list-item-label-text-size: 0.8125rem;
+      --mat-list-list-item-label-text-weight: 500;
+      --mat-list-list-item-leading-icon-start-space: 10px;
+      --mat-list-list-item-leading-icon-end-space: 10px;
+      --mat-list-list-item-label-text-color: color-mix(
+        in srgb,
+        var(--app-color-on-surface) 78%,
+        transparent
+      );
+      --mat-list-list-item-leading-icon-color: color-mix(
+        in srgb,
+        var(--app-color-on-surface) 52%,
+        transparent
+      );
+      padding: 0;
+    }
+    .nav__item {
+      margin-block: 1px;
+      border-radius: var(--app-radius-md);
+    }
+    .nav__item:hover {
+      background: color-mix(
+        in srgb,
+        var(--app-color-on-surface) 6%,
+        transparent
+      );
+    }
+    .active-link.nav__item {
+      background: var(--app-color-surface-variant);
+      box-shadow: inset 2px 0 0 var(--app-color-primary);
+      --mat-list-list-item-label-text-color: var(--app-color-primary);
+      --mat-list-list-item-label-text-weight: 600;
+      --mat-list-list-item-leading-icon-color: var(--app-color-primary);
     }
   `,
 })

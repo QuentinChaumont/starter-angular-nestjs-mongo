@@ -76,17 +76,29 @@ export class UserController {
     return this.service.create(dto);
   }
 
-  /** Admin console list — paginated, newest first, `?search=` on email/name. */
+  /**
+   * Admin console list — paginated. `?search=` matches email/name at once;
+   * `?email=` / `?name=` / `?roles=` are per-column (contains, i-case);
+   * `?sort=` ∈ {email,name,status,verified,createdAt} with `?dir=asc|desc`.
+   */
   @Get()
   listUsers(
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
     @Query('search') search?: string,
+    @Query('email') email?: string,
+    @Query('name') name?: string,
+    @Query('roles') roles?: string,
+    @Query('sort') sort?: string,
+    @Query('dir') dir?: string,
   ): Promise<PaginatedResponse<UserSummary>> {
     return this.service.listUsers({
       page: page ? Number(page) : undefined,
       pageSize: pageSize ? Number(pageSize) : undefined,
       search,
+      filters: { email, name, roles },
+      sort,
+      dir: dir === 'asc' ? 'asc' : dir === 'desc' ? 'desc' : undefined,
     });
   }
 

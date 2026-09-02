@@ -1,5 +1,9 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { AppConfigService, AppLogger } from '@org/backend-core';
+import {
+  AppConfigService,
+  AppLogger,
+  TooManyRequestsError,
+} from '@org/backend-core';
 import {
   MailerService,
   renderEmailVerification,
@@ -104,11 +108,33 @@ export class AuthResetService implements OnModuleInit {
     await this.users.markEmailVerified(userId);
   }
 
+  /**
+   * Manual "resend verification email". Enforces a per-account cooldown
+   * (`VERIFICATION_RESEND_COOLDOWN_SECONDS`, default 300) on top of the
+   * route's IP throttle, so a single account can't be used to spray mail.
+   * A verified account is a silent no-op.
+   */
   async resendVerification(userId: string): Promise<void> {
     const user = await this.users.findById(userId);
     if (user.emailVerifiedAt) {
       return;
     }
+
+    const cooldownMs =
+      this.config.auth.verificationResendCooldownSeconds * 1_000;
+    const lastSent = await this.emailVerification.latestIssuedAt(userId);
+    if (lastSent) {
+      const elapsed = Date.now() - lastSent.getTime();
+      if (elapsed < cooldownMs) {
+        const retryAfterSeconds = Math.ceil((cooldownMs - elapsed) / 1_000);
+        throw new TooManyRequestsError(
+          'VERIFICATION_RESEND_COOLDOWN',
+          `Please wait ${retryAfterSeconds}s before requesting another verification email.`,
+          { retryAfterSeconds },
+        );
+      }
+    }
+
     await this.emailVerification.invalidateAllForUser(userId);
     await this.sendVerificationEmail({ userId, email: user.email });
   }

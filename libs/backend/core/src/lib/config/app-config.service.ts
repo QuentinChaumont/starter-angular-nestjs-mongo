@@ -35,7 +35,8 @@ export class AppConfigService {
             infer: true,
           }) ?? 60,
         limit:
-          this.configService.get('AUTH_RATE_LIMIT_LIMIT', { infer: true }) ?? 10,
+          this.configService.get('AUTH_RATE_LIMIT_LIMIT', { infer: true }) ??
+          10,
       },
     };
   }
@@ -76,11 +77,18 @@ export class AppConfigService {
           infer: true,
         }) === true,
       resetTokenTtlMinutes:
-        this.configService.get('RESET_TOKEN_TTL_MINUTES', { infer: true }) ?? 60,
+        this.configService.get('RESET_TOKEN_TTL_MINUTES', { infer: true }) ??
+        60,
       verificationTokenTtlHours:
         this.configService.get('VERIFICATION_TOKEN_TTL_HOURS', {
           infer: true,
         }) ?? 24,
+      // Min delay between two *manual* "resend verification email" requests
+      // for one account (the automatic send on sign-up is exempt).
+      verificationResendCooldownSeconds:
+        this.configService.get('VERIFICATION_RESEND_COOLDOWN_SECONDS', {
+          infer: true,
+        }) ?? 300,
     };
   }
 

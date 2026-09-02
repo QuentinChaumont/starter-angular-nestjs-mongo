@@ -169,8 +169,16 @@ export function validateEnv(
     rawEnv['AUTH_RATE_LIMIT_LIMIT'],
     errors,
   );
-  const MONGO_URI = parseOptionalString('MONGO_URI', rawEnv['MONGO_URI'], errors);
-  const JWT_SECRET = parseOptionalString('JWT_SECRET', rawEnv['JWT_SECRET'], errors);
+  const MONGO_URI = parseOptionalString(
+    'MONGO_URI',
+    rawEnv['MONGO_URI'],
+    errors,
+  );
+  const JWT_SECRET = parseOptionalString(
+    'JWT_SECRET',
+    rawEnv['JWT_SECRET'],
+    errors,
+  );
   const JWT_EXPIRES_IN = parseOptionalString(
     'JWT_EXPIRES_IN',
     rawEnv['JWT_EXPIRES_IN'],
@@ -214,6 +222,11 @@ export function validateEnv(
   const VERIFICATION_TOKEN_TTL_HOURS = parseOptionalPositiveInt(
     'VERIFICATION_TOKEN_TTL_HOURS',
     rawEnv['VERIFICATION_TOKEN_TTL_HOURS'],
+    errors,
+  );
+  const VERIFICATION_RESEND_COOLDOWN_SECONDS = parseOptionalPositiveInt(
+    'VERIFICATION_RESEND_COOLDOWN_SECONDS',
+    rawEnv['VERIFICATION_RESEND_COOLDOWN_SECONDS'],
     errors,
   );
 
@@ -309,6 +322,9 @@ export function validateEnv(
       : {}),
     ...(VERIFICATION_TOKEN_TTL_HOURS !== undefined
       ? { VERIFICATION_TOKEN_TTL_HOURS }
+      : {}),
+    ...(VERIFICATION_RESEND_COOLDOWN_SECONDS !== undefined
+      ? { VERIFICATION_RESEND_COOLDOWN_SECONDS }
       : {}),
     ...(OIDC_ISSUER !== undefined ? { OIDC_ISSUER } : {}),
     ...(OIDC_CLIENT_ID !== undefined ? { OIDC_CLIENT_ID } : {}),

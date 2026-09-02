@@ -6,15 +6,16 @@ Install with `nx g @org/starter-plugin:auth-reset` (needs the `auth` and
 
 ## Endpoints
 
-| Route | Auth | Notes |
-| --- | --- | --- |
-| `POST /api/auth/forgot-password` `{ email }` | — | Always `202`, no account enumeration. Emails a reset link if the account exists. |
-| `POST /api/auth/reset-password` `{ token, password }` | — | `400` on a bad/expired/used token. Revokes **every** session on success. |
-| `POST /api/auth/verify-email` `{ token }` | — | Stamps `emailVerifiedAt`. |
-| `POST /api/auth/resend-verification` | Bearer | Re-issues a verification link for the current user. |
+| Route                                                 | Auth   | Notes                                                                                                                                                                                           |
+| ----------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/auth/forgot-password` `{ email }`          | —      | Always `202`, no account enumeration. Emails a reset link if the account exists.                                                                                                                |
+| `POST /api/auth/reset-password` `{ token, password }` | —      | `400` on a bad/expired/used token. Revokes **every** session on success.                                                                                                                        |
+| `POST /api/auth/verify-email` `{ token }`             | —      | Stamps `emailVerifiedAt`.                                                                                                                                                                       |
+| `POST /api/auth/resend-verification`                  | Bearer | Re-issues a verification link for the current user. Per-account cooldown (`VERIFICATION_RESEND_COOLDOWN_SECONDS`, default 300) → `429 VERIFICATION_RESEND_COOLDOWN` (the sign-up email counts). |
 
 All four sit behind the dedicated `AuthThrottlerGuard` (same limits as
-`login` / `register`).
+`login` / `register`); `resend-verification` adds the per-account cooldown
+above so one account can't be used to spray mail.
 
 ## Tokens
 
@@ -35,11 +36,12 @@ SPA shows a "verify your email" banner. Set
 
 ## Config
 
-| Variable | Default | Notes |
-| --- | --- | --- |
-| `AUTH_REQUIRE_VERIFIED_EMAIL` | `false` | Hard-gate login on a verified email |
-| `RESET_TOKEN_TTL_MINUTES` | `60` | Reset-link lifetime |
-| `VERIFICATION_TOKEN_TTL_HOURS` | `24` | Verification-link lifetime |
+| Variable                               | Default | Notes                                                                    |
+| -------------------------------------- | ------- | ------------------------------------------------------------------------ |
+| `AUTH_REQUIRE_VERIFIED_EMAIL`          | `false` | Hard-gate login on a verified email                                      |
+| `RESET_TOKEN_TTL_MINUTES`              | `60`    | Reset-link lifetime                                                      |
+| `VERIFICATION_TOKEN_TTL_HOURS`         | `24`    | Verification-link lifetime                                               |
+| `VERIFICATION_RESEND_COOLDOWN_SECONDS` | `300`   | Min delay between two manual `resend-verification` calls for one account |
 
 Reset / verification links point at `CORS_ORIGINS[0]` +
 `/reset-password?token=…` / `/verify-email?token=…`.

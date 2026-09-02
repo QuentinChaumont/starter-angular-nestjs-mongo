@@ -10,7 +10,23 @@ test.describe('dashboard shell', () => {
     await expect(
       page.getByRole('button', { name: 'Account menu' }),
     ).toBeVisible();
-    await expect(page.getByText('Roles: none')).toBeVisible();
+    // A role-less account shows no "Roles:" line at all.
+    await expect(page.getByText(/^Roles:/)).toHaveCount(0);
+  });
+
+  test('the sidenav "Home" link returns to /app from a child route', async ({
+    page,
+  }) => {
+    await login(page, SEEDED_USER);
+    await acceptConsent(page);
+
+    await page.getByRole('button', { name: 'Account menu' }).click();
+    await page.getByRole('menuitem', { name: 'Profile' }).click();
+    await expect(page).toHaveURL(/\/app\/profile$/);
+
+    await page.getByRole('link', { name: 'Home' }).click();
+    await expect(page).toHaveURL(/\/app$/);
+    await expect(page.getByTestId('dashboard-home')).toBeVisible();
   });
 
   test('"Manage cookies" in the account menu reopens the preferences dialog', async ({

@@ -50,11 +50,15 @@ describe('validateEnv', () => {
   });
 
   it('throws a readable error for a non-numeric PORT', () => {
-    expect(() => validateEnv({ PORT: 'abc' })).toThrow(/PORT must be an integer/);
+    expect(() => validateEnv({ PORT: 'abc' })).toThrow(
+      /PORT must be an integer/,
+    );
   });
 
   it('throws a readable error for an out-of-range PORT', () => {
-    expect(() => validateEnv({ PORT: '70000' })).toThrow(/PORT must be an integer/);
+    expect(() => validateEnv({ PORT: '70000' })).toThrow(
+      /PORT must be an integer/,
+    );
   });
 
   it('accumulates multiple errors in a single message', () => {
@@ -79,9 +83,9 @@ describe('validateEnv', () => {
   });
 
   it('parses AUTH_COOKIE_SECURE as a boolean and passes REFRESH_EXPIRES_IN through', () => {
-    expect(validateEnv({ AUTH_COOKIE_SECURE: 'false' }).AUTH_COOKIE_SECURE).toBe(
-      false,
-    );
+    expect(
+      validateEnv({ AUTH_COOKIE_SECURE: 'false' }).AUTH_COOKIE_SECURE,
+    ).toBe(false);
     expect(validateEnv({ AUTH_COOKIE_SECURE: 'true' }).AUTH_COOKIE_SECURE).toBe(
       true,
     );
@@ -125,15 +129,18 @@ describe('validateEnv', () => {
     expect(bare.AUTH_REQUIRE_VERIFIED_EMAIL).toBeUndefined();
     expect(bare.RESET_TOKEN_TTL_MINUTES).toBeUndefined();
     expect(bare.VERIFICATION_TOKEN_TTL_HOURS).toBeUndefined();
+    expect(bare.VERIFICATION_RESEND_COOLDOWN_SECONDS).toBeUndefined();
 
     const configured = validateEnv({
       AUTH_REQUIRE_VERIFIED_EMAIL: 'true',
       RESET_TOKEN_TTL_MINUTES: '15',
       VERIFICATION_TOKEN_TTL_HOURS: '48',
+      VERIFICATION_RESEND_COOLDOWN_SECONDS: '120',
     });
     expect(configured.AUTH_REQUIRE_VERIFIED_EMAIL).toBe(true);
     expect(configured.RESET_TOKEN_TTL_MINUTES).toBe(15);
     expect(configured.VERIFICATION_TOKEN_TTL_HOURS).toBe(48);
+    expect(configured.VERIFICATION_RESEND_COOLDOWN_SECONDS).toBe(120);
 
     expect(() => validateEnv({ RESET_TOKEN_TTL_MINUTES: '0' })).toThrow(
       /RESET_TOKEN_TTL_MINUTES must be a positive integer/,

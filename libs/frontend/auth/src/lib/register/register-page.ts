@@ -1,5 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,6 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { isApiError } from '@org/shared-contracts';
+import { PasswordRevealButton } from '@org/frontend-ui';
 import { AuthService } from '../auth.service';
 import { sanitizeRedirect } from '../sanitize-redirect';
 
@@ -21,6 +27,7 @@ const MIN_PASSWORD_LENGTH = 8;
     MatInputModule,
     MatButtonModule,
     MatProgressBarModule,
+    PasswordRevealButton,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -34,27 +41,42 @@ const MIN_PASSWORD_LENGTH = 8;
         <div class="register__row">
           <mat-form-field appearance="outline">
             <mat-label>First name</mat-label>
-            <input matInput formControlName="firstName" autocomplete="given-name" />
+            <input
+              matInput
+              formControlName="firstName"
+              autocomplete="given-name"
+            />
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Last name</mat-label>
-            <input matInput formControlName="lastName" autocomplete="family-name" />
+            <input
+              matInput
+              formControlName="lastName"
+              autocomplete="family-name"
+            />
           </mat-form-field>
         </div>
 
         <mat-form-field appearance="outline">
           <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" autocomplete="username" />
+          <input
+            matInput
+            type="email"
+            formControlName="email"
+            autocomplete="username"
+          />
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Password</mat-label>
           <input
+            #password
             matInput
             type="password"
             formControlName="password"
             autocomplete="new-password"
           />
+          <lib-password-reveal-button matSuffix [input]="password" />
           <mat-hint>At least {{ minPasswordLength }} characters</mat-hint>
         </mat-form-field>
 
@@ -114,7 +136,10 @@ export class RegisterPage {
     firstName: ['', [Validators.required]],
     lastName: ['', [Validators.required]],
     email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)]],
+    password: [
+      '',
+      [Validators.required, Validators.minLength(MIN_PASSWORD_LENGTH)],
+    ],
   });
 
   protected readonly submitting = signal(false);
