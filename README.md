@@ -134,6 +134,9 @@ failing later at first use.
 | `AUTH_RATE_LIMIT_TTL_SECONDS` | no | `60` | That window, in seconds |
 | `SEED_ADMIN_EMAIL` | only for `seed:admin` | — | Bootstrap admin account |
 | `SEED_ADMIN_PASSWORD` | only for `seed:admin` | — | |
+| `AUTH_REQUIRE_VERIFIED_EMAIL` | no | `false` | `true` → `POST /auth/login` returns `403` until the email is verified (`auth-reset` brick) |
+| `RESET_TOKEN_TTL_MINUTES` | no | `60` | Password-reset link lifetime |
+| `VERIFICATION_TOKEN_TTL_HOURS` | no | `24` | Email-verification link lifetime |
 | `SMTP_URL` | no | — | Set to deliver mail over SMTP (needs `nodemailer`); otherwise console + `.eml` previews |
 | `MAIL_FROM` | no | `no-reply@localhost` | `From` address for the mailer brick |
 | `MAIL_PREVIEW_DIR` | no | `tmp/mail` | Where the console transport writes `.eml` previews |
@@ -249,6 +252,23 @@ Adds `MailerService` and a pluggable `MailTransport`. By default the
 templates (`renderPasswordReset`, `renderEmailVerification`,
 `renderWelcome`) and `InMemoryMailTransport` for tests. See
 `libs/backend/mailer/README.md`.
+
+### Password reset & email verification
+
+```bash
+npx nx g @org/starter-plugin:auth-reset
+```
+
+Needs the `auth` and `mailer` bricks. Adds `POST /api/auth/forgot-password`
+(always `202`, no account enumeration), `POST /api/auth/reset-password`
+(revokes every session on success), `POST /api/auth/verify-email` and
+`POST /api/auth/resend-verification`. On registration the `auth` brick
+emits a `user.registered` event this brick listens for to send the
+verification email. Verification is **soft** by default
+(`AUTH_REQUIRE_VERIFIED_EMAIL=false`) — a banner nudges the user. Wires the
+`/forgot-password`, `/reset-password` and `/verify-email` frontend routes
+plus the banner when `frontend-auth` is installed. See
+`libs/backend/auth-reset/README.md`.
 
 ### Healthchecks
 

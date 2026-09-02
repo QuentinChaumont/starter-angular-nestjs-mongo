@@ -65,6 +65,16 @@ export class UserService {
     return updated;
   }
 
+  /** Idempotent: stamps `emailVerifiedAt` once, keeps the first value. */
+  async markEmailVerified(id: string): Promise<UserDocument> {
+    const user = await this.findById(id);
+    if (!user.emailVerifiedAt) {
+      user.emailVerifiedAt = new Date();
+      await user.save();
+    }
+    return user;
+  }
+
   async deleteById(id: string): Promise<void> {
     const deleted = await this.repository.deleteById(id);
     if (!deleted) {

@@ -53,6 +53,9 @@
     },
     {
       "path": "./libs/backend/mailer"
+    },
+    {
+      "path": "./libs/backend/auth-reset"
     }
   ],
   "compilerOptions": {}

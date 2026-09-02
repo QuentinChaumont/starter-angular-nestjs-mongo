@@ -7,6 +7,7 @@ import {
   LoggerModule,
 } from '@org/backend-core';
 import { AuthModule } from '@org/backend-auth';
+import { AuthResetModule } from '@org/backend-auth-reset';
 import { MongoModule } from '@org/backend-database-mongo';
 import { MailerModule } from '@org/backend-mailer';
 import { UserModule } from '@org/backend-features-user';
@@ -22,6 +23,7 @@ import { UserModule } from '@org/backend-features-user';
     MailerModule,
     UserModule,
     AuthModule,
+    AuthResetModule,
   ],
 })
 export class AppModule {}

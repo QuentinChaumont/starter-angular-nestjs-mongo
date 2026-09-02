@@ -120,6 +120,26 @@ describe('validateEnv', () => {
     ).toBe(false);
   });
 
+  it('parses the auth-reset variables (optional bool + positive ints)', () => {
+    const bare = validateEnv({});
+    expect(bare.AUTH_REQUIRE_VERIFIED_EMAIL).toBeUndefined();
+    expect(bare.RESET_TOKEN_TTL_MINUTES).toBeUndefined();
+    expect(bare.VERIFICATION_TOKEN_TTL_HOURS).toBeUndefined();
+
+    const configured = validateEnv({
+      AUTH_REQUIRE_VERIFIED_EMAIL: 'true',
+      RESET_TOKEN_TTL_MINUTES: '15',
+      VERIFICATION_TOKEN_TTL_HOURS: '48',
+    });
+    expect(configured.AUTH_REQUIRE_VERIFIED_EMAIL).toBe(true);
+    expect(configured.RESET_TOKEN_TTL_MINUTES).toBe(15);
+    expect(configured.VERIFICATION_TOKEN_TTL_HOURS).toBe(48);
+
+    expect(() => validateEnv({ RESET_TOKEN_TTL_MINUTES: '0' })).toThrow(
+      /RESET_TOKEN_TTL_MINUTES must be a positive integer/,
+    );
+  });
+
   it('throws a readable error for a non-boolean AUTH_COOKIE_SECURE', () => {
     expect(() => validateEnv({ AUTH_COOKIE_SECURE: 'maybe' })).toThrow(
       /AUTH_COOKIE_SECURE must be a boolean/,

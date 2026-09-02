@@ -63,6 +63,7 @@ import { sanitizeRedirect } from '../sanitize-redirect';
           Sign in
         </button>
       </form>
+      <a routerLink="/forgot-password">Forgot your password?</a>
 
       @if (oidcEnabled()) {
         <a mat-stroked-button [href]="oidcUrl()">Sign in with SSO</a>

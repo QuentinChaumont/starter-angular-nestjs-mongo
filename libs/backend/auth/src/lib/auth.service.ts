@@ -8,6 +8,7 @@ import {
   verifyPassword,
 } from '@org/backend-core';
 import { UserService } from '@org/backend-features-user';
+import { AuthEvents } from './auth-events';
 import { generateOpaqueToken } from './refresh/opaque-token';
 import { parseDurationMs } from './refresh/parse-duration';
 import {
@@ -53,6 +54,7 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly refreshTokens: RefreshTokenService,
     private readonly config: AppConfigService,
+    private readonly events: AuthEvents,
   ) {}
 
   async login(
@@ -66,6 +68,13 @@ export class AuthService {
       throw new UnauthorizedError(
         'INVALID_CREDENTIALS',
         'Invalid email or password',
+      );
+    }
+
+    if (this.config.auth.requireVerifiedEmail && !user.emailVerifiedAt) {
+      throw new ForbiddenError(
+        'EMAIL_NOT_VERIFIED',
+        'Please verify your email address before signing in',
       );
     }
 
@@ -99,6 +108,13 @@ export class AuthService {
       firstName: input.firstName,
       lastName: input.lastName,
       roles: [],
+    });
+
+    // Optional bricks (auth-reset) hook this to send a verification email.
+    this.events.emitUserRegistered({
+      userId: created._id.toString(),
+      email: created.email,
+      firstName: created.firstName,
     });
 
     return this.issueSession(
@@ -155,6 +171,24 @@ export class AuthService {
 
   isRegistrationEnabled(): boolean {
     return this.config.auth.registrationEnabled;
+  }
+
+  /**
+   * The `GET /auth/me` payload: the JWT identity (`id` + `roles`) plus
+   * `emailVerifiedAt`, which the token doesn't carry. A fuller profile
+   * endpoint arrives with V2.1 step 34.
+   */
+  async currentUser(
+    userId: string,
+  ): Promise<AuthenticatedUser & { emailVerifiedAt: string | null }> {
+    const user = await this.users.findById(userId);
+    return {
+      id: userId,
+      roles: user.roles,
+      emailVerifiedAt: user.emailVerifiedAt
+        ? user.emailVerifiedAt.toISOString()
+        : null,
+    };
   }
 
   async logout(presentedToken: string | undefined): Promise<void> {

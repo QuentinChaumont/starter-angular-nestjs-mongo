@@ -36,6 +36,10 @@ Point `SMTP_URL` at [Mailpit](https://github.com/axllent/mailpit) or
 Ethereal in dev. The first `send()` that needs SMTP resolves the package
 and fails with an actionable message if it is missing.
 
+With no `SMTP_URL`, `MailerService` logs one `warn` line at startup so the
+missing config isn't discovered only when a user asks for a password
+reset.
+
 ## Config
 
 | Variable | Required | Default | Notes |

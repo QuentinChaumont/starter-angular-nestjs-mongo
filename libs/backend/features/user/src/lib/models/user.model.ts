@@ -8,6 +8,7 @@ export interface UserModel {
   firstName: string;
   lastName: string;
   roles: string[];
+  emailVerifiedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

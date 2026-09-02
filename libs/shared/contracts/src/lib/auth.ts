@@ -59,6 +59,31 @@ export interface AccessTokenResponse {
 export interface AuthenticatedUserDto {
   id: string;
   roles: string[];
+  /**
+   * `null` when the account's email is not yet verified, an ISO timestamp
+   * once it is. `undefined` on the login/register responses (the access
+   * token doesn't carry it) — only `GET /api/auth/me` populates it. Added
+   * by the `auth-reset` brick (V2.1 step 33).
+   */
+  emailVerifiedAt?: string | null;
+}
+
+/** Body of `POST /api/auth/forgot-password`. Always answered `202`, whether
+ * or not the address matches an account (no enumeration). */
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+/** Body of `POST /api/auth/reset-password`. `token` comes from the emailed
+ * link; a successful reset revokes every existing session. */
+export interface ResetPasswordRequest {
+  token: string;
+  password: string;
+}
+
+/** Body of `POST /api/auth/verify-email`. */
+export interface VerifyEmailRequest {
+  token: string;
 }
 
 /** Body returned by `GET /api/auth/me`. */

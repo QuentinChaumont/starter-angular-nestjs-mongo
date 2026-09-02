@@ -12,6 +12,7 @@ import {
 import { ApiBearerAuth, ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import type {
   AccessTokenResponse,
+  MeResponse,
   RegistrationInfo,
 } from '@org/shared-contracts';
 import type { Request, Response } from 'express';
@@ -124,8 +125,8 @@ export class AuthController {
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  me(@CurrentUser() user: AuthenticatedUser): AuthenticatedUser {
-    return user;
+  me(@CurrentUser() user: AuthenticatedUser): Promise<MeResponse> {
+    return this.authService.currentUser(user.id);
   }
 
   /**

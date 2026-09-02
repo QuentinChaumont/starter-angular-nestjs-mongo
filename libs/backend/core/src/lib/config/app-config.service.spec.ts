@@ -159,13 +159,46 @@ describe('AppConfigService', () => {
       RATE_LIMIT_LIMIT: 100,
     };
 
-    expect(createService(base).auth).toEqual({ registrationEnabled: true });
+    expect(createService(base).auth.registrationEnabled).toBe(true);
     expect(
-      createService({ ...base, AUTH_REGISTRATION_ENABLED: true }).auth,
-    ).toEqual({ registrationEnabled: true });
+      createService({ ...base, AUTH_REGISTRATION_ENABLED: true }).auth
+        .registrationEnabled,
+    ).toBe(true);
     expect(
-      createService({ ...base, AUTH_REGISTRATION_ENABLED: false }).auth,
-    ).toEqual({ registrationEnabled: false });
+      createService({ ...base, AUTH_REGISTRATION_ENABLED: false }).auth
+        .registrationEnabled,
+    ).toBe(false);
+  });
+
+  it('exposes the auth-reset knobs with soft defaults', () => {
+    const base = {
+      NODE_ENV: 'development' as const,
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
+    };
+
+    expect(createService(base).auth).toEqual({
+      registrationEnabled: true,
+      requireVerifiedEmail: false,
+      resetTokenTtlMinutes: 60,
+      verificationTokenTtlHours: 24,
+    });
+
+    expect(
+      createService({
+        ...base,
+        AUTH_REQUIRE_VERIFIED_EMAIL: true,
+        RESET_TOKEN_TTL_MINUTES: 15,
+        VERIFICATION_TOKEN_TTL_HOURS: 48,
+      }).auth,
+    ).toEqual({
+      registrationEnabled: true,
+      requireVerifiedEmail: true,
+      resetTokenTtlMinutes: 15,
+      verificationTokenTtlHours: 48,
+    });
   });
 
   it('exposes mailer config with console-transport defaults', () => {

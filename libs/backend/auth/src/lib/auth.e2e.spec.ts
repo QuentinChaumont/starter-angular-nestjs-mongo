@@ -185,7 +185,12 @@ describe('Auth (e2e, real Mongo instance)', () => {
     });
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual(loginBody.user);
+    // `/auth/me` adds `emailVerifiedAt` (null here — unverified), which the
+    // login response's `user` doesn't carry.
+    expect(await response.json()).toEqual({
+      ...loginBody.user,
+      emailVerifiedAt: null,
+    });
   });
 
   it('rejects GET /auth/admin without a token (401)', async () => {

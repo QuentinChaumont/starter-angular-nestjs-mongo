@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "AuthReset",
+  "title": "Install the optional password-reset + email-verification brick",
+  "type": "object",
+  "properties": {}
+}

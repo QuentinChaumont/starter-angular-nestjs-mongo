@@ -70,6 +70,17 @@ export class AppConfigService {
       registrationEnabled:
         this.configService.get('AUTH_REGISTRATION_ENABLED', { infer: true }) !==
         false,
+      // Soft by default: an unverified account can still sign in.
+      requireVerifiedEmail:
+        this.configService.get('AUTH_REQUIRE_VERIFIED_EMAIL', {
+          infer: true,
+        }) === true,
+      resetTokenTtlMinutes:
+        this.configService.get('RESET_TOKEN_TTL_MINUTES', { infer: true }) ?? 60,
+      verificationTokenTtlHours:
+        this.configService.get('VERIFICATION_TOKEN_TTL_HOURS', {
+          infer: true,
+        }) ?? 24,
     };
   }
 

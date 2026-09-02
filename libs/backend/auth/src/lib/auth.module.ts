@@ -11,6 +11,7 @@ import {
 } from '@org/backend-core';
 import { UserModule } from '@org/backend-features-user';
 import { AuthController } from './auth.controller';
+import { AuthEvents } from './auth-events';
 import { AuthService } from './auth.service';
 import { AuthCookieService } from './cookies/auth-cookie.service';
 import { CsrfGuard } from './csrf/csrf.guard';
@@ -49,6 +50,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
   controllers: [AuthController, OidcController],
   providers: [
     AuthService,
+    AuthEvents,
     JwtStrategy,
     RefreshTokenRepository,
     RefreshTokenService,
@@ -65,6 +67,6 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     { provide: APP_GUARD, useClass: OptionalJwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],
-  exports: [AuthService, RefreshTokenService],
+  exports: [AuthService, AuthEvents, RefreshTokenService],
 })
 export class AuthModule {}

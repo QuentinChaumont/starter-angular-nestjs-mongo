@@ -22,6 +22,14 @@ export interface EnvironmentVariables {
   /** Bootstrap admin account, created idempotently by `pnpm seed:admin`. */
   SEED_ADMIN_EMAIL?: string;
   SEED_ADMIN_PASSWORD?: string;
+  /** When `true`, `POST /auth/login` is refused (`403 EMAIL_NOT_VERIFIED`)
+   * until the account's email is verified. Defaults to `false` (soft:
+   * account usable, a banner nudges the user). `auth-reset` brick. */
+  AUTH_REQUIRE_VERIFIED_EMAIL?: boolean;
+  /** Password-reset link lifetime, minutes (default 60). `auth-reset`. */
+  RESET_TOKEN_TTL_MINUTES?: number;
+  /** Email-verification link lifetime, hours (default 24). `auth-reset`. */
+  VERIFICATION_TOKEN_TTL_HOURS?: number;
   OIDC_ISSUER?: string;
   OIDC_CLIENT_ID?: string;
   OIDC_CLIENT_SECRET?: string;
@@ -64,6 +72,9 @@ export const ENVIRONMENT_VARIABLE_NAMES: readonly (keyof EnvironmentVariables)[]
     'AUTH_REGISTRATION_ENABLED',
     'SEED_ADMIN_EMAIL',
     'SEED_ADMIN_PASSWORD',
+    'AUTH_REQUIRE_VERIFIED_EMAIL',
+    'RESET_TOKEN_TTL_MINUTES',
+    'VERIFICATION_TOKEN_TTL_HOURS',
     'OIDC_ISSUER',
     'OIDC_CLIENT_ID',
     'OIDC_CLIENT_SECRET',

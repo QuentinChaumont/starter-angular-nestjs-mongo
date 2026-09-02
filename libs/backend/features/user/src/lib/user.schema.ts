@@ -35,6 +35,11 @@ export class User {
   @Prop({ type: [String], default: [] })
   roles!: string[];
 
+  /** Set once the account's email address is confirmed. Unset ⇒ unverified.
+   * Written by the `auth-reset` brick (V2.1 step 33). */
+  @Prop()
+  emailVerifiedAt?: Date;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

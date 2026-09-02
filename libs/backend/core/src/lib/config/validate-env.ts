@@ -201,6 +201,21 @@ export function validateEnv(
     rawEnv['SEED_ADMIN_PASSWORD'],
     errors,
   );
+  const AUTH_REQUIRE_VERIFIED_EMAIL = parseOptionalBoolean(
+    'AUTH_REQUIRE_VERIFIED_EMAIL',
+    rawEnv['AUTH_REQUIRE_VERIFIED_EMAIL'],
+    errors,
+  );
+  const RESET_TOKEN_TTL_MINUTES = parseOptionalPositiveInt(
+    'RESET_TOKEN_TTL_MINUTES',
+    rawEnv['RESET_TOKEN_TTL_MINUTES'],
+    errors,
+  );
+  const VERIFICATION_TOKEN_TTL_HOURS = parseOptionalPositiveInt(
+    'VERIFICATION_TOKEN_TTL_HOURS',
+    rawEnv['VERIFICATION_TOKEN_TTL_HOURS'],
+    errors,
+  );
 
   const OIDC_ISSUER = parseOptionalString(
     'OIDC_ISSUER',
@@ -286,6 +301,15 @@ export function validateEnv(
       : {}),
     ...(SEED_ADMIN_EMAIL !== undefined ? { SEED_ADMIN_EMAIL } : {}),
     ...(SEED_ADMIN_PASSWORD !== undefined ? { SEED_ADMIN_PASSWORD } : {}),
+    ...(AUTH_REQUIRE_VERIFIED_EMAIL !== undefined
+      ? { AUTH_REQUIRE_VERIFIED_EMAIL }
+      : {}),
+    ...(RESET_TOKEN_TTL_MINUTES !== undefined
+      ? { RESET_TOKEN_TTL_MINUTES }
+      : {}),
+    ...(VERIFICATION_TOKEN_TTL_HOURS !== undefined
+      ? { VERIFICATION_TOKEN_TTL_HOURS }
+      : {}),
     ...(OIDC_ISSUER !== undefined ? { OIDC_ISSUER } : {}),
     ...(OIDC_CLIENT_ID !== undefined ? { OIDC_CLIENT_ID } : {}),
     ...(OIDC_CLIENT_SECRET !== undefined ? { OIDC_CLIENT_SECRET } : {}),
