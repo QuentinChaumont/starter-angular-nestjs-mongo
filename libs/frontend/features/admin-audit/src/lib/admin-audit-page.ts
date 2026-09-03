@@ -6,10 +6,11 @@ import {
   inject,
   viewChild,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import type { AuditEvent } from '@org/shared-contracts';
 import {
   DataTable,
+  PageHeader,
+  RelativeTime,
   type DataCellContext,
   type DataColumn,
   type DataQuery,
@@ -18,19 +19,17 @@ import { AdminAuditService } from './admin-audit.service';
 
 @Component({
   selector: 'lib-admin-audit-page',
-  imports: [DataTable, DatePipe],
+  imports: [DataTable, PageHeader, RelativeTime],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="admin-audit">
-      <header class="admin-audit__toolbar">
-        <div class="admin-audit__heading">
-          <h1>Audit log</h1>
-          <p>Every sensitive auth and admin action, newest first.</p>
-        </div>
-      </header>
+      <lib-page-header
+        title="Audit log"
+        subtitle="Every sensitive auth and admin action, newest first."
+      ></lib-page-header>
 
       <ng-template #whenCell let-row>
-        <span class="mono">{{ row.at | date: 'medium' }}</span>
+        <span class="mono"><lib-relative-time [value]="row.at" /></span>
       </ng-template>
 
       <ng-template #actorCell let-row>
@@ -56,21 +55,6 @@ import { AdminAuditService } from './admin-audit.service';
       flex-direction: column;
       gap: var(--app-space-4);
       max-width: 1180px;
-    }
-    .admin-audit__toolbar {
-      padding-block-end: var(--app-space-3);
-      border-block-end: var(--app-border-hairline);
-    }
-    .admin-audit__heading h1 {
-      margin: 0;
-      font-size: 1.0625rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-    }
-    .admin-audit__heading p {
-      margin: 3px 0 0;
-      font-size: 0.8125rem;
-      color: color-mix(in srgb, var(--app-color-on-surface) 58%, transparent);
     }
     .admin-audit .mono {
       font-family: var(--app-font-mono);

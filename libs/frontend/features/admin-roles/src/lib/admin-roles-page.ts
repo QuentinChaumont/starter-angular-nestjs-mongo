@@ -15,6 +15,8 @@ import { DialogService, NotificationService } from '@org/frontend-feedback';
 import {
   DataTable,
   DataTableRowActionsDirective,
+  PageHeader,
+  StatusBadge,
   type DataCellContext,
   type DataColumn,
   type DataQuery,
@@ -33,25 +35,35 @@ function apiMessage(err: unknown, fallback: string): string {
 
 @Component({
   selector: 'lib-admin-roles-page',
-  imports: [MatButtonModule, DataTable, DataTableRowActionsDirective],
+  imports: [
+    MatButtonModule,
+    DataTable,
+    DataTableRowActionsDirective,
+    PageHeader,
+    StatusBadge,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="admin-roles">
-      <header class="admin-roles__toolbar">
-        <div class="admin-roles__heading">
-          <h1>Roles</h1>
-          <p>The catalogue the user console assigns from.</p>
-        </div>
-        <button mat-flat-button color="primary" (click)="createRole()">
+      <lib-page-header
+        title="Roles"
+        subtitle="The catalogue the user console assigns from."
+      >
+        <button
+          mat-flat-button
+          color="primary"
+          actions
+          (click)="createRole()"
+        >
           New role
         </button>
-      </header>
+      </lib-page-header>
 
       <ng-template #nameCell let-role let-value="value">
         <span class="admin-roles__name">
           <span class="mono">{{ value }}</span>
           @if (role.system) {
-            <span class="admin-roles__tag">system</span>
+            <lib-status-badge>system</lib-status-badge>
           }
         </span>
       </ng-template>
@@ -86,25 +98,6 @@ function apiMessage(err: unknown, fallback: string): string {
       gap: var(--app-space-4);
       max-width: 1180px;
     }
-    .admin-roles__toolbar {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: var(--app-space-4);
-      padding-block-end: var(--app-space-3);
-      border-block-end: var(--app-border-hairline);
-    }
-    .admin-roles__heading h1 {
-      margin: 0;
-      font-size: 1.0625rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-    }
-    .admin-roles__heading p {
-      margin: 3px 0 0;
-      font-size: 0.8125rem;
-      color: color-mix(in srgb, var(--app-color-on-surface) 58%, transparent);
-    }
     .admin-roles__name {
       display: inline-flex;
       align-items: center;
@@ -113,14 +106,6 @@ function apiMessage(err: unknown, fallback: string): string {
     .admin-roles .mono {
       font-family: var(--app-font-mono);
       font-size: 0.75rem;
-    }
-    .admin-roles__tag {
-      padding: 1px 5px;
-      border-radius: var(--app-radius-sm);
-      border: var(--app-border-hairline);
-      font: 500 0.6875rem/1.4 var(--app-font-mono);
-      letter-spacing: 0.02em;
-      color: color-mix(in srgb, var(--app-color-on-surface) 58%, transparent);
     }
     .admin-roles__danger:not([disabled]) {
       color: var(--app-color-error);

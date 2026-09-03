@@ -529,6 +529,12 @@ Always present (not a brick). No business logic, no HTTP.
 - **`<lib-password-reveal-button>`** — a show/hide toggle dropped in as a
   `matSuffix` next to any password `<input>` (used on login, register,
   reset-password and the profile page).
+- **The UI kit** (V2.3 step 48) — `<lib-page-header>`, `libAsyncButton`
+  (loading state + spinner on a Material button), `<lib-form-errors>`,
+  `<lib-relative-time>` (one shared timer), `<lib-status-badge>`,
+  `<lib-empty-state>`, `<lib-copy-button>`. Extracted from patterns
+  duplicated across the admin consoles and the profile page, then wired
+  back into them. See `libs/frontend/ui/README.md`.
 
 ## Testing
 

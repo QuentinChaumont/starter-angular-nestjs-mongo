@@ -1,4 +1,4 @@
-import { DOCUMENT, DatePipe } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -23,7 +23,15 @@ import type {
 } from '@org/shared-contracts';
 import { AuthService, ResetService } from '@org/frontend-auth';
 import { DialogService, NotificationService } from '@org/frontend-feedback';
-import { PasswordRevealButton } from '@org/frontend-ui';
+import {
+  AsyncButtonDirective,
+  CopyButton,
+  FormErrors,
+  PageHeader,
+  PasswordRevealButton,
+  RelativeTime,
+  StatusBadge,
+} from '@org/frontend-ui';
 import { ProfileService } from './profile.service';
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -38,22 +46,26 @@ function apiMessage(err: unknown, fallback: string): string {
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    DatePipe,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
     MatProgressBarModule,
     PasswordRevealButton,
+    AsyncButtonDirective,
+    CopyButton,
+    FormErrors,
+    PageHeader,
+    RelativeTime,
+    StatusBadge,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="profile">
-      <header class="profile__toolbar">
-        <h1 class="profile__title">Profile</h1>
+      <lib-page-header title="Profile">
         @if (roleLabel()) {
-          <span class="profile__roles">{{ roleLabel() }}</span>
+          <span class="profile__roles" actions>{{ roleLabel() }}</span>
         }
-      </header>
+      </lib-page-header>
 
       @if (loading()) {
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
@@ -93,7 +105,8 @@ function apiMessage(err: unknown, fallback: string): string {
                   mat-flat-button
                   color="primary"
                   type="submit"
-                  [disabled]="nameForm.invalid || savingName()"
+                  [libAsyncButton]="savingName()"
+                  [busyDisabled]="nameForm.invalid"
                 >
                   Save
                 </button>
@@ -117,12 +130,14 @@ function apiMessage(err: unknown, fallback: string): string {
                 />
               </mat-form-field>
 
-              <p
-                class="profile__status"
-                [class.profile__status--ok]="p.emailVerifiedAt"
-              >
-                {{ p.emailVerifiedAt ? 'Verified' : 'Not verified' }}
+              <p class="profile__status-line">
+                <lib-status-badge
+                  [tone]="p.emailVerifiedAt ? 'success' : 'danger'"
+                >
+                  {{ p.emailVerifiedAt ? 'Verified' : 'Not verified' }}
+                </lib-status-badge>
               </p>
+              <lib-form-errors [control]="emailForm.controls.email" />
 
               @if (emailError()) {
                 <p class="profile__error" role="alert">{{ emailError() }}</p>
@@ -133,9 +148,8 @@ function apiMessage(err: unknown, fallback: string): string {
                   mat-flat-button
                   color="primary"
                   type="submit"
-                  [disabled]="
-                    emailForm.invalid || savingEmail() || !emailDirty()
-                  "
+                  [libAsyncButton]="savingEmail()"
+                  [busyDisabled]="emailForm.invalid || !emailDirty()"
                 >
                   Save email
                 </button>
@@ -144,7 +158,7 @@ function apiMessage(err: unknown, fallback: string): string {
                   <button
                     mat-stroked-button
                     type="button"
-                    [disabled]="resending()"
+                    [libAsyncButton]="resending()"
                     (click)="resendVerification()"
                   >
                     Resend verification email
@@ -187,6 +201,13 @@ function apiMessage(err: unknown, fallback: string): string {
                 <lib-password-reveal-button matSuffix [input]="next" />
                 <mat-hint>At least {{ minPasswordLength }} characters</mat-hint>
               </mat-form-field>
+              <lib-form-errors
+                [control]="passwordForm.controls.newPassword"
+                [messages]="{
+                  minlength:
+                    'At least ' + minPasswordLength + ' characters.',
+                }"
+              />
 
               @if (passwordError()) {
                 <p class="profile__error" role="alert">{{ passwordError() }}</p>
@@ -197,7 +218,8 @@ function apiMessage(err: unknown, fallback: string): string {
                   mat-flat-button
                   color="primary"
                   type="submit"
-                  [disabled]="passwordForm.invalid || savingPassword()"
+                  [libAsyncButton]="savingPassword()"
+                  [busyDisabled]="passwordForm.invalid"
                 >
                   Update password
                 </button>
@@ -213,12 +235,10 @@ function apiMessage(err: unknown, fallback: string): string {
         <section class="panel">
           <div class="panel__head">
             <h2>Two-factor authentication</h2>
-            <span
-              class="profile__status"
-              [class.profile__status--ok]="p.twoFactorEnabled"
+            <lib-status-badge
+              [tone]="p.twoFactorEnabled ? 'success' : 'neutral'"
+              >{{ p.twoFactorEnabled ? 'On' : 'Off' }}</lib-status-badge
             >
-              {{ p.twoFactorEnabled ? 'On' : 'Off' }}
-            </span>
           </div>
           <div class="panel__body">
             @if (tfaMode() === 'idle') {
@@ -234,7 +254,7 @@ function apiMessage(err: unknown, fallback: string): string {
                     mat-flat-button
                     color="primary"
                     type="button"
-                    [disabled]="tfaBusy()"
+                    [libAsyncButton]="tfaBusy()"
                     (click)="startTwoFactor()"
                   >
                     Enable two-factor
@@ -261,7 +281,8 @@ function apiMessage(err: unknown, fallback: string): string {
                       mat-stroked-button
                       color="warn"
                       type="submit"
-                      [disabled]="tfaDisableForm.invalid || tfaBusy()"
+                      [libAsyncButton]="tfaBusy()"
+                      [busyDisabled]="tfaDisableForm.invalid"
                     >
                       Disable two-factor
                     </button>
@@ -296,7 +317,8 @@ function apiMessage(err: unknown, fallback: string): string {
                     mat-flat-button
                     color="primary"
                     type="submit"
-                    [disabled]="tfaConfirmForm.invalid || tfaBusy()"
+                    [libAsyncButton]="tfaBusy()"
+                    [busyDisabled]="tfaConfirmForm.invalid"
                   >
                     Confirm
                   </button>
@@ -324,6 +346,10 @@ function apiMessage(err: unknown, fallback: string): string {
                 }
               </ul>
               <div class="profile__actions">
+                <lib-copy-button
+                  [value]="tfaBackupCodes().join('\n')"
+                  label="Copy backup codes"
+                />
                 <button
                   mat-flat-button
                   color="primary"
@@ -374,7 +400,7 @@ function apiMessage(err: unknown, fallback: string): string {
                   <button
                     mat-stroked-button
                     type="button"
-                    [disabled]="busyProvider() === identity.provider"
+                    [libAsyncButton]="busyProvider() === identity.provider"
                     (click)="unlink(identity.provider)"
                   >
                     Disconnect
@@ -391,7 +417,7 @@ function apiMessage(err: unknown, fallback: string): string {
                   <button
                     mat-stroked-button
                     type="button"
-                    [disabled]="busyProvider() === provider.id"
+                    [libAsyncButton]="busyProvider() === provider.id"
                     (click)="connect(provider.id)"
                   >
                     Connect
@@ -414,7 +440,7 @@ function apiMessage(err: unknown, fallback: string): string {
               <button
                 mat-stroked-button
                 type="button"
-                [disabled]="sessionsBusy()"
+                [libAsyncButton]="sessionsBusy()"
                 (click)="signOutOthers()"
               >
                 Sign out everywhere else
@@ -432,21 +458,19 @@ function apiMessage(err: unknown, fallback: string): string {
                     <span class="accounts__name">
                       {{ session.userAgent || 'Unknown device' }}
                       @if (session.current) {
-                        <span class="profile__status profile__status--ok">
-                          This device
-                        </span>
+                        <lib-status-badge tone="success">This device</lib-status-badge>
                       }
                     </span>
                     <span class="accounts__sub">
                       {{ session.ip || 'no IP' }} · last active
-                      {{ session.lastUsedAt | date: 'short' }}
+                      <lib-relative-time [value]="session.lastUsedAt" />
                     </span>
                   </div>
                   @if (!session.current) {
                     <button
                       mat-stroked-button
                       type="button"
-                      [disabled]="sessionsBusy()"
+                      [libAsyncButton]="sessionsBusy()"
                       (click)="signOut(session.id)"
                     >
                       Sign out
@@ -491,7 +515,8 @@ function apiMessage(err: unknown, fallback: string): string {
                   mat-stroked-button
                   color="warn"
                   type="submit"
-                  [disabled]="deleteForm.invalid || deleting()"
+                  [libAsyncButton]="deleting()"
+                  [busyDisabled]="deleteForm.invalid"
                 >
                   Delete my account
                 </button>
@@ -510,19 +535,6 @@ function apiMessage(err: unknown, fallback: string): string {
       flex-direction: column;
       gap: var(--app-space-4);
       max-width: 560px;
-    }
-    .profile__toolbar {
-      display: flex;
-      align-items: baseline;
-      gap: var(--app-space-3);
-      padding-block-end: var(--app-space-3);
-      border-block-end: var(--app-border-hairline);
-    }
-    .profile__title {
-      margin: 0;
-      font-size: 1.0625rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
     }
     .profile__roles {
       font: 500 0.6875rem/1 var(--app-font-mono);
@@ -582,15 +594,8 @@ function apiMessage(err: unknown, fallback: string): string {
       gap: var(--app-space-2);
       margin-block-start: 2px;
     }
-    .profile__status {
+    .profile__status-line {
       margin: 0;
-      font: 500 0.6875rem/1 var(--app-font-mono);
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--app-color-error);
-    }
-    .profile__status--ok {
-      color: color-mix(in srgb, var(--app-color-on-surface) 60%, transparent);
     }
     .profile__error {
       color: var(--app-color-error);

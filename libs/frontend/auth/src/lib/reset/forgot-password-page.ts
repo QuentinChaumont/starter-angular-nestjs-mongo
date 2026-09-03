@@ -3,9 +3,9 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
+import { AsyncButtonDirective, FormErrors } from '@org/frontend-ui';
 import { ResetService } from './reset.service';
 
 @Component({
@@ -16,15 +16,13 @@ import { ResetService } from './reset.service';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatProgressBarModule,
+    AsyncButtonDirective,
+    FormErrors,
     TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="forgot">
-      @if (submitting()) {
-        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-      }
       <h1>{{ 'auth.forgot.title' | transloco }}</h1>
 
       @if (done()) {
@@ -41,12 +39,14 @@ import { ResetService } from './reset.service';
               autocomplete="username"
             />
           </mat-form-field>
+          <lib-form-errors [control]="form.controls.email" />
 
           <button
             mat-flat-button
             color="primary"
             type="submit"
-            [disabled]="form.invalid || submitting()"
+            [libAsyncButton]="submitting()"
+            [busyDisabled]="form.invalid"
           >
             {{ 'auth.forgot.submit' | transloco }}
           </button>

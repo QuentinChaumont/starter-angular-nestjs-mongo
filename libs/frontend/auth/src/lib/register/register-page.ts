@@ -9,11 +9,14 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { isApiError } from '@org/shared-contracts';
-import { PasswordRevealButton } from '@org/frontend-ui';
+import {
+  AsyncButtonDirective,
+  FormErrors,
+  PasswordRevealButton,
+} from '@org/frontend-ui';
 import { AuthService } from '../auth.service';
 import { sanitizeRedirect } from '../sanitize-redirect';
 
@@ -27,16 +30,14 @@ const MIN_PASSWORD_LENGTH = 8;
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatProgressBarModule,
     PasswordRevealButton,
+    AsyncButtonDirective,
+    FormErrors,
     TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="register">
-      @if (submitting()) {
-        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-      }
       <h1>{{ 'auth.register.title' | transloco }}</h1>
 
       <form [formGroup]="form" (ngSubmit)="submit()">
@@ -68,6 +69,7 @@ const MIN_PASSWORD_LENGTH = 8;
             autocomplete="username"
           />
         </mat-form-field>
+        <lib-form-errors [control]="form.controls.email" />
 
         <mat-form-field appearance="outline">
           <mat-label>{{ 'common.password' | transloco }}</mat-label>
@@ -86,6 +88,14 @@ const MIN_PASSWORD_LENGTH = 8;
             }}
           </mat-hint>
         </mat-form-field>
+        <lib-form-errors
+          [control]="form.controls.password"
+          [messages]="{
+            minlength:
+              'auth.register.passwordHint'
+                | transloco: { count: minPasswordLength },
+          }"
+        />
 
         @if (error()) {
           <p class="register__error" role="alert">{{ error() }}</p>
@@ -95,7 +105,8 @@ const MIN_PASSWORD_LENGTH = 8;
           mat-flat-button
           color="primary"
           type="submit"
-          [disabled]="form.invalid || submitting()"
+          [libAsyncButton]="submitting()"
+          [busyDisabled]="form.invalid"
         >
           {{ 'auth.register.submit' | transloco }}
         </button>

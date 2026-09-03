@@ -14,6 +14,8 @@ import { DialogService, NotificationService } from '@org/frontend-feedback';
 import {
   DataTable,
   DataTableRowActionsDirective,
+  PageHeader,
+  StatusBadge,
   type DataCellContext,
   type DataColumn,
   type DataQuery,
@@ -33,22 +35,26 @@ function sameRoles(a: string[], b: string[]): boolean {
 
 @Component({
   selector: 'lib-admin-users-page',
-  imports: [MatButtonModule, DataTable, DataTableRowActionsDirective],
+  imports: [
+    MatButtonModule,
+    DataTable,
+    DataTableRowActionsDirective,
+    PageHeader,
+    StatusBadge,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="admin-users">
-      <header class="admin-users__toolbar">
-        <div class="admin-users__heading">
-          <h1>Users</h1>
-          <p>Grant roles and enable or disable accounts.</p>
-        </div>
-      </header>
+      <lib-page-header
+        title="Users"
+        subtitle="Grant roles and enable or disable accounts."
+      ></lib-page-header>
 
       <ng-template #emailCell let-user let-value="value">
         <span class="admin-users__email">
           <span class="mono">{{ value }}</span>
           @if (!user.emailVerifiedAt) {
-            <span class="admin-users__tag">unverified</span>
+            <lib-status-badge tone="warn">unverified</lib-status-badge>
           }
         </span>
       </ng-template>
@@ -82,25 +88,6 @@ function sameRoles(a: string[], b: string[]): boolean {
       gap: var(--app-space-4);
       max-width: 1180px;
     }
-    .admin-users__toolbar {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: var(--app-space-4);
-      padding-block-end: var(--app-space-3);
-      border-block-end: var(--app-border-hairline);
-    }
-    .admin-users__heading h1 {
-      margin: 0;
-      font-size: 1.0625rem;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-    }
-    .admin-users__heading p {
-      margin: 3px 0 0;
-      font-size: 0.8125rem;
-      color: color-mix(in srgb, var(--app-color-on-surface) 58%, transparent);
-    }
     .admin-users__email {
       display: inline-flex;
       align-items: center;
@@ -109,14 +96,6 @@ function sameRoles(a: string[], b: string[]): boolean {
     .admin-users .mono {
       font-family: var(--app-font-mono);
       font-size: 0.75rem;
-    }
-    .admin-users__tag {
-      padding: 1px 5px;
-      border-radius: var(--app-radius-sm);
-      border: var(--app-border-hairline);
-      font: 500 0.6875rem/1.4 var(--app-font-mono);
-      letter-spacing: 0.02em;
-      color: color-mix(in srgb, var(--app-color-on-surface) 58%, transparent);
     }
     .admin-users__danger:not(.admin-users__danger--off) {
       color: var(--app-color-error);

@@ -1,7 +1,24 @@
 # frontend-ui
 
 Shared presentational primitives for the Angular app — no business logic,
-no HTTP. Always available (not an opt-in brick).
+no HTTP. Always available (not an opt-in brick). Everything here is
+standalone: `import { … } from '@org/frontend-ui'` and drop it in a
+component's `imports`.
+
+## Kit (V2.3 step 48)
+
+Extracted from patterns that had been copy-pasted across the admin and
+profile pages, then wired back into them.
+
+| Export | What it is |
+| --- | --- |
+| `<lib-page-header>` | `[title]` / `[subtitle]` + a right-aligned `actions` slot (and an optional `breadcrumbs` slot). Replaces the per-page `.*__toolbar` headers. |
+| `libAsyncButton` | Directive on a Material button: `[libAsyncButton]="saving()"` disables it and shows an inline spinner; `[busyDisabled]="form.invalid"` folds in the usual guard, so `[disabled]="form.invalid \|\| saving()"` + a separate `<mat-progress-bar>` collapse to one binding. |
+| `<lib-form-errors>` | `[control]` + optional `[messages]` (per-validator overrides, e.g. translated). Renders the first active error, and only once the control is touched. English defaults for `required` / `email` / `minlength` / `maxlength` / `pattern`. |
+| `<lib-relative-time>` | `[value]` (ISO / Date / ms) → "3 min ago" … falling back to an absolute date past a week, full date in `title`. One shared `setInterval` for the whole page, running only while a `<lib-relative-time>` is mounted (`RelativeTimeClock`). |
+| `<lib-status-badge>` | `[tone]` (`neutral` \| `success` \| `warn` \| `danger`) + projected label. Replaces the `.*__tag` / `.*__status` pills. |
+| `<lib-empty-state>` | `[icon]` + `[title]` + projected body + `action` slot. Used as `<lib-data-table>`'s `empty` slot and on any page whose data set can be empty. |
+| `<lib-copy-button>` | `[value]` + `[label]`; copies to the clipboard and flips to a "Copied" tick for two seconds. On the 2FA backup codes. |
 
 ## `<lib-data-table>`
 
@@ -35,6 +52,17 @@ as text.
 
 **This is the default for every table in the app** — reach for a bespoke
 `<table>` only when the data genuinely isn't a paginated list.
+
+The empty state defaults to `<lib-empty-state>` with `emptyMessage`;
+override it by projecting your own into the `empty` slot:
+
+```html
+<lib-data-table [columns]="columns" [dataSource]="load">
+  <lib-empty-state empty icon="group_off" title="No users yet">
+    <button mat-flat-button action (click)="invite()">Invite someone</button>
+  </lib-empty-state>
+</lib-data-table>
+```
 
 ## `<lib-password-reveal-button>`
 

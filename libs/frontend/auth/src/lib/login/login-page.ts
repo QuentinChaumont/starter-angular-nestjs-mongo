@@ -9,9 +9,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { PasswordRevealButton } from '@org/frontend-ui';
+import { AsyncButtonDirective, FormErrors, PasswordRevealButton } from '@org/frontend-ui';
 import { isApiError, OidcProviderInfo } from '@org/shared-contracts';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
@@ -27,8 +26,9 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatProgressBarModule,
     PasswordRevealButton,
+    AsyncButtonDirective,
+    FormErrors,
     TwoFactorPrompt,
     TranslocoPipe,
   ],
@@ -38,9 +38,6 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
       <lib-two-factor-prompt [pendingToken]="token" [redirectTo]="redirectTo" />
     } @else {
     <section class="login">
-      @if (submitting()) {
-        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-      }
       <h1>{{ 'auth.login.title' | transloco }}</h1>
 
       <form [formGroup]="form" (ngSubmit)="submit()">
@@ -53,6 +50,7 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
             autocomplete="username"
           />
         </mat-form-field>
+        <lib-form-errors [control]="form.controls.email" />
 
         <mat-form-field appearance="outline">
           <mat-label>{{ 'common.password' | transloco }}</mat-label>
@@ -65,6 +63,7 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
           />
           <lib-password-reveal-button matSuffix [input]="password" />
         </mat-form-field>
+        <lib-form-errors [control]="form.controls.password" />
 
         @if (error()) {
           <p class="login__error" role="alert">{{ error() }}</p>
@@ -74,7 +73,8 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
           mat-flat-button
           color="primary"
           type="submit"
-          [disabled]="form.invalid || submitting()"
+          [libAsyncButton]="submitting()"
+          [busyDisabled]="form.invalid"
         >
           {{ 'auth.login.submit' | transloco }}
         </button>

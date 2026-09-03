@@ -15,6 +15,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { NgTemplateOutlet } from '@angular/common';
 import { catchError, debounce, of, switchMap, tap, timer } from 'rxjs';
 import { DataTableRowActionsDirective } from './data-table-row-actions.directive';
+import { EmptyState } from '../empty-state.component';
 import {
   DataColumn,
   DataQuery,
@@ -44,6 +45,7 @@ const DEFAULT_FILTER_DEBOUNCE_MS = 250;
     MatIconModule,
     MatPaginatorModule,
     MatProgressBarModule,
+    EmptyState,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -148,7 +150,11 @@ const DEFAULT_FILTER_DEBOUNCE_MS = 250;
       </div>
 
       @if (!loading() && !error() && items().length === 0) {
-        <p class="data-table__empty">{{ emptyMessage() }}</p>
+        <div class="data-table__empty">
+          <ng-content select="[empty]">
+            <lib-empty-state [title]="emptyMessage()" />
+          </ng-content>
+        </div>
       }
 
       <mat-paginator
@@ -313,15 +319,11 @@ const DEFAULT_FILTER_DEBOUNCE_MS = 250;
       text-align: end;
       white-space: nowrap;
     }
-    .data-table__empty,
     .data-table__error {
       margin: 0;
       padding: 28px 16px;
       text-align: center;
       font-size: 0.8125rem;
-      color: var(--dt-muted);
-    }
-    .data-table__error {
       color: var(--app-color-error);
     }
     mat-paginator {

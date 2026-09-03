@@ -10,10 +10,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { isApiError } from '@org/shared-contracts';
+import { AsyncButtonDirective, FormErrors } from '@org/frontend-ui';
 import { AuthService } from '../auth.service';
 
 /**
@@ -28,15 +28,13 @@ import { AuthService } from '../auth.service';
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
-    MatProgressBarModule,
+    AsyncButtonDirective,
+    FormErrors,
     TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="tfa">
-      @if (submitting()) {
-        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-      }
       <h1>{{ 'auth.twoFactor.title' | transloco }}</h1>
       <p class="tfa__hint">{{ 'auth.twoFactor.hint' | transloco }}</p>
 
@@ -50,6 +48,7 @@ import { AuthService } from '../auth.service';
             inputmode="numeric"
           />
         </mat-form-field>
+        <lib-form-errors [control]="form.controls.code" />
 
         @if (error()) {
           <p class="tfa__error" role="alert">{{ error() }}</p>
@@ -59,7 +58,8 @@ import { AuthService } from '../auth.service';
           mat-flat-button
           color="primary"
           type="submit"
-          [disabled]="form.invalid || submitting()"
+          [libAsyncButton]="submitting()"
+          [busyDisabled]="form.invalid"
         >
           {{ 'auth.twoFactor.verify' | transloco }}
         </button>
