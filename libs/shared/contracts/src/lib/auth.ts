@@ -123,3 +123,40 @@ export interface OidcProviderInfo {
    */
   loginUrl: string;
 }
+
+/**
+ * One login method linked to the current account (V2.2 step 42), as listed
+ * by `GET /api/auth/identities`. A single user can have several — a local
+ * password plus one entry per OIDC provider they've connected.
+ */
+export interface LinkedIdentity {
+  /** OIDC provider id (`generic`, `google`, `keycloak`). */
+  provider: string;
+  /** Display label — the provider's current label, or the id if it's no
+   * longer configured. */
+  label: string;
+  /** Email the provider asserted when the link was made (`null` if unknown). */
+  email: string | null;
+  /** ISO timestamp of when the provider was linked. */
+  linkedAt: string;
+}
+
+/**
+ * Body of `GET /api/auth/identities`: every way the current account can log
+ * in, for the profile page's "Connected accounts" section.
+ */
+export interface ConnectedAccounts {
+  /** Whether a usable local email + password login is set. */
+  hasPassword: boolean;
+  /** OIDC providers already linked to this account. */
+  identities: LinkedIdentity[];
+}
+
+/**
+ * Body of `POST /api/auth/identities/:providerId/link`: the URL the SPA must
+ * navigate the browser to, to start linking that provider to the current
+ * account.
+ */
+export interface StartIdentityLinkResponse {
+  authorizationUrl: string;
+}

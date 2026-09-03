@@ -4,7 +4,8 @@
  */
 export interface UserModel {
   email: string;
-  password: string;
+  /** Optional: an OIDC-only account (V2.2 step 42) has no local password. */
+  password?: string;
   firstName: string;
   lastName: string;
   roles: string[];

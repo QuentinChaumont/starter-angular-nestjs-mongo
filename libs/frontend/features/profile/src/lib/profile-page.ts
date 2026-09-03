@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -11,9 +12,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { isApiError } from '@org/shared-contracts';
-import type { UserProfile } from '@org/shared-contracts';
+import type {
+  ConnectedAccounts,
+  OidcProviderInfo,
+  UserProfile,
+} from '@org/shared-contracts';
 import { AuthService, ResetService } from '@org/frontend-auth';
 import { DialogService, NotificationService } from '@org/frontend-feedback';
 import { PasswordRevealButton } from '@org/frontend-ui';
@@ -30,6 +35,7 @@ function apiMessage(err: unknown, fallback: string): string {
   selector: 'lib-profile-page',
   imports: [
     ReactiveFormsModule,
+    RouterLink,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -200,6 +206,75 @@ function apiMessage(err: unknown, fallback: string): string {
           </div>
         </section>
 
+        <!-- connected accounts -->
+        <section class="panel">
+          <div class="panel__head"><h2>Connected accounts</h2></div>
+          <div class="panel__body">
+            <p class="profile__hint">
+              Ways to sign in to this account. Keep at least one.
+            </p>
+
+            <ul class="accounts">
+              <li class="accounts__row">
+                <div class="accounts__meta">
+                  <span class="accounts__name">Password</span>
+                  <span class="accounts__sub">
+                    {{ connected()?.hasPassword ? 'Set' : 'Not set' }}
+                  </span>
+                </div>
+                @if (connected() && !connected()!.hasPassword) {
+                  <a mat-stroked-button routerLink="/forgot-password">
+                    Set a password
+                  </a>
+                }
+              </li>
+
+              @for (
+                identity of connected()?.identities ?? [];
+                track identity.provider
+              ) {
+                <li class="accounts__row">
+                  <div class="accounts__meta">
+                    <span class="accounts__name">{{ identity.label }}</span>
+                    @if (identity.email) {
+                      <span class="accounts__sub">{{ identity.email }}</span>
+                    }
+                  </div>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="busyProvider() === identity.provider"
+                    (click)="unlink(identity.provider)"
+                  >
+                    Disconnect
+                  </button>
+                </li>
+              }
+
+              @for (provider of connectable(); track provider.id) {
+                <li class="accounts__row">
+                  <div class="accounts__meta">
+                    <span class="accounts__name">{{ provider.label }}</span>
+                    <span class="accounts__sub">Not connected</span>
+                  </div>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="busyProvider() === provider.id"
+                    (click)="connect(provider.id)"
+                  >
+                    Connect
+                  </button>
+                </li>
+              }
+            </ul>
+
+            @if (accountsError()) {
+              <p class="profile__error" role="alert">{{ accountsError() }}</p>
+            }
+          </div>
+        </section>
+
         <!-- delete -->
         <section class="panel panel--danger">
           <div class="panel__head"><h2>Delete account</h2></div>
@@ -338,6 +413,41 @@ function apiMessage(err: unknown, fallback: string): string {
       color: color-mix(in srgb, var(--app-color-on-surface) 60%, transparent);
       margin: 2px 0 0;
     }
+    .accounts {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .accounts__row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--app-space-3);
+      padding-block: var(--app-space-3);
+      border-block-start: var(--app-border-hairline);
+    }
+    .accounts__row:first-child {
+      border-block-start: none;
+      padding-block-start: 0;
+    }
+    .accounts__meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .accounts__name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+    }
+    .accounts__sub {
+      font: 500 0.6875rem/1.3 var(--app-font-mono);
+      letter-spacing: 0.02em;
+      color: color-mix(in srgb, var(--app-color-on-surface) 55%, transparent);
+      overflow-wrap: anywhere;
+    }
   `,
 })
 export class ProfilePage {
@@ -346,6 +456,8 @@ export class ProfilePage {
   private readonly reset = inject(ResetService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly document = inject(DOCUMENT);
   private readonly dialog = inject(DialogService, { optional: true });
   private readonly notify = inject(NotificationService, { optional: true });
 
@@ -365,9 +477,23 @@ export class ProfilePage {
   protected readonly deleting = signal(false);
   protected readonly deleteError = signal<string | null>(null);
 
+  protected readonly connected = signal<ConnectedAccounts | null>(null);
+  protected readonly providers = signal<OidcProviderInfo[]>([]);
+  protected readonly accountsError = signal<string | null>(null);
+  /** Provider id whose Connect/Disconnect button is mid-request. */
+  protected readonly busyProvider = signal<string | null>(null);
+
   protected readonly roleLabel = computed(() =>
     (this.profile()?.roles ?? []).join(', '),
   );
+
+  /** Active providers not yet linked — the ones worth a "Connect" button. */
+  protected readonly connectable = computed(() => {
+    const linked = new Set(
+      (this.connected()?.identities ?? []).map((i) => i.provider),
+    );
+    return this.providers().filter((p) => !linked.has(p.id));
+  });
 
   protected readonly nameForm = this.fb.nonNullable.group({
     firstName: ['', [Validators.required]],
@@ -404,6 +530,83 @@ export class ProfilePage {
       error: () => {
         this.loadError.set('Could not load your profile.');
         this.loading.set(false);
+      },
+    });
+
+    this.auth.oidcProviders().subscribe((providers) => {
+      this.providers.set(providers);
+    });
+    this.loadConnectedAccounts();
+    this.consumeLinkResult();
+  }
+
+  private loadConnectedAccounts(): void {
+    this.service.getConnectedAccounts().subscribe({
+      next: (accounts) => this.connected.set(accounts),
+      error: () =>
+        this.accountsError.set('Could not load your connected accounts.'),
+    });
+  }
+
+  /** Reads the `?linked` / `?linkError` params the OIDC "Connect" callback
+   * bounces back with, shows a toast, then scrubs them from the URL. */
+  private consumeLinkResult(): void {
+    const params = this.route.snapshot.queryParamMap;
+    const linked = params.get('linked');
+    const linkError = params.get('linkError');
+    if (!linked && !linkError) {
+      return;
+    }
+    if (linked) {
+      this.notify?.success('Account connected.');
+    }
+    if (linkError) {
+      const message =
+        linkError === 'IDENTITY_ALREADY_LINKED'
+          ? 'That account is already linked to another user.'
+          : 'Could not connect that account.';
+      this.notify?.error(message);
+      this.accountsError.set(message);
+    }
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {},
+      replaceUrl: true,
+    });
+  }
+
+  protected connect(provider: string): void {
+    if (this.busyProvider()) return;
+    this.busyProvider.set(provider);
+    this.accountsError.set(null);
+    this.service.startIdentityLink(provider).subscribe({
+      next: ({ authorizationUrl }) => {
+        this.document.location.href = authorizationUrl;
+      },
+      error: (err: unknown) => {
+        this.busyProvider.set(null);
+        this.accountsError.set(
+          apiMessage(err, 'Could not start connecting that account.'),
+        );
+      },
+    });
+  }
+
+  protected unlink(provider: string): void {
+    if (this.busyProvider()) return;
+    this.busyProvider.set(provider);
+    this.accountsError.set(null);
+    this.service.unlinkIdentity(provider).subscribe({
+      next: () => {
+        this.busyProvider.set(null);
+        this.notify?.success('Account disconnected.');
+        this.loadConnectedAccounts();
+      },
+      error: (err: unknown) => {
+        this.busyProvider.set(null);
+        this.accountsError.set(
+          apiMessage(err, 'Could not disconnect that account.'),
+        );
       },
     });
   }

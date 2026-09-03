@@ -17,6 +17,7 @@ import {
   TestMongo,
 } from '@org/backend-testing';
 import { AuthModule } from './auth.module';
+import { IdentityService } from './identity/identity.service';
 
 @Module({
   imports: [
@@ -636,6 +637,87 @@ describe('Auth (e2e, real Mongo instance)', () => {
         body: JSON.stringify({ email, password: newPassword }),
       });
       expect(withNew.status).toBe(201);
+    });
+  });
+
+  describe('connected accounts (/auth/identities)', () => {
+    const identityUser = {
+      email: 'linker@example.com',
+      password: 'Str0ng!Passw0rd',
+    };
+
+    async function token(): Promise<string> {
+      const { body } = await login(identityUser);
+      return body.accessToken as string;
+    }
+
+    const list = (accessToken: string) =>
+      fetch(`${authBaseUrl}/identities`, {
+        headers: { authorization: `Bearer ${accessToken}` },
+      });
+
+    beforeAll(async () => {
+      await app.get(UserService).create({
+        ...identityUser,
+        firstName: 'Link',
+        lastName: 'Er',
+      });
+    });
+
+    it('401s without a token', async () => {
+      expect((await list('')).status).toBe(401);
+    });
+
+    it('reports a password-only account with no linked providers', async () => {
+      const res = await list(await token());
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ hasPassword: true, identities: [] });
+    });
+
+    it('lists a linked provider, then disconnects it', async () => {
+      const accessToken = await token();
+      const me = (await (
+        await fetch(`${authBaseUrl}/me`, {
+          headers: { authorization: `Bearer ${accessToken}` },
+        })
+      ).json()) as any;
+
+      await app.get(IdentityService).link({
+        userId: me.id,
+        provider: 'google',
+        subject: `sub-${me.id}`,
+        email: 'linker@gmail.com',
+      });
+
+      const listed = (await (await list(accessToken)).json()) as any;
+      expect(listed.hasPassword).toBe(true);
+      expect(listed.identities).toEqual([
+        {
+          provider: 'google',
+          // no provider configured → the title-cased id is the fallback label
+          label: 'Google',
+          email: 'linker@gmail.com',
+          linkedAt: expect.any(String),
+        },
+      ]);
+
+      const del = await fetch(`${authBaseUrl}/identities/google`, {
+        method: 'DELETE',
+        headers: { authorization: `Bearer ${accessToken}` },
+      });
+      expect(del.status).toBe(204);
+
+      const after = (await (await list(accessToken)).json()) as any;
+      expect(after.identities).toEqual([]);
+    });
+
+    it('404s when disconnecting a provider that is not linked', async () => {
+      const del = await fetch(`${authBaseUrl}/identities/keycloak`, {
+        method: 'DELETE',
+        headers: { authorization: `Bearer ${await token()}` },
+      });
+      expect(del.status).toBe(404);
+      expect(((await del.json()) as any).code).toBe('IDENTITY_NOT_FOUND');
     });
   });
 

@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Query, Req, Res } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
-import { UnauthorizedError } from '@org/backend-core';
+import { ApplicationError, UnauthorizedError } from '@org/backend-core';
 import type { OidcProviderInfo } from '@org/shared-contracts';
 import type { Request, Response } from 'express';
 import { AuthService } from '../auth.service';
@@ -98,6 +98,23 @@ export class OidcController {
         'OIDC_EXCHANGE_FAILED',
         'Could not complete the OIDC login',
       );
+    }
+
+    // "Connect" flow (V2.2 step 42): link to the signed-in account and bounce
+    // back to the profile page instead of opening a session.
+    if (tx.linkUserId) {
+      const profileUrl = new URL('/app/profile', provider.frontendUrl);
+      try {
+        await this.linker.linkToUser(provider.id, claims, tx.linkUserId);
+        profileUrl.searchParams.set('linked', provider.id);
+      } catch (err) {
+        profileUrl.searchParams.set(
+          'linkError',
+          err instanceof ApplicationError ? err.code : 'IDENTITY_LINK_FAILED',
+        );
+      }
+      res.redirect(profileUrl.toString());
+      return;
     }
 
     const user = await this.linker.linkFromClaims(provider.id, claims);

@@ -58,15 +58,43 @@ The routes are **per provider** (`:providerId` ∈ `generic`, `google`,
   are stored in a short-lived httpOnly `oidc_tx` cookie. Unknown id → 404
   `OIDC_PROVIDER_UNKNOWN`.
 - `GET /auth/oidc/:providerId/callback` → checks the cookie's `providerId`
-  and `state`, exchanges the code (`openid-client`), links the user
-  **by verified email**
-  (`OidcUserLinker`: reuse an existing account, else create a passwordless
-  one), issues the same access token + session cookies as local login,
-  then redirects to `OIDC_FRONTEND_URL + redirectTo` with
+  and `state`, exchanges the code (`openid-client`), resolves the account
+  (`OidcUserLinker`, see **Connected accounts** below), issues the same
+  access token + session cookies as local login, then redirects to
+  `OIDC_FRONTEND_URL + redirectTo` with
   `#access_token=...&expires_in=...&token_type=Bearer` in the fragment.
 
 The provider's own tokens never leave the backend. `redirectTo` is
 constrained to a single-slash relative path.
+
+## Connected accounts (V2.2 step 42)
+
+A single account can hold several login methods at once — a local password
+**and** any of the OIDC providers. The link lives in the `identities`
+collection (`{ userId, provider, subject, email, linkedAt }`, unique on
+`(provider, subject)`), not on the user's email.
+
+On an OIDC callback `OidcUserLinker` resolves, in order: an existing
+`identities` row for this `(provider, subject)`; else an account with the
+same **verified email** (a new identity is linked to it — this also
+migrates pre-step-42 accounts on their next login); else a new
+**passwordless** account plus its first identity. A passwordless account
+sets a local password later via "forgot password".
+
+Endpoints (all bearer-authenticated, no CSRF guard — like
+`change-password`):
+
+- `GET /auth/identities` → `{ hasPassword, identities: { provider, label,
+  email, linkedAt }[] }` for the current account.
+- `POST /auth/identities/:providerId/link` → `{ authorizationUrl }`. The
+  SPA navigates there; the callback (recognising the `oidc_tx` cookie's
+  `linkUserId`) links the identity to the signed-in account and bounces to
+  `/app/profile?linked=<id>` (or `?linkError=<code>`), **without** opening
+  a new session. Linking an identity already owned by another account →
+  `409 IDENTITY_ALREADY_LINKED`.
+- `DELETE /auth/identities/:providerId` → `204`. `404 IDENTITY_NOT_FOUND`
+  if it isn't linked; `409 LAST_LOGIN_METHOD` if it's the only way in (no
+  password, no other identity).
 
 | Variable                      | Required  | Default                 | Notes                                       |
 | ----------------------------- | --------- | ----------------------- | ------------------------------------------- |

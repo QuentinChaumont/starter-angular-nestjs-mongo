@@ -9,6 +9,8 @@ export * from './lib/dto/login.dto';
 export * from './lib/dto/register.dto';
 export * from './lib/refresh/refresh-token.service';
 export * from './lib/refresh/opaque-token';
+export * from './lib/identity/identity.service';
+export * from './lib/identity/identity.schema';
 export * from './lib/strategies/jwt.strategy';
 
 // The authz primitives moved to `@org/backend-core` (V2.1 step 31) so the

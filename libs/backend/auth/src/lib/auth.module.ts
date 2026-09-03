@@ -16,6 +16,10 @@ import { AuthService } from './auth.service';
 import { AuthCookieService } from './cookies/auth-cookie.service';
 import { CsrfGuard } from './csrf/csrf.guard';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
+import { IdentitiesController } from './identity/identities.controller';
+import { IdentityRepository } from './identity/identity.repository';
+import { Identity, IdentitySchema } from './identity/identity.schema';
+import { IdentityService } from './identity/identity.service';
 import { OidcController } from './oidc/oidc.controller';
 import { OidcUserLinker } from './oidc/oidc-user.linker';
 import { OidcService } from './oidc/oidc.service';
@@ -34,6 +38,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     PassportModule,
     MongooseModule.forFeature([
       { name: RefreshToken.name, schema: RefreshTokenSchema },
+      { name: Identity.name, schema: IdentitySchema },
     ]),
     JwtModule.registerAsync({
       imports: [AppConfigModule],
@@ -47,7 +52,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       },
     }),
   ],
-  controllers: [AuthController, OidcController],
+  controllers: [AuthController, OidcController, IdentitiesController],
   providers: [
     AuthService,
     AuthEvents,
@@ -59,6 +64,8 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     AuthThrottlerGuard,
     OidcService,
     OidcUserLinker,
+    IdentityRepository,
+    IdentityService,
     // Global authz: `OptionalJwtAuthGuard` attaches `request.user` when a
     // valid bearer token is present (no-op otherwise), then `RolesGuard`
     // enforces `@Roles(...)` — so any controller in the app (e.g. the

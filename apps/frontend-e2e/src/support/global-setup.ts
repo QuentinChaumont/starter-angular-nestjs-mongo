@@ -51,6 +51,10 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
 
   const mongo = await MongoMemoryServer.create({ instance: { dbName: 'e2e' } });
   const mongoUri = mongo.getUri('e2e');
+  // Test workers are forked after this returns, so they inherit this — a few
+  // specs poke the DB directly for fixtures no API can create (an admin
+  // role, a linked OIDC identity, …).
+  process.env.E2E_MONGO_URI = mongoUri;
 
   if (!existsSync(BACKEND_ENTRY)) {
     // `nx run frontend-e2e:e2e` builds it via `dependsOn`; this covers a

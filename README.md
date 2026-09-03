@@ -235,9 +235,15 @@ entity with `--crud` — `AuthModule` logs users in against it. Provides:
   `GET /auth/oidc/:providerId/{login,callback}` (multi-provider registry:
   `generic` + `google` (`OIDC_GOOGLE_*`) + `keycloak` (`OIDC_KEYCLOAK_*`) presets).
   Authorization Code + PKCE via `openid-client`; the provider's tokens
-  never leave the backend — the user is linked **by verified email** and
-  gets our own access token + session cookies, then the browser is sent to
+  never leave the backend — the user gets our own access token + session
+  cookies, then the browser is sent to
   `{OIDC_FRONTEND_URL}/auth/callback#access_token=…&redirect_to=…`.
+- **Connected accounts**: one account can carry a local password plus any
+  OIDC providers at once (`identities` collection, keyed on
+  `(provider, subject)` — not email). `GET /auth/identities` +
+  `POST /auth/identities/:id/link` + `DELETE /auth/identities/:id`, managed
+  from `/app/profile`. An OIDC-only account is passwordless until it uses
+  "forgot password".
 
 See `libs/backend/auth/README.md` for the full contract.
 

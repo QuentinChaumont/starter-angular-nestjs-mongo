@@ -65,7 +65,11 @@ export class AuthService {
   ): Promise<LoginResult> {
     const user = await this.users.findByEmailWithPassword(email);
 
-    if (!user || !(await verifyPassword(password, user.password))) {
+    if (
+      !user ||
+      !user.password ||
+      !(await verifyPassword(password, user.password))
+    ) {
       throw new UnauthorizedError(
         'INVALID_CREDENTIALS',
         'Invalid email or password',
@@ -218,7 +222,10 @@ export class AuthService {
     currentToken: string | undefined,
   ): Promise<void> {
     const user = await this.users.findByIdWithPassword(userId);
-    if (!(await verifyPassword(currentPassword, user.password))) {
+    if (
+      !user.password ||
+      !(await verifyPassword(currentPassword, user.password))
+    ) {
       throw new ValidationError(
         'INVALID_CURRENT_PASSWORD',
         'The current password is incorrect',

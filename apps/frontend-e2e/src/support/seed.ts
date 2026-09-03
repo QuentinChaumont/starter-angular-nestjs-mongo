@@ -56,3 +56,40 @@ export async function promoteToAdmin(
     await client.close();
   }
 }
+
+/** Mongo URI exposed by `global-setup` for the specs that seed fixtures. */
+function e2eMongoUri(): string {
+  const uri = process.env.E2E_MONGO_URI;
+  if (!uri) {
+    throw new Error('E2E_MONGO_URI is not set — run through global-setup');
+  }
+  return uri;
+}
+
+/**
+ * Links an OIDC identity to an existing account straight in the DB — there
+ * is no real identity provider in the e2e suite to link one through.
+ */
+export async function linkIdentity(
+  email: string,
+  identity: { provider: string; subject: string; email?: string },
+): Promise<void> {
+  const client = new MongoClient(e2eMongoUri());
+  try {
+    await client.connect();
+    const db = client.db();
+    const user = await db.collection('users').findOne({ email });
+    if (!user) {
+      throw new Error(`linkIdentity: no user ${email}`);
+    }
+    await db.collection('identities').insertOne({
+      userId: user._id.toString(),
+      provider: identity.provider,
+      subject: identity.subject,
+      email: identity.email ?? email,
+      linkedAt: new Date(),
+    });
+  } finally {
+    await client.close();
+  }
+}

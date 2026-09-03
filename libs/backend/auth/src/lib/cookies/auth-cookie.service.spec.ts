@@ -117,6 +117,25 @@ describe('AuthCookieService', () => {
     expect(service.readOidcTransaction(req)).toEqual(tx);
   });
 
+  it('round-trips an OIDC transaction carrying a linkUserId', () => {
+    const service = new AuthCookieService(buildTestConfig());
+    const res = fakeResponse();
+    const tx = {
+      providerId: 'google',
+      state: 'st',
+      nonce: 'no',
+      codeVerifier: 'cv',
+      redirectTo: '/app/profile',
+      linkUserId: 'user-123',
+    };
+
+    service.setOidcTransaction(res, tx);
+
+    const [, value] = res.cookie.mock.calls[0];
+    const req = { headers: { cookie: `oidc_tx=${value}` } } as Request;
+    expect(service.readOidcTransaction(req)).toEqual(tx);
+  });
+
   it('returns undefined for a malformed OIDC transaction cookie', () => {
     const service = new AuthCookieService(buildTestConfig());
     const req = { headers: { cookie: 'oidc_tx=not-base64-json' } } as Request;

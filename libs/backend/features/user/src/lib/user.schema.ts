@@ -8,7 +8,9 @@ import { HydratedDocument } from 'mongoose';
  *
  * `password` is excluded by default (`select: false`) and stripped from
  * JSON output regardless, so a hashed password never leaves the API even
- * if a future query opts into fetching it.
+ * if a future query opts into fetching it. It is **optional**: an account
+ * created purely through OIDC (V2.2 step 42) has no local password until
+ * the user sets one via "forgot password".
  */
 @Schema({
   timestamps: true,
@@ -23,8 +25,8 @@ export class User {
   @Prop({ required: true, unique: true, trim: true, lowercase: true })
   email!: string;
 
-  @Prop({ required: true, select: false })
-  password!: string;
+  @Prop({ select: false })
+  password?: string;
 
   @Prop({ required: true, trim: true })
   firstName!: string;

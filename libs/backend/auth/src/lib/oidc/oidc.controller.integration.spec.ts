@@ -4,6 +4,7 @@ import {
   AppConfigModule,
   AppConfigService,
   AppHttpModule,
+  ConflictError,
   GlobalExceptionFilter,
   LoggerModule,
   NotFoundError,
@@ -61,6 +62,14 @@ const fakeOidcService = {
 
 const fakeLinker = {
   linkFromClaims: async () => ({ id: 'u1', roles: [] as string[] }),
+  linkToUser: jest.fn(async (_providerId: string, _claims, userId: string) => {
+    if (userId === 'conflict-user') {
+      throw new ConflictError(
+        'IDENTITY_ALREADY_LINKED',
+        'This account is already linked to another user',
+      );
+    }
+  }),
 };
 
 const fakeAuthService = {
@@ -76,7 +85,11 @@ const fakeAuthService = {
   }),
 };
 
-function txCookie(redirectTo = '/app', providerId = 'generic'): string {
+function txCookie(
+  redirectTo = '/app',
+  providerId = 'generic',
+  linkUserId?: string,
+): string {
   const value = Buffer.from(
     JSON.stringify({
       providerId,
@@ -84,6 +97,7 @@ function txCookie(redirectTo = '/app', providerId = 'generic'): string {
       nonce: AUTH_REQUEST.nonce,
       codeVerifier: AUTH_REQUEST.codeVerifier,
       redirectTo,
+      ...(linkUserId ? { linkUserId } : {}),
     }),
     'utf-8',
   ).toString('base64url');
@@ -193,6 +207,45 @@ describe('OidcController (integration)', () => {
     expect(setCookie(response, 'refresh_token')).toContain('refresh-value');
     expect(setCookie(response, 'csrf-token')).toContain('csrf-value');
     expect(setCookie(response, 'oidc_tx')).toBeDefined(); // cleared
+  });
+
+  it('links the provider to the signed-in account and bounces to the profile page', async () => {
+    const response = await fetch(
+      `${baseUrl}/generic/callback?code=the-code&state=state-xyz`,
+      {
+        redirect: 'manual',
+        headers: { cookie: txCookie('/app/profile', 'generic', 'user-1') },
+      },
+    );
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toBe(
+      'http://localhost:4200/app/profile?linked=generic',
+    );
+    // no session issued on a link flow
+    expect(setCookie(response, 'refresh_token')).toBeUndefined();
+    expect(fakeLinker.linkToUser).toHaveBeenCalledWith(
+      'generic',
+      expect.any(Object),
+      'user-1',
+    );
+  });
+
+  it('reports a link conflict as ?linkError on the profile page', async () => {
+    const response = await fetch(
+      `${baseUrl}/generic/callback?code=the-code&state=state-xyz`,
+      {
+        redirect: 'manual',
+        headers: {
+          cookie: txCookie('/app/profile', 'generic', 'conflict-user'),
+        },
+      },
+    );
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get('location')).toBe(
+      'http://localhost:4200/app/profile?linkError=IDENTITY_ALREADY_LINKED',
+    );
   });
 
   it('rejects a callback whose provider does not match the cookie (401)', async () => {

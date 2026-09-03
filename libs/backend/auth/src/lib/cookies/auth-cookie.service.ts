@@ -24,6 +24,12 @@ export interface OidcTransaction {
   nonce: string;
   codeVerifier: string;
   redirectTo: string;
+  /**
+   * Set when the flow was started from the profile page's "Connect" button
+   * (V2.2 step 42): the callback links the identity to this already-signed-in
+   * user instead of opening a new session.
+   */
+  linkUserId?: string;
 }
 
 /**
@@ -110,7 +116,9 @@ export class AuthCookieService {
         typeof parsed.state === 'string' &&
         typeof parsed.nonce === 'string' &&
         typeof parsed.codeVerifier === 'string' &&
-        typeof parsed.redirectTo === 'string'
+        typeof parsed.redirectTo === 'string' &&
+        (parsed.linkUserId === undefined ||
+          typeof parsed.linkUserId === 'string')
       ) {
         return parsed as OidcTransaction;
       }

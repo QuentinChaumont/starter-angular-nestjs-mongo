@@ -3,7 +3,9 @@ import { Injectable, inject } from '@angular/core';
 import { API_BASE_URL } from '@org/frontend-core';
 import type {
   ChangePasswordRequest,
+  ConnectedAccounts,
   DeleteAccountRequest,
+  StartIdentityLinkResponse,
   UpdateProfileRequest,
   UserProfile,
 } from '@org/shared-contracts';
@@ -40,5 +42,31 @@ export class ProfileService {
       body: { password } satisfies DeleteAccountRequest,
       withCredentials: true,
     });
+  }
+
+  /* ---- connected accounts (V2.2 step 42) ---- */
+
+  /** Login methods linked to the current account. */
+  getConnectedAccounts(): Observable<ConnectedAccounts> {
+    return this.http.get<ConnectedAccounts>(`${this.base}/auth/identities`, {
+      withCredentials: true,
+    });
+  }
+
+  /** Starts linking `provider` — the caller navigates to `authorizationUrl`. */
+  startIdentityLink(provider: string): Observable<StartIdentityLinkResponse> {
+    return this.http.post<StartIdentityLinkResponse>(
+      `${this.base}/auth/identities/${provider}/link`,
+      {},
+      { withCredentials: true },
+    );
+  }
+
+  /** Removes a linked provider. `409` if it's the last way to sign in. */
+  unlinkIdentity(provider: string): Observable<void> {
+    return this.http.delete<void>(
+      `${this.base}/auth/identities/${provider}`,
+      { withCredentials: true },
+    );
   }
 }

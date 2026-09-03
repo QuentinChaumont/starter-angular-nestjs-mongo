@@ -40,6 +40,11 @@ redirects back to
 token, scrubs the fragment (`history.replaceState`), loads the profile and
 forwards to `redirect_to`.
 
+The profile brick's **Connected accounts** section (V2.2 step 42) reuses
+these same provider routes to _link_ a provider to the already-signed-in
+account (`POST /auth/identities/:id/link` → navigate to the returned
+`authorizationUrl`; the callback returns to `/app/profile?linked=…`).
+
 ## API base URL
 
 Requests target `API_BASE_URL` (from `@org/frontend-core`, default `/api`).
