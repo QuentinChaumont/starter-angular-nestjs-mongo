@@ -13,6 +13,7 @@ const CONFIG: ConsentConfig = {
   legal: {
     cookiePolicyRoute: '/legal/cookies',
     privacyPolicyRoute: '/legal/privacy',
+    legalNoticeRoute: '/legal/notice',
   },
 };
 

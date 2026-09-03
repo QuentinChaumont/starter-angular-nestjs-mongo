@@ -130,6 +130,7 @@ describe('frontend brick sequence', () => {
       "redirectTo: 'app'",
       "path: 'legal/cookies'",
       "path: 'legal/privacy'",
+      "path: 'legal/notice'",
     ]) {
       expect(routes).toContain(marker);
     }
@@ -143,6 +144,9 @@ describe('frontend brick sequence', () => {
 
     const template = tree.read(APP_TEMPLATE, 'utf-8') as string;
     expect(template.indexOf('lib-consent-banner')).toBeLessThan(
+      template.indexOf('router-outlet'),
+    );
+    expect(template.indexOf('lib-legal-links')).toBeGreaterThan(
       template.indexOf('router-outlet'),
     );
 

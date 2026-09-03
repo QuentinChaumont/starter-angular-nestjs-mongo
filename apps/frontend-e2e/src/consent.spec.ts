@@ -41,4 +41,22 @@ test.describe('cookie consent', () => {
     await policy.getByRole('button', { name: /back/i }).click();
     await expect(policy).not.toHaveURL(/\/legal\/cookies$/);
   });
+
+  test('the legal footer links to the legal notice from any page', async ({
+    page,
+  }) => {
+    await page.goto('/login');
+
+    const footer = page.locator('footer.legal-links');
+    await expect(footer).toBeVisible();
+    await footer.getByRole('link', { name: 'Legal notice' }).click();
+
+    await expect(page).toHaveURL(/\/legal\/notice$/);
+    await expect(
+      page.getByRole('heading', { name: 'Legal Notice' }),
+    ).toBeVisible();
+    await expect(
+      page.locator('.legal').getByText(/crafted with .* by/i),
+    ).toBeVisible();
+  });
 });

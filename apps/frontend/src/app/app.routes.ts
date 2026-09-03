@@ -9,7 +9,11 @@ import {
   authGuard,
   roleGuard,
 } from '@org/frontend-auth';
-import { CookiePolicy, PrivacyPolicy } from '@org/frontend-consent';
+import {
+  CookiePolicy,
+  LegalNotice,
+  PrivacyPolicy,
+} from '@org/frontend-consent';
 import {
   AdminTabsShell,
   DashboardHome,
@@ -25,6 +29,7 @@ export const appRoutes: Route[] = [
   { path: 'verify-email', component: VerifyEmailPage },
   { path: 'legal/cookies', component: CookiePolicy },
   { path: 'legal/privacy', component: PrivacyPolicy },
+  { path: 'legal/notice', component: LegalNotice },
   {
     path: 'app',
     canActivate: [authGuard],

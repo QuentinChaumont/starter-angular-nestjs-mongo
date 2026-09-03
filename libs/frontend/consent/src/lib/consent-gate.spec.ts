@@ -11,7 +11,7 @@ const CONFIG: ConsentConfig = {
     { id: 'essential', label: 'E', description: '', essential: true },
     { id: 'analytics', label: 'A', description: '' },
   ],
-  legal: { cookiePolicyRoute: '/legal/cookies', privacyPolicyRoute: '/legal/privacy' },
+  legal: { cookiePolicyRoute: '/legal/cookies', privacyPolicyRoute: '/legal/privacy', legalNoticeRoute: '/legal/notice' },
 };
 
 @Component({ template: '' })

@@ -462,9 +462,12 @@ hooks. The decision (categories + `policyVersion`) is stored in
 ~6 months) or when `policyVersion` bumps. Configure via
 `provideConsent({ policyVersion, categories, ... })`.
 
-`/legal/cookies` and `/legal/privacy` are **template** route components —
-fill the `[PLACEHOLDERS]` before going live. "Manage cookies" appears in
-the dashboard user-menu automatically (via a neutral `CONSENT_MANAGER`
+`/legal/cookies`, `/legal/privacy` and `/legal/notice` (legal notice /
+imprint) are **template** route components — fill the `[PLACEHOLDERS]`
+before going live (the generator never overwrites them once created).
+`<lib-legal-links>` is a slim footer, mounted in `app.ts` after the outlet,
+that keeps those links one click from every page. "Manage cookies" appears
+in the dashboard user-menu automatically (via a neutral `CONSENT_MANAGER`
 hook — the dashboard doesn't depend on the consent brick).
 
 ### `frontend-feature` — lazy business modules

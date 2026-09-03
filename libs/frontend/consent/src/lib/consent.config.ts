@@ -11,6 +11,7 @@ export interface ConsentConfig {
   legal: {
     cookiePolicyRoute: string;
     privacyPolicyRoute: string;
+    legalNoticeRoute: string;
   };
 }
 
@@ -34,6 +35,7 @@ export const DEFAULT_CONSENT_CONFIG: ConsentConfig = {
   legal: {
     cookiePolicyRoute: '/legal/cookies',
     privacyPolicyRoute: '/legal/privacy',
+    legalNoticeRoute: '/legal/notice',
   },
 };
 

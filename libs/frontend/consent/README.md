@@ -14,7 +14,8 @@ Install with `nx g @org/starter-plugin:frontend-consent` (needs
 | `ConsentService`                | `hasDecided()`, `bannerVisible()`, `isGranted(id)` (signal), `acceptAll()` / `rejectAll()` / `save(decision)`, `reopen()`. |
 | `runWhenConsented(id, fn)`      | Run a side effect once the category is consented (immediately if it already is).                                           |
 | `ConsentIf`                     | `<div *consentIf="'marketing'">` — render a block only while consented.                                                    |
-| `CookiePolicy`, `PrivacyPolicy` | Route components (`/legal/cookies`, `/legal/privacy`) — **templates**, fill the `[PLACEHOLDERS]`.                          |
+| `CookiePolicy`, `PrivacyPolicy`, `LegalNotice` | Route components (`/legal/cookies`, `/legal/privacy`, `/legal/notice`) — **templates**, fill the `[PLACEHOLDERS]`.        |
+| `LegalLinks`                    | `<lib-legal-links>` — the always-visible footer (legal notice · privacy · cookies). Mount once in `app.ts`, after the outlet. |
 
 ## How it works
 
@@ -30,6 +31,12 @@ Install with `nx g @org/starter-plugin:frontend-consent` (needs
 - "Manage cookies" appears in the dashboard user-menu automatically (via
   the neutral `CONSENT_MANAGER` hook in `frontend-core` — no dependency
   from the dashboard on this brick).
+- **Legal pages + footer.** `/legal/cookies`, `/legal/privacy` and
+  `/legal/notice` (legal notice / imprint) are template route components —
+  replace the `[PLACEHOLDERS]` before going live; the generator never
+  overwrites them once created. `<lib-legal-links>` is a slim footer that
+  keeps those links one click from every page (routes come from
+  `CONSENT_CONFIG.legal`, so a project can move them).
 - **Session cookie.** When the app wires the `SESSION_CONTROL` hook
   (`frontend-core`) and someone is signed in, the preferences dialog shows
   a "Session & authentication" toggle. Turning it off → a confirm dialog →

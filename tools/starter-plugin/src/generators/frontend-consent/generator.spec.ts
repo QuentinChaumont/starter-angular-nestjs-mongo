@@ -70,20 +70,27 @@ describe('frontend-consent generator', () => {
     expect(config).toMatch(/providers:\s*\[[^\]]*provideConsent\(\)/);
 
     const component = tree.read(APP_COMPONENT, 'utf-8') as string;
-    expect(component).toContain(
-      "import { ConsentBanner } from '@org/frontend-consent';",
+    expect(component).toMatch(
+      /import \{[^}]*\bConsentBanner\b[^}]*\} from '@org\/frontend-consent';/,
     );
     expect(component).toMatch(/imports:\s*\[[^\]]*ConsentBanner/);
+    expect(component).toMatch(/imports:\s*\[[^\]]*LegalLinks/);
 
     const template = tree.read(APP_TEMPLATE, 'utf-8') as string;
     expect(template.indexOf('lib-consent-banner')).toBeLessThan(
+      template.indexOf('router-outlet'),
+    );
+    // the legal footer sits after the outlet
+    expect(template.indexOf('lib-legal-links')).toBeGreaterThan(
       template.indexOf('router-outlet'),
     );
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
     expect(routes).toContain('component: CookiePolicy');
     expect(routes).toContain('component: PrivacyPolicy');
+    expect(routes).toContain('component: LegalNotice');
     expect(routes).toContain("path: 'legal/cookies'");
+    expect(routes).toContain("path: 'legal/notice'");
 
     expect(
       readJson(tree, 'tsconfig.base.json').compilerOptions.paths[
@@ -102,8 +109,10 @@ describe('frontend-consent generator', () => {
 
     const template = tree.read(APP_TEMPLATE, 'utf-8') as string;
     expect((template.match(/lib-consent-banner/g) ?? []).length).toBe(2); // open + close tag
+    expect((template.match(/lib-legal-links/g) ?? []).length).toBe(2);
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
     expect((routes.match(/path: 'legal\/cookies'/g) ?? []).length).toBe(1);
+    expect((routes.match(/path: 'legal\/notice'/g) ?? []).length).toBe(1);
   });
 });

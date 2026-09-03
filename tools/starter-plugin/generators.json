@@ -70,7 +70,7 @@
     "frontend-consent": {
       "factory": "./src/generators/frontend-consent/generator",
       "schema": "./src/generators/frontend-consent/schema.json",
-      "description": "Install the consent brick: first-visit cookie banner, preferences dialog, /legal routes and legal-page templates."
+      "description": "Install the consent brick: first-visit cookie banner, preferences dialog, /legal routes (cookie policy, privacy notice, legal notice) with page templates, and the always-visible legal-links footer."
     },
     "frontend-feature": {
       "factory": "./src/generators/frontend-feature/generator",

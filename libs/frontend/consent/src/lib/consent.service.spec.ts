@@ -9,7 +9,7 @@ const CONFIG: ConsentConfig = {
     { id: 'essential', label: 'Essential', description: '', essential: true },
     { id: 'analytics', label: 'Analytics', description: '' },
   ],
-  legal: { cookiePolicyRoute: '/legal/cookies', privacyPolicyRoute: '/legal/privacy' },
+  legal: { cookiePolicyRoute: '/legal/cookies', privacyPolicyRoute: '/legal/privacy', legalNoticeRoute: '/legal/notice' },
 };
 
 function build(): ConsentService {
