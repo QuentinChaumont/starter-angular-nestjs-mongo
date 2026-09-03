@@ -285,6 +285,31 @@ export function validateEnv(
     rawEnv['OIDC_GOOGLE_CLIENT_SECRET'],
     errors,
   );
+  const OIDC_KEYCLOAK_ISSUER = parseOptionalString(
+    'OIDC_KEYCLOAK_ISSUER',
+    rawEnv['OIDC_KEYCLOAK_ISSUER'],
+    errors,
+  );
+  const OIDC_KEYCLOAK_CLIENT_ID = parseOptionalString(
+    'OIDC_KEYCLOAK_CLIENT_ID',
+    rawEnv['OIDC_KEYCLOAK_CLIENT_ID'],
+    errors,
+  );
+  const OIDC_KEYCLOAK_CLIENT_SECRET = parseOptionalString(
+    'OIDC_KEYCLOAK_CLIENT_SECRET',
+    rawEnv['OIDC_KEYCLOAK_CLIENT_SECRET'],
+    errors,
+  );
+  const OIDC_KEYCLOAK_ROLES_CLAIM = parseOptionalString(
+    'OIDC_KEYCLOAK_ROLES_CLAIM',
+    rawEnv['OIDC_KEYCLOAK_ROLES_CLAIM'],
+    errors,
+  );
+  const OIDC_KEYCLOAK_LABEL = parseOptionalString(
+    'OIDC_KEYCLOAK_LABEL',
+    rawEnv['OIDC_KEYCLOAK_LABEL'],
+    errors,
+  );
 
   const SMTP_URL = parseOptionalString('SMTP_URL', rawEnv['SMTP_URL'], errors);
   const MAIL_FROM = parseOptionalString(
@@ -353,6 +378,17 @@ export function validateEnv(
     ...(OIDC_GOOGLE_CLIENT_SECRET !== undefined
       ? { OIDC_GOOGLE_CLIENT_SECRET }
       : {}),
+    ...(OIDC_KEYCLOAK_ISSUER !== undefined ? { OIDC_KEYCLOAK_ISSUER } : {}),
+    ...(OIDC_KEYCLOAK_CLIENT_ID !== undefined
+      ? { OIDC_KEYCLOAK_CLIENT_ID }
+      : {}),
+    ...(OIDC_KEYCLOAK_CLIENT_SECRET !== undefined
+      ? { OIDC_KEYCLOAK_CLIENT_SECRET }
+      : {}),
+    ...(OIDC_KEYCLOAK_ROLES_CLAIM !== undefined
+      ? { OIDC_KEYCLOAK_ROLES_CLAIM }
+      : {}),
+    ...(OIDC_KEYCLOAK_LABEL !== undefined ? { OIDC_KEYCLOAK_LABEL } : {}),
     ...(SMTP_URL !== undefined ? { SMTP_URL } : {}),
     ...(MAIL_FROM !== undefined ? { MAIL_FROM } : {}),
     ...(MAIL_PREVIEW_DIR !== undefined ? { MAIL_PREVIEW_DIR } : {}),

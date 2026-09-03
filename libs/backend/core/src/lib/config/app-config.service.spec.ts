@@ -282,4 +282,34 @@ describe('AppConfigService', () => {
       clientSecret: 'g-secret',
     });
   });
+
+  it('exposes the Keycloak preset config', () => {
+    const bare = createService({
+      NODE_ENV: 'development',
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
+    });
+    expect(bare.oidcKeycloak.issuer).toBeUndefined();
+
+    const configured = createService({
+      NODE_ENV: 'development',
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
+      OIDC_KEYCLOAK_ISSUER: 'https://kc.example/realms/app',
+      OIDC_KEYCLOAK_CLIENT_ID: 'kc-id',
+      OIDC_KEYCLOAK_ROLES_CLAIM: 'realm_access.roles',
+      OIDC_KEYCLOAK_LABEL: 'Company SSO',
+    });
+    expect(configured.oidcKeycloak).toEqual({
+      issuer: 'https://kc.example/realms/app',
+      clientId: 'kc-id',
+      clientSecret: undefined,
+      rolesClaim: 'realm_access.roles',
+      label: 'Company SSO',
+    });
+  });
 });

@@ -66,6 +66,26 @@ describe('resolveOidcProviders', () => {
     expect(providers.map((p) => p.id)).toEqual(['google']);
   });
 
+  it('orders the slots generic → google → keycloak', () => {
+    const providers = resolveOidcProviders(
+      buildTestConfig({
+        OIDC_ISSUER: 'https://idp.example',
+        OIDC_CLIENT_ID: 'client-1',
+        OIDC_REDIRECT_URI: 'https://api.example/api/auth/oidc/generic/callback',
+        OIDC_GOOGLE_CLIENT_ID: 'g-id',
+        OIDC_GOOGLE_CLIENT_SECRET: 'g-secret',
+        OIDC_KEYCLOAK_ISSUER: 'https://kc.example/realms/app',
+        OIDC_KEYCLOAK_CLIENT_ID: 'kc-id',
+      }),
+    );
+
+    expect(providers.map((p) => p.id)).toEqual([
+      'generic',
+      'google',
+      'keycloak',
+    ]);
+  });
+
   it('honours overrides', () => {
     const [generic] = resolveOidcProviders(
       buildTestConfig({

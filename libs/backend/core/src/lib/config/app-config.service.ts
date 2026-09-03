@@ -143,4 +143,21 @@ export class AppConfigService {
       }),
     };
   }
+
+  /** Keycloak preset config (see {@link oidc} for the shared bits). */
+  get oidcKeycloak() {
+    return {
+      issuer: this.configService.get('OIDC_KEYCLOAK_ISSUER', { infer: true }),
+      clientId: this.configService.get('OIDC_KEYCLOAK_CLIENT_ID', {
+        infer: true,
+      }),
+      clientSecret: this.configService.get('OIDC_KEYCLOAK_CLIENT_SECRET', {
+        infer: true,
+      }),
+      rolesClaim: this.configService.get('OIDC_KEYCLOAK_ROLES_CLAIM', {
+        infer: true,
+      }),
+      label: this.configService.get('OIDC_KEYCLOAK_LABEL', { infer: true }),
+    };
+  }
 }

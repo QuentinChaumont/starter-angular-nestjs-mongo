@@ -47,6 +47,17 @@ export interface EnvironmentVariables {
    * `OIDC_REDIRECT_URI` (segment swapped to `google`). */
   OIDC_GOOGLE_CLIENT_ID?: string;
   OIDC_GOOGLE_CLIENT_SECRET?: string;
+  /** Keycloak preset. Active once issuer + client id are set; the secret
+   * is optional (public client + PKCE when omitted, like the generic
+   * provider). The callback origin is taken from `OIDC_REDIRECT_URI`
+   * (segment swapped to `keycloak`). */
+  OIDC_KEYCLOAK_ISSUER?: string;
+  OIDC_KEYCLOAK_CLIENT_ID?: string;
+  OIDC_KEYCLOAK_CLIENT_SECRET?: string;
+  /** Dot-path to the realm-roles claim (default `realm_access.roles`). */
+  OIDC_KEYCLOAK_ROLES_CLAIM?: string;
+  /** Overrides the "Keycloak" login-button label. */
+  OIDC_KEYCLOAK_LABEL?: string;
   /** SMTP connection string. When set, the `mailer` brick delivers over
    * SMTP (needs the optional `nodemailer` package); otherwise it logs to
    * the console and writes `.eml` previews. */
@@ -95,6 +106,11 @@ export const ENVIRONMENT_VARIABLE_NAMES: readonly (keyof EnvironmentVariables)[]
     'OIDC_ROLES_CLAIM',
     'OIDC_GOOGLE_CLIENT_ID',
     'OIDC_GOOGLE_CLIENT_SECRET',
+    'OIDC_KEYCLOAK_ISSUER',
+    'OIDC_KEYCLOAK_CLIENT_ID',
+    'OIDC_KEYCLOAK_CLIENT_SECRET',
+    'OIDC_KEYCLOAK_ROLES_CLAIM',
+    'OIDC_KEYCLOAK_LABEL',
     'SMTP_URL',
     'MAIL_FROM',
     'MAIL_PREVIEW_DIR',

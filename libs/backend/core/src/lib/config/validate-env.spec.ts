@@ -187,6 +187,20 @@ describe('validateEnv', () => {
     expect(result.OIDC_GOOGLE_CLIENT_SECRET).toBe('g-secret');
   });
 
+  it('passes the Keycloak preset config through', () => {
+    const result = validateEnv({
+      OIDC_KEYCLOAK_ISSUER: 'https://kc.example/realms/app',
+      OIDC_KEYCLOAK_CLIENT_ID: 'kc-id',
+      OIDC_KEYCLOAK_ROLES_CLAIM: 'realm_access.roles',
+      OIDC_KEYCLOAK_LABEL: 'Company SSO',
+    });
+
+    expect(result.OIDC_KEYCLOAK_ISSUER).toBe('https://kc.example/realms/app');
+    expect(result.OIDC_KEYCLOAK_CLIENT_ID).toBe('kc-id');
+    expect(result.OIDC_KEYCLOAK_ROLES_CLAIM).toBe('realm_access.roles');
+    expect(result.OIDC_KEYCLOAK_LABEL).toBe('Company SSO');
+  });
+
   it('passes through optional variables when present', () => {
     const result = validateEnv({
       MONGO_URI: 'mongodb://localhost:27017/app',

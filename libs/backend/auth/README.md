@@ -48,8 +48,8 @@ Ships with the brick, **inert until configured**. Set `OIDC_ISSUER`,
 `OIDC_CLIENT_ID` and `OIDC_REDIRECT_URI` to enable the built-in `generic`
 provider — local login keeps working alongside.
 
-The routes are **per provider** (`:providerId` ∈ `generic`, `google`;
-Keycloak joins at V2.2 step 41):
+The routes are **per provider** (`:providerId` ∈ `generic`, `google`,
+`keycloak`):
 
 - `GET /auth/oidc/providers` → `{ id, label, loginUrl }[]`; the SPA renders
   one "Sign in with {label}" button per entry (empty list → no button).
@@ -107,6 +107,38 @@ _Create credentials_ → _OAuth client ID_:
 Google always asserts `email_verified`, so the shared
 `OIDC_REQUIRE_VERIFIED_EMAIL` default (on) applies unchanged. No E2E — the
 flow needs a real Google account (test manually once).
+
+### Keycloak preset
+
+Points at an **existing** realm — the starter bundles no Keycloak
+container (add your own in `docker-compose.override.yml` to test locally).
+
+| Variable                     | Required  | Default              | Notes                                             |
+| ---------------------------- | --------- | -------------------- | ------------------------------------------------ |
+| `OIDC_KEYCLOAK_ISSUER`       | to enable | —                    | `https://<host>/realms/<realm>`                   |
+| `OIDC_KEYCLOAK_CLIENT_ID`    | to enable | —                    |                                                  |
+| `OIDC_KEYCLOAK_CLIENT_SECRET`| no        | —                    | Omit for a public client (PKCE only)             |
+| `OIDC_KEYCLOAK_ROLES_CLAIM`  | no        | `realm_access.roles` | Realm roles → local roles, **at account creation only** |
+| `OIDC_KEYCLOAK_LABEL`        | no        | `Keycloak`           | Login-button label                               |
+
+Callback URI is derived from `OIDC_REDIRECT_URI` (id segment → `keycloak`),
+so set `OIDC_REDIRECT_URI` even for a Keycloak-only setup.
+
+**In Keycloak** (_Clients_ → _Create client_):
+
+1. Client type **OpenID Connect**, client authentication **On** for a
+   confidential client (set `OIDC_KEYCLOAK_CLIENT_SECRET` from
+   _Credentials_) or **Off** for public + PKCE (leave the secret unset).
+2. _Valid redirect URIs_: `<api-origin>/api/auth/oidc/keycloak/callback`.
+3. Realm roles land in `realm_access.roles` of the id-token by default
+   (Keycloak ships the mapper). Point `OIDC_KEYCLOAK_ROLES_CLAIM` elsewhere
+   (e.g. `resource_access.<client>.roles`) if you use a client-roles
+   mapper instead.
+
+Roles are copied onto the local account **once**, when it is first
+created — later logins do not re-sync (the local role CRUD is the source of
+truth after that). No CI/E2E — needs an external Keycloak; verify once
+manually against `quay.io/keycloak/keycloak`.
 
 ## Config
 

@@ -151,6 +151,11 @@ failing later at first use.
 | `OIDC_ROLES_CLAIM`             | no                         | —                            | Dot-path to a `string[]` claim → user roles                                                                                  |
 | `OIDC_GOOGLE_CLIENT_ID`        | only to enable Google      | —                            | OAuth client id (Google Cloud Console). Needs `OIDC_REDIRECT_URI` set for the callback origin                                 |
 | `OIDC_GOOGLE_CLIENT_SECRET`    | only to enable Google      | —                            | OAuth client secret; both id + secret required for the Google button to appear                                               |
+| `OIDC_KEYCLOAK_ISSUER`         | only to enable Keycloak    | —                            | Realm URL, e.g. `https://kc.example/realms/app`. Needs `OIDC_REDIRECT_URI` set for the callback origin                        |
+| `OIDC_KEYCLOAK_CLIENT_ID`      | only to enable Keycloak    | —                            | issuer + client id both required for the Keycloak button                                                                     |
+| `OIDC_KEYCLOAK_CLIENT_SECRET`  | no                         | —                            | Omit for a public client (PKCE only)                                                                                         |
+| `OIDC_KEYCLOAK_ROLES_CLAIM`    | no                         | `realm_access.roles`         | Dot-path to the realm-roles claim (mapped at account creation only)                                                          |
+| `OIDC_KEYCLOAK_LABEL`          | no                         | `Keycloak`                   | Login-button label override                                                                                                  |
 
 Access config only through `AppConfigService` (e.g. `config.app.port`,
 `config.mongo.uri`, `config.session.*`, `config.auth.*`, `config.mailer.*`,
@@ -228,7 +233,7 @@ entity with `--crud` — `AuthModule` logs users in against it. Provides:
 - **OIDC login** (inert until `OIDC_ISSUER`/`OIDC_CLIENT_ID`/
   `OIDC_REDIRECT_URI` are set): `GET /auth/oidc/providers` +
   `GET /auth/oidc/:providerId/{login,callback}` (multi-provider registry:
-  `generic` + a `google` preset via `OIDC_GOOGLE_*`; Keycloak at V2.2 step 41).
+  `generic` + `google` (`OIDC_GOOGLE_*`) + `keycloak` (`OIDC_KEYCLOAK_*`) presets).
   Authorization Code + PKCE via `openid-client`; the provider's tokens
   never leave the backend — the user is linked **by verified email** and
   gets our own access token + session cookies, then the browser is sent to

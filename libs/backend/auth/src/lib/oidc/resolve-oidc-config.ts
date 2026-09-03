@@ -4,6 +4,7 @@ import {
   sharedProviderConfig,
 } from './oidc-provider-defaults';
 import { resolveGoogleProvider } from './providers/google';
+import { resolveKeycloakProvider } from './providers/keycloak';
 
 /** Stable id of the built-in generic provider (`OIDC_ISSUER` / `OIDC_CLIENT_ID`). */
 export const GENERIC_PROVIDER_ID = 'generic';
@@ -64,8 +65,8 @@ function resolveGenericProvider(
  * its own issuer/clientId and its own login/callback routes; a project that
  * configures none gets an empty array (local login stays untouched).
  *
- * Fixed slots (V2.2): the generic provider (`OIDC_*`) then the Google
- * preset (`OIDC_GOOGLE_*`). Keycloak joins at step 41.
+ * Fixed slots (V2.2): the generic provider (`OIDC_*`), then the Google
+ * preset (`OIDC_GOOGLE_*`), then the Keycloak preset (`OIDC_KEYCLOAK_*`).
  */
 export function resolveOidcProviders(
   config: AppConfigService,
@@ -80,6 +81,11 @@ export function resolveOidcProviders(
   const google = resolveGoogleProvider(config);
   if (google) {
     providers.push(google);
+  }
+
+  const keycloak = resolveKeycloakProvider(config);
+  if (keycloak) {
+    providers.push(keycloak);
   }
 
   return providers;
