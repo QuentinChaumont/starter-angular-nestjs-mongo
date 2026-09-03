@@ -23,7 +23,7 @@ const BACKEND_PACKAGE_JSON = 'apps/backend/package.json';
 const FRONTEND_LIB = 'libs/frontend/features/admin-roles';
 const FRONTEND_IMPORT = '@org/frontend-features-admin-roles';
 const APP_ROUTES_PATH = 'apps/frontend/src/app/app.routes.ts';
-const NAV_PATH = 'apps/frontend/src/app/dashboard-nav.ts';
+const APP_CONFIG_PATH = 'apps/frontend/src/app/app.config.ts';
 const FEATURES_WORKSPACE_GLOB = 'libs/backend/features/*';
 
 /**
@@ -92,10 +92,11 @@ function ensureWorkspaceGlob(tree: Tree): void {
 }
 
 /**
- * The `/app/admin/roles` page. Only runs with the frontend admin-users
- * brick installed (it owns the `/app/admin` route + nav) — the backend CRUD
- * works on its own regardless. The admin-users console picks up the role
- * catalogue automatically (its role dialog calls `GET /api/roles`).
+ * The `/app/admin/roles` console — a tab under `AdminTabsShell` (V2.3 step
+ * 49). Only runs with the frontend admin-users brick installed (it owns the
+ * `/app/admin` route + `AdminTabsShell`) — the backend CRUD works on its
+ * own regardless. The admin-users console picks up the role catalogue
+ * automatically (its role dialog calls `GET /api/roles`).
  */
 function wireFrontend(tree: Tree): void {
   if (!tree.exists('libs/frontend/features/admin-users/project.json')) {
@@ -121,11 +122,12 @@ function wireFrontend(tree: Tree): void {
     return json;
   });
 
+  // A child route of `/app/admin` — the parent's `roleGuard('admin')` covers it.
   ensureArrayEntry(
     tree,
     APP_ROUTES_PATH,
-    /children:\s*\[/,
-    `{ path: 'admin/roles', canActivate: [roleGuard('admin')], loadChildren: () => import('${FRONTEND_IMPORT}').then((m) => m.ADMIN_ROLES_ROUTES) }`,
+    /AdminTabsShell,\s*children:\s*\[/,
+    `{ path: 'roles', loadChildren: () => import('${FRONTEND_IMPORT}').then((m) => m.ADMIN_ROLES_ROUTES) }`,
     FRONTEND_IMPORT,
   );
 
@@ -133,13 +135,18 @@ function wireFrontend(tree: Tree): void {
   ensureProjectReference(tree, 'apps/frontend/tsconfig.spec.json', featureRef);
   ensureProjectReference(tree, 'apps/frontend/tsconfig.app.json', featureRef);
 
-  if (tree.exists(NAV_PATH)) {
-    ensureArrayEntry(
+  if (tree.exists(APP_CONFIG_PATH)) {
+    ensureNamedImport(
       tree,
-      NAV_PATH,
-      /DASHBOARD_NAV[^=]*=\s*\[/,
-      "{ label: 'Roles', icon: 'key', route: 'admin/roles', roles: ['admin'] }",
-      "route: 'admin/roles'",
+      APP_CONFIG_PATH,
+      'provideAdminTab',
+      '@org/frontend-dashboard',
+    );
+    ensureArrayItem(
+      tree,
+      APP_CONFIG_PATH,
+      'providers',
+      "provideAdminTab({ label: 'Roles', labelKey: 'dashboard.adminTabs.roles', path: 'roles', order: 10 })",
     );
   }
 }

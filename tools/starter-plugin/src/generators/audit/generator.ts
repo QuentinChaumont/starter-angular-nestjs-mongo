@@ -23,7 +23,7 @@ const BACKEND_PACKAGE_JSON = 'apps/backend/package.json';
 const FRONTEND_LIB = 'libs/frontend/features/admin-audit';
 const FRONTEND_IMPORT = '@org/frontend-features-admin-audit';
 const APP_ROUTES_PATH = 'apps/frontend/src/app/app.routes.ts';
-const NAV_PATH = 'apps/frontend/src/app/dashboard-nav.ts';
+const APP_CONFIG_PATH = 'apps/frontend/src/app/app.config.ts';
 const FEATURES_WORKSPACE_GLOB = 'libs/backend/features/*';
 
 /**
@@ -82,9 +82,10 @@ export default async function auditGenerator(
 }
 
 /**
- * The `/app/admin/audit` console. Runs only with the frontend admin-users
- * brick installed (it owns the `/app/admin` route + nav) — the backend
- * endpoint works on its own regardless.
+ * The `/app/admin/audit` console — a tab under `AdminTabsShell` (V2.3 step
+ * 49). Runs only with the frontend admin-users brick installed (it owns the
+ * `/app/admin` route + `AdminTabsShell`) — the backend endpoint works on
+ * its own regardless.
  */
 function wireFrontend(tree: Tree): void {
   if (!tree.exists('libs/frontend/features/admin-users/project.json')) {
@@ -110,11 +111,12 @@ function wireFrontend(tree: Tree): void {
     return json;
   });
 
+  // A child route of `/app/admin` — the parent's `roleGuard('admin')` covers it.
   ensureArrayEntry(
     tree,
     APP_ROUTES_PATH,
-    /children:\s*\[/,
-    `{ path: 'admin/audit', canActivate: [roleGuard('admin')], loadChildren: () => import('${FRONTEND_IMPORT}').then((m) => m.ADMIN_AUDIT_ROUTES) }`,
+    /AdminTabsShell,\s*children:\s*\[/,
+    `{ path: 'audit', loadChildren: () => import('${FRONTEND_IMPORT}').then((m) => m.ADMIN_AUDIT_ROUTES) }`,
     FRONTEND_IMPORT,
   );
 
@@ -122,13 +124,18 @@ function wireFrontend(tree: Tree): void {
   ensureProjectReference(tree, 'apps/frontend/tsconfig.spec.json', featureRef);
   ensureProjectReference(tree, 'apps/frontend/tsconfig.app.json', featureRef);
 
-  if (tree.exists(NAV_PATH)) {
-    ensureArrayEntry(
+  if (tree.exists(APP_CONFIG_PATH)) {
+    ensureNamedImport(
       tree,
-      NAV_PATH,
-      /DASHBOARD_NAV[^=]*=\s*\[/,
-      "{ label: 'Audit', icon: 'receipt_long', route: 'admin/audit', roles: ['admin'] }",
-      "route: 'admin/audit'",
+      APP_CONFIG_PATH,
+      'provideAdminTab',
+      '@org/frontend-dashboard',
+    );
+    ensureArrayItem(
+      tree,
+      APP_CONFIG_PATH,
+      'providers',
+      "provideAdminTab({ label: 'Audit', labelKey: 'dashboard.adminTabs.audit', path: 'audit', order: 20 })",
     );
   }
 }

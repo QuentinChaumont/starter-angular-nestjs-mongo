@@ -18,7 +18,8 @@ test.describe('role management', () => {
     await login(page, SEEDED_ADMIN);
     await acceptConsent(page);
 
-    // ---- create ----
+    // ---- create ---- (Roles is a tab under /app/admin)
+    await page.getByRole('link', { name: 'Admin', exact: true }).click();
     await page.getByRole('link', { name: 'Roles' }).click();
     await expect(page).toHaveURL(/\/app\/admin\/roles$/);
     await page.getByRole('button', { name: 'New role' }).click();

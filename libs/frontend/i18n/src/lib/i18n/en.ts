@@ -83,9 +83,12 @@ export const en = {
     nav: {
       home: 'Home',
       admin: 'Admin',
+      profile: 'Profile',
+    },
+    adminTabs: {
+      users: 'Users',
       roles: 'Roles',
       audit: 'Audit',
-      profile: 'Profile',
     },
   },
 };

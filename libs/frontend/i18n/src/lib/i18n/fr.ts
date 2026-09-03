@@ -81,9 +81,12 @@ export const fr: TranslationShape = {
     nav: {
       home: 'Accueil',
       admin: 'Administration',
+      profile: 'Profil',
+    },
+    adminTabs: {
+      users: 'Utilisateurs',
       roles: 'Rôles',
       audit: 'Journal',
-      profile: 'Profil',
     },
   },
 };

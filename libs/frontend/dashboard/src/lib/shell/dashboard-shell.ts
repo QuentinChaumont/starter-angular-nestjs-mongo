@@ -9,14 +9,25 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { RouterOutlet } from '@angular/router';
+import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  NavigationStart,
+  Router,
+  RouterOutlet,
+} from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LangSwitcher } from '@org/frontend-i18n';
-import { map } from 'rxjs';
+import { filter, map, of, switchMap, timer } from 'rxjs';
 import { SidenavNav } from './sidenav-nav';
 import { UserMenu } from './user-menu';
+
+/** Don't flash the bar for navigations that resolve almost instantly. */
+const PROGRESS_DELAY_MS = 150;
 
 const COMPACT_QUERY = '(max-width: 959.98px)';
 const OPEN_PREF_KEY = 'app.dashboard.sidenav-open';
@@ -49,6 +60,7 @@ function writeOpenPref(open: boolean): void {
     MatSidenavModule,
     MatButtonModule,
     MatIconModule,
+    MatProgressBarModule,
     RouterOutlet,
     SidenavNav,
     UserMenu,
@@ -57,6 +69,13 @@ function writeOpenPref(open: boolean): void {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    @if (navigating()) {
+      <mat-progress-bar
+        class="shell__progress"
+        mode="indeterminate"
+        aria-label="Loading"
+      ></mat-progress-bar>
+    }
     <mat-toolbar class="shell__bar">
       <button
         mat-icon-button
@@ -95,6 +114,14 @@ function writeOpenPref(open: boolean): void {
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+    }
+    .shell__progress {
+      position: fixed;
+      inset-block-start: 0;
+      inset-inline: 0;
+      z-index: 1001;
+      --mdc-linear-progress-track-height: 2px;
+      --mdc-linear-progress-active-indicator-height: 2px;
     }
     .shell__bar {
       --mat-toolbar-standard-height: 48px;
@@ -147,8 +174,32 @@ function writeOpenPref(open: boolean): void {
 })
 export class DashboardShell {
   private readonly breakpoints = inject(BreakpointObserver);
+  private readonly router = inject(Router);
 
   protected readonly title = 'Dashboard';
+
+  /**
+   * `true` while a router navigation is in flight — but only once it has
+   * been running for {@link PROGRESS_DELAY_MS}, so instant in-app moves
+   * don't flash the bar. Any terminal navigation event clears it at once.
+   */
+  protected readonly navigating = toSignal(
+    this.router.events.pipe(
+      filter(
+        (e) =>
+          e instanceof NavigationStart ||
+          e instanceof NavigationEnd ||
+          e instanceof NavigationCancel ||
+          e instanceof NavigationError,
+      ),
+      switchMap((e) =>
+        e instanceof NavigationStart
+          ? timer(PROGRESS_DELAY_MS).pipe(map(() => true))
+          : of(false),
+      ),
+    ),
+    { initialValue: false },
+  );
 
   protected readonly compact = toSignal(
     this.breakpoints.observe(COMPACT_QUERY).pipe(map((state) => state.matches)),

@@ -4,7 +4,7 @@ import auditGenerator from './generator';
 
 const APP_MODULE_PATH = 'apps/backend/src/app/app.module.ts';
 const APP_ROUTES_PATH = 'apps/frontend/src/app/app.routes.ts';
-const NAV_PATH = 'apps/frontend/src/app/dashboard-nav.ts';
+const APP_CONFIG_PATH = 'apps/frontend/src/app/app.config.ts';
 
 function seedBackend(tree: Tree): void {
   tree.write('libs/backend/auth/package.json', '{}');
@@ -27,19 +27,44 @@ export class AppModule {}
 
 function seedFrontend(tree: Tree): void {
   tree.write('libs/frontend/features/admin-users/project.json', '{}');
+  // The shape left by `frontend-admin-users` (V2.3 step 49).
   tree.write(
     APP_ROUTES_PATH,
     `import { Route } from '@angular/router';
 import { roleGuard } from '@org/frontend-auth';
+import { AdminTabsShell } from '@org/frontend-dashboard';
 
 export const appRoutes: Route[] = [
-  { path: 'app', children: [{ path: '', component: Home }] },
+  {
+    path: 'app',
+    children: [
+      { path: '', component: Home },
+      {
+        path: 'admin',
+        canActivate: [roleGuard('admin')],
+        component: AdminTabsShell,
+        children: [
+          { path: '', loadChildren: () => import('@org/frontend-features-admin-users').then((m) => m.ADMIN_USERS_ROUTES) },
+        ],
+      },
+    ],
+  },
 ];
 `,
   );
   tree.write(
-    NAV_PATH,
-    `export const DASHBOARD_NAV = [{ label: 'Home', icon: 'home', route: '' }];\n`,
+    APP_CONFIG_PATH,
+    `import { ApplicationConfig } from '@angular/core';
+import { provideAdminTab, provideDashboard } from '@org/frontend-dashboard';
+import { DASHBOARD_NAV } from './dashboard-nav';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideDashboard(DASHBOARD_NAV),
+    provideAdminTab({ label: 'Users', labelKey: 'dashboard.adminTabs.users', path: '', order: 0 }),
+  ],
+};
+`,
   );
   tree.write('apps/frontend/tsconfig.app.json', JSON.stringify({ references: [] }));
   tree.write(
@@ -76,7 +101,7 @@ describe('audit generator', () => {
     ).toBe('0.0.1');
   });
 
-  it('adds the /app/admin/audit route + nav entry when admin-users is present', async () => {
+  it('adds the audit tab + child route when admin-users is present', async () => {
     seedBackend(tree);
     seedFrontend(tree);
     await auditGenerator(tree);
@@ -86,8 +111,14 @@ describe('audit generator', () => {
     );
     const routes = tree.read(APP_ROUTES_PATH, 'utf-8') as string;
     expect(routes).toContain('@org/frontend-features-admin-audit');
-    expect(routes).toContain("path: 'admin/audit'");
-    expect(tree.read(NAV_PATH, 'utf-8')).toContain("route: 'admin/audit'");
+    expect(routes).toMatch(
+      /AdminTabsShell,\s*children: \[[\s\S]*path: 'audit'[\s\S]*ADMIN_AUDIT_ROUTES/,
+    );
+
+    const config = tree.read(APP_CONFIG_PATH, 'utf-8') as string;
+    expect(config).toMatch(
+      /provideAdminTab\(\{ label: 'Audit',[^}]*path: 'audit', order: 20 \}\)/,
+    );
   });
 
   it('skips the frontend wiring when admin-users is absent', async () => {
@@ -105,13 +136,13 @@ describe('audit generator', () => {
     const before = {
       appModule: tree.read(APP_MODULE_PATH, 'utf-8'),
       routes: tree.read(APP_ROUTES_PATH, 'utf-8'),
-      nav: tree.read(NAV_PATH, 'utf-8'),
+      config: tree.read(APP_CONFIG_PATH, 'utf-8'),
     };
 
     await auditGenerator(tree);
 
     expect(tree.read(APP_MODULE_PATH, 'utf-8')).toBe(before.appModule);
     expect(tree.read(APP_ROUTES_PATH, 'utf-8')).toBe(before.routes);
-    expect(tree.read(NAV_PATH, 'utf-8')).toBe(before.nav);
+    expect(tree.read(APP_CONFIG_PATH, 'utf-8')).toBe(before.config);
   });
 });

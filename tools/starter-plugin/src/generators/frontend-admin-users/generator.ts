@@ -1,7 +1,9 @@
 import { GeneratorCallback, Tree, formatFiles, updateJson } from '@nx/devkit';
 import { join } from 'path';
 import { ensureArrayEntry } from '../_shared/ensure-array-entry';
+import { ensureArrayItem } from '../_shared/ensure-array-item';
 import { ensureLibCopied } from '../_shared/ensure-lib-copied';
+import { ensureNamedImport } from '../_shared/ensure-named-import';
 import { ensureProjectReference } from '../_shared/ensure-project-reference';
 
 const WORKSPACE_ROOT = join(__dirname, '../../../../../');
@@ -9,14 +11,16 @@ const LIB_ROOT = 'libs/frontend/features/admin-users';
 const IMPORT_PATH = '@org/frontend-features-admin-users';
 
 const APP_ROUTES_PATH = 'apps/frontend/src/app/app.routes.ts';
+const APP_CONFIG_PATH = 'apps/frontend/src/app/app.config.ts';
 const NAV_PATH = 'apps/frontend/src/app/dashboard-nav.ts';
 
 /**
- * Turns the dashboard's placeholder `/app/admin` route into the real user
- * admin console (paginated list, role toggles, enable/disable). Lazy —
- * loaded only for a user who passes the route's `roleGuard('admin')`.
- * Needs the dashboard shell (it owns the `/app/admin` route + nav entry)
- * and the feedback brick (confirm dialogs). Idempotent.
+ * Turns the dashboard's placeholder `/app/admin` route into the tabbed
+ * admin console (V2.3 step 49): `AdminTabsShell` over a routed outlet, with
+ * the user console (paginated list, role toggles, enable/disable) as the
+ * index tab. Lazy — loaded only for a user who passes the route's
+ * `roleGuard('admin')`. Needs the dashboard shell (it owns the `/app/admin`
+ * route + nav entry) and the feedback brick (confirm dialogs). Idempotent.
  */
 export default async function frontendAdminUsersGenerator(
   tree: Tree,
@@ -49,8 +53,10 @@ export default async function frontendAdminUsersGenerator(
     return json;
   });
 
-  // Swap the `component: DashboardHome` placeholder for a lazy `loadChildren`
-  // on the existing `/app/admin` route (its `roleGuard('admin')` stays).
+  // Swap the `component: DashboardHome` placeholder on the `/app/admin`
+  // route for `AdminTabsShell` + a child outlet, with this console as the
+  // index tab. The route's `roleGuard('admin')` stays and now covers every
+  // tab. Sibling admin bricks (role, audit) add their own child + tab.
   const routes = tree.read(APP_ROUTES_PATH, 'utf-8');
   if (routes === null) {
     throw new Error(`Missing "${APP_ROUTES_PATH}".`);
@@ -58,7 +64,7 @@ export default async function frontendAdminUsersGenerator(
   if (!routes.includes(IMPORT_PATH)) {
     const swapped = routes.replace(
       /(path: 'admin'[^}]*?)component:\s*DashboardHome,?/,
-      `$1loadChildren: () => import('${IMPORT_PATH}').then((m) => m.ADMIN_USERS_ROUTES)`,
+      `$1component: AdminTabsShell, children: [{ path: '', loadChildren: () => import('${IMPORT_PATH}').then((m) => m.ADMIN_USERS_ROUTES) }]`,
     );
     if (swapped === routes) {
       throw new Error(
@@ -66,6 +72,29 @@ export default async function frontendAdminUsersGenerator(
       );
     }
     tree.write(APP_ROUTES_PATH, swapped);
+  }
+  ensureNamedImport(
+    tree,
+    APP_ROUTES_PATH,
+    'AdminTabsShell',
+    '@org/frontend-dashboard',
+  );
+
+  // Register the "Users" tab (V2.3 step 49) — each admin brick provides its
+  // own via `provideAdminTab`, so no brick patches a shared list.
+  if (tree.exists(APP_CONFIG_PATH)) {
+    ensureNamedImport(
+      tree,
+      APP_CONFIG_PATH,
+      'provideAdminTab',
+      '@org/frontend-dashboard',
+    );
+    ensureArrayItem(
+      tree,
+      APP_CONFIG_PATH,
+      'providers',
+      "provideAdminTab({ label: 'Users', labelKey: 'dashboard.adminTabs.users', path: '', order: 0 })",
+    );
   }
 
   // The nav entry is normally already there (dashboard brick) — keep it safe.

@@ -496,11 +496,14 @@ generator right after the backend entity and drops a matching
 npx nx g @org/starter-plugin:frontend-admin-users
 ```
 
-Turns the dashboard's placeholder `/app/admin` route into a real console
-(needs the dashboard + feedback bricks) — lazy-loaded, still behind the
-route's `roleGuard('admin')`. It's built on `<lib-data-table>` (see
-**`frontend-ui`** below): per-column contains filters + sort in the header,
-server-side pagination.
+Turns the dashboard's placeholder `/app/admin` route into the tabbed admin
+console (needs the dashboard + feedback bricks): `AdminTabsShell` over a
+routed outlet, the user console as the index tab, still behind the route's
+`roleGuard('admin')` (which now covers every tab). The `role` (44) and
+`audit` (45) bricks add their own tab + child route via the `ADMIN_TABS`
+multi-provider — a single "Admin" sidenav entry. The user console itself is
+built on `<lib-data-table>` (see **`frontend-ui`** below): per-column
+contains filters + sort in the header, server-side pagination.
 
 - `GET /api/users?page=&pageSize=&search=&email=&name=&roles=&sort=&dir=`
   → **server-side** paginated `UserSummary` list. `search` matches
@@ -515,6 +518,17 @@ server-side pagination.
   No hard delete — disable instead.
 
 Sensitive actions go through a `DialogService.confirm()`.
+
+> **Migrating from the flat admin routes (pre-V2.3-step-49).** Earlier
+> versions of these generators added `/app/admin/roles` and
+> `/app/admin/audit` as top-level children of `/app` plus a sidenav entry
+> each. If you generated that layout, the new generators won't rewrite it
+> automatically — either keep it (it still works) or, to adopt the tabs:
+> in `app.routes.ts` give the `/app/admin` route
+> `component: AdminTabsShell` + a `children: []` and move the `roles` /
+> `audit` routes into it (dropping their `admin/` path prefix and
+> `canActivate`); in `app.config.ts` add a `provideAdminTab({...})` per
+> console; in `dashboard-nav.ts` delete the "Roles" / "Audit" entries.
 
 ### `frontend-ui` — shared UI primitives
 

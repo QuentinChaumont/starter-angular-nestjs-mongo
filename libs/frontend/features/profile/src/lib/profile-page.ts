@@ -22,7 +22,11 @@ import type {
   UserProfile,
 } from '@org/shared-contracts';
 import { AuthService, ResetService } from '@org/frontend-auth';
-import { DialogService, NotificationService } from '@org/frontend-feedback';
+import {
+  DialogService,
+  NotificationService,
+  type HasUnsavedChanges,
+} from '@org/frontend-feedback';
 import {
   AsyncButtonDirective,
   CopyButton,
@@ -672,7 +676,7 @@ function apiMessage(err: unknown, fallback: string): string {
     }
   `,
 })
-export class ProfilePage {
+export class ProfilePage implements HasUnsavedChanges {
   private readonly fb = inject(FormBuilder);
   private readonly service = inject(ProfileService);
   private readonly reset = inject(ResetService);
@@ -763,6 +767,25 @@ export class ProfilePage {
     this.loadConnectedAccounts();
     this.loadSessions();
     this.consumeLinkResult();
+  }
+
+  /** For `unsavedChangesGuard` — any edited-but-not-saved field, unless a
+   * save is already in flight (it'll clear the form on success). */
+  hasUnsavedChanges(): boolean {
+    const busy =
+      this.savingName() ||
+      this.savingEmail() ||
+      this.savingPassword() ||
+      this.deleting();
+    if (busy) {
+      return false;
+    }
+    return (
+      this.nameForm.dirty ||
+      this.emailForm.dirty ||
+      this.passwordForm.dirty ||
+      this.deleteForm.dirty
+    );
   }
 
   private loadSessions(): void {
@@ -987,6 +1010,7 @@ export class ProfilePage {
       next: (p) => {
         this.profile.set(p);
         this.savingName.set(false);
+        this.nameForm.markAsPristine();
         this.notify?.success('Profile updated.');
         this.auth.loadMe().subscribe({ error: () => undefined });
       },
@@ -1010,6 +1034,7 @@ export class ProfilePage {
         next: (p) => {
           this.profile.set(p);
           this.emailForm.patchValue({ email: p.email });
+          this.emailForm.markAsPristine();
           this.savingEmail.set(false);
           this.notify?.success(
             'Email updated. Check your new inbox to verify the address.',

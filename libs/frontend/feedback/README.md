@@ -10,6 +10,7 @@ with `nx g @org/starter-plugin:frontend-feedback` (needs `frontend-design`).
 | `DialogService` | `confirm(opts)` / `alert(opts)` → `Observable<boolean>` / `<void>`; `open(component, config)` typed passthrough with shared defaults. |
 | `NotificationService` | `success` / `info` / `warn` / `error(message, opts?)` over `MatSnackBar`. |
 | `httpErrorInterceptor`, `SKIP_ERROR_TOAST` | The `ApiError` → toast interceptor + its per-request opt-out. |
+| `unsavedChangesGuard`, `HasUnsavedChanges` | `canDeactivate` guard: confirms before leaving a component that reports unsaved edits. |
 | `provideFeedback()` | Shared `MatDialog` defaults. |
 | `provideNotificationConfig(partial)`, `NOTIFICATION_CONFIG` | Toast durations. |
 
@@ -45,10 +46,31 @@ http.post(url, body, {
 });
 ```
 
+## Unsaved-changes guard (V2.3 step 49)
+
+A routed component implements `HasUnsavedChanges` and the route attaches
+`unsavedChangesGuard`:
+
+```ts
+export class ProfilePage implements HasUnsavedChanges {
+  hasUnsavedChanges(): boolean {
+    return this.form.dirty && !this.saving();
+  }
+}
+
+// route
+{ path: '', component: ProfilePage, canDeactivate: [unsavedChangesGuard] }
+```
+
+When leaving would discard something, the guard opens a
+`DialogService.confirm` ("Leave" / "Stay"). Flip `hasUnsavedChanges()` back
+to `false` after a successful save (`form.markAsPristine()`) so a completed
+submission navigates cleanly.
+
 ## i18n
 
-All strings are hard-coded English — a deliberate v2 limitation. The
-service layer is the single place to route them through a translation
+Dialog / toast strings are hard-coded English — a deliberate limitation.
+The service layer is the single place to route them through a translation
 pipe later.
 
 ## Running unit tests

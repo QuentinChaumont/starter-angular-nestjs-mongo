@@ -3,6 +3,7 @@ import { createTreeWithEmptyWorkspace } from '@nx/devkit/testing';
 import frontendAdminUsersGenerator from './generator';
 
 const APP_ROUTES = 'apps/frontend/src/app/app.routes.ts';
+const APP_CONFIG = 'apps/frontend/src/app/app.config.ts';
 const NAV = 'apps/frontend/src/app/dashboard-nav.ts';
 
 function seed(tree: Tree): void {
@@ -28,6 +29,17 @@ export const appRoutes: Route[] = [
     ],
   },
 ];
+`,
+  );
+  tree.write(
+    APP_CONFIG,
+    `import { ApplicationConfig } from '@angular/core';
+import { provideDashboard } from '@org/frontend-dashboard';
+import { DASHBOARD_NAV } from './dashboard-nav';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideDashboard(DASHBOARD_NAV)],
+};
 `,
   );
   tree.write(
@@ -60,7 +72,7 @@ describe('frontend-admin-users generator', () => {
     );
   });
 
-  it('lazy-loads the admin console on the existing /app/admin route', async () => {
+  it('wires the tabbed admin console on the existing /app/admin route', async () => {
     await frontendAdminUsersGenerator(tree);
 
     expect(tree.exists('libs/frontend/features/admin-users/project.json')).toBe(
@@ -70,11 +82,25 @@ describe('frontend-admin-users generator', () => {
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
     expect(routes).toContain("import('@org/frontend-features-admin-users')");
     expect(routes).toContain('m.ADMIN_USERS_ROUTES');
-    // the guard is kept, the placeholder component is gone from that route
+    // the guard is kept, the placeholder is replaced by the tabs shell, and
+    // the console is now the index child of /app/admin
     expect(routes).toMatch(
-      /path: 'admin'[\s\S]*?canActivate: \[roleGuard\('admin'\)\][\s\S]*?ADMIN_USERS_ROUTES/,
+      /path: 'admin'[\s\S]*?canActivate: \[roleGuard\('admin'\)\][\s\S]*?component: AdminTabsShell,\s*children: \[\{ path: '',[\s\S]*?ADMIN_USERS_ROUTES/,
     );
+    expect(routes).toMatch(
+      /import \{[^}]*\bAdminTabsShell\b[^}]*\} from '@org\/frontend-dashboard'/,
+    );
+    expect(routes).not.toContain('component: DashboardHome, children');
     expect(routes).not.toMatch(/^import .*frontend-features-admin-users/m);
+
+    // registers the "Users" tab
+    const config = tree.read(APP_CONFIG, 'utf-8') as string;
+    expect(config).toMatch(
+      /import \{[^}]*\bprovideAdminTab\b[^}]*\} from '@org\/frontend-dashboard'/,
+    );
+    expect(config).toMatch(
+      /provideAdminTab\(\{ label: 'Users',[^}]*path: '', order: 0 \}\)/,
+    );
 
     expect(
       readJson(tree, 'tsconfig.base.json').compilerOptions.paths[
@@ -85,8 +111,10 @@ describe('frontend-admin-users generator', () => {
 
   it('is idempotent', async () => {
     await frontendAdminUsersGenerator(tree);
-    const before = tree.read(APP_ROUTES, 'utf-8');
+    const routes = tree.read(APP_ROUTES, 'utf-8');
+    const config = tree.read(APP_CONFIG, 'utf-8');
     await frontendAdminUsersGenerator(tree);
-    expect(tree.read(APP_ROUTES, 'utf-8')).toBe(before);
+    expect(tree.read(APP_ROUTES, 'utf-8')).toBe(routes);
+    expect(tree.read(APP_CONFIG, 'utf-8')).toBe(config);
   });
 });

@@ -5,3 +5,6 @@ export { DashboardShell } from './lib/shell/dashboard-shell';
 export { SidenavNav } from './lib/shell/sidenav-nav';
 export { UserMenu } from './lib/shell/user-menu';
 export { DashboardHome } from './lib/dashboard-home';
+export { AdminTabsShell } from './lib/admin/admin-tabs-shell';
+export { ADMIN_TABS, provideAdminTab } from './lib/admin/admin-tabs.tokens';
+export type { AdminTab } from './lib/admin/admin-tabs.tokens';
