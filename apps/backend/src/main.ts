@@ -31,6 +31,11 @@ async function bootstrap() {
   const config = app.get(AppConfigService);
   const port = config.app.port;
 
+  // On SIGTERM/SIGINT, Nest stops accepting connections, waits for in-flight
+  // requests, runs `onModuleDestroy` hooks (Mongoose closes its connection),
+  // then exits — no dropped requests on a container redeploy.
+  app.enableShutdownHooks();
+
   await app.listen(port);
   logger.log(
     `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`,

@@ -25,6 +25,22 @@ test.describe('authentication', () => {
     await expect(page).toHaveURL(/\/login$/);
   });
 
+  test('an unknown URL renders the 404 page; routes set the document title', async ({
+    page,
+  }) => {
+    await page.goto('/login');
+    await expect(page).toHaveTitle(/Sign in/);
+
+    await page.goto('/definitely-not-a-route');
+    await expect(
+      page.getByRole('heading', { name: 'Page not found' }),
+    ).toBeVisible();
+    await expect(page).toHaveTitle(/Page not found/);
+
+    await page.getByRole('link', { name: 'Back to the app' }).click();
+    await expect(page).toHaveURL(/\/login/);
+  });
+
   test('a wrong password shows an inline error, not a toast', async ({
     page,
   }) => {

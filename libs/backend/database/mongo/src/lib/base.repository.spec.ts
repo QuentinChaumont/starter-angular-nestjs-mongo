@@ -129,6 +129,17 @@ describe('BaseRepository (integration, real Mongo instance)', () => {
       expect(page.pageSize).toBe(20);
       expect(page.total).toBe(1);
     });
+
+    it('clamps an oversized pageSize to the maximum', async () => {
+      for (let i = 0; i < 3; i += 1) {
+        await repository.create({ name: `x-${i}`, quantity: i });
+      }
+
+      const page = await repository.findPage({}, { pageSize: 1_000_000 });
+
+      expect(page.pageSize).toBe(100);
+      expect(page.items).toHaveLength(3);
+    });
   });
 
   describe('updateById', () => {

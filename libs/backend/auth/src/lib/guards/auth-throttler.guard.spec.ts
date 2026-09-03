@@ -29,6 +29,21 @@ describe('AuthThrottlerGuard', () => {
     );
   });
 
+  it('carries a retryAfterSeconds hint on the 429', () => {
+    const guard = guardWith(1, 60);
+    guard.canActivate(context());
+
+    try {
+      guard.canActivate(context());
+      throw new Error('expected a 429');
+    } catch (error) {
+      const details = (error as { details?: { retryAfterSeconds?: number } })
+        .details;
+      expect(details?.retryAfterSeconds).toBeGreaterThan(0);
+      expect(details?.retryAfterSeconds).toBeLessThanOrEqual(60);
+    }
+  });
+
   it('tracks each client IP separately', () => {
     const guard = guardWith(1);
 

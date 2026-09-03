@@ -264,8 +264,13 @@ See `libs/backend/auth/README.md` for the full contract.
 npx nx g @org/starter-plugin:security
 ```
 
-Wires Helmet, CORS, and rate limiting into the app (`main.ts` +
-`app.module.ts`).
+Adds **rate limiting** (`@nestjs/throttler`) into the app. Helmet, gzip
+**compression** and CORS are always on — they live in `setupSecurity()`
+(`backend-core`), called from `main.ts`. A `429` always carries a
+`Retry-After` header (from the throttler, or `details.retryAfterSeconds`
+on the app's own limiters). `main.ts` also calls
+`app.enableShutdownHooks()` so a SIGTERM drains in-flight requests and
+closes the Mongo connection cleanly.
 
 ### Mailer
 
@@ -366,6 +371,10 @@ the `@org/frontend-*` path, and is idempotent. Prerequisites:
 `frontend-i18n` + the backend `auth` brick; `frontend-dashboard` →
 `frontend-auth`; `frontend-feedback` / `frontend-consent` →
 `frontend-design`.
+
+The app shell itself carries a `TitleStrategy` (each route's `title` →
+`document.title`, with the app name appended — rename `APP_NAME` in
+`title-strategy.ts`) and a `**` catch-all route rendering a 404 page.
 
 ### `frontend-design` — theme & charter
 

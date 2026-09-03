@@ -4,12 +4,18 @@ import { AppLogger } from '../../logger/app-logger.service';
 import { RequestContextService } from '../../logger/request-context.service';
 import { buildTestConfig as buildConfig } from '../../../testing/build-test-config';
 import { NotFoundError } from '../errors/not-found.error';
+import { TooManyRequestsError } from '../errors/too-many-requests.error';
 import { GlobalExceptionFilter } from './global-exception.filter';
 
 function buildHost() {
+  const headers: Record<string, string> = {};
   const response = {
     status: jest.fn().mockReturnThis(),
     json: jest.fn().mockReturnThis(),
+    setHeader: jest.fn((name: string, value: string) => {
+      headers[name] = value;
+    }),
+    getHeader: jest.fn((name: string) => headers[name]),
   };
   const host = {
     switchToHttp: () => ({
@@ -186,6 +192,33 @@ describe('GlobalExceptionFilter', () => {
 
     expect(logger.warn).toHaveBeenCalledWith('User not found');
     expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('sets Retry-After on a 429 from the error details, else a default', () => {
+    const { filter, requestContext } = buildFilter(buildConfig());
+
+    const withHint = buildHost();
+    catchWithinRequest(
+      filter,
+      requestContext,
+      'req-8',
+      new TooManyRequestsError('COOLDOWN', 'slow down', { retryAfterSeconds: 42 }),
+      withHint.host,
+    );
+    expect(withHint.response.setHeader).toHaveBeenCalledWith('Retry-After', '42');
+
+    const withoutHint = buildHost();
+    catchWithinRequest(
+      filter,
+      requestContext,
+      'req-9',
+      new TooManyRequestsError('TOO_MANY', 'slow down'),
+      withoutHint.host,
+    );
+    expect(withoutHint.response.setHeader).toHaveBeenCalledWith(
+      'Retry-After',
+      '60',
+    );
   });
 
   it('has no requestId in the body when there is no active request context', () => {

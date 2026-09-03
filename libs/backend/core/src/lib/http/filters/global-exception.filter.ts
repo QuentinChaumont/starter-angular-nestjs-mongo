@@ -43,6 +43,19 @@ function codeFromStatus(status: number): string {
   return entry ?? DEFAULT_ERROR_CODE;
 }
 
+const DEFAULT_RETRY_AFTER_SECONDS = 60;
+
+/** A positive integer `retryAfterSeconds` on the error's `details`, if any. */
+function retryAfterSecondsFrom(details: unknown): number | undefined {
+  if (details && typeof details === 'object' && 'retryAfterSeconds' in details) {
+    const value = (details as { retryAfterSeconds: unknown }).retryAfterSeconds;
+    if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+      return Math.ceil(value);
+    }
+  }
+  return undefined;
+}
+
 @Injectable()
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -70,6 +83,18 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     if (!isProduction && resolved.details !== undefined) {
       body.details = resolved.details;
+    }
+
+    // A 429 should always tell the client when to come back. `@nestjs/throttler`
+    // sets `Retry-After` itself; our own rate limiters carry the hint in
+    // `details.retryAfterSeconds`.
+    if (
+      resolved.statusCode === HttpStatus.TOO_MANY_REQUESTS &&
+      response.getHeader('Retry-After') === undefined
+    ) {
+      const seconds =
+        retryAfterSecondsFrom(resolved.details) ?? DEFAULT_RETRY_AFTER_SECONDS;
+      response.setHeader('Retry-After', String(seconds));
     }
 
     response.status(resolved.statusCode).json(body);

@@ -19,27 +19,37 @@ import {
   DashboardHome,
   DashboardShell,
 } from '@org/frontend-dashboard';
+import { NotFoundPage } from './not-found.component';
 
 export const appRoutes: Route[] = [
-  { path: 'login', component: LoginPage },
-  { path: 'register', component: RegisterPage },
-  { path: 'auth/callback', component: OidcCallback },
-  { path: 'forgot-password', component: ForgotPasswordPage },
-  { path: 'reset-password', component: ResetPasswordPage },
-  { path: 'verify-email', component: VerifyEmailPage },
-  { path: 'legal/cookies', component: CookiePolicy },
-  { path: 'legal/privacy', component: PrivacyPolicy },
-  { path: 'legal/notice', component: LegalNotice },
+  { path: 'login', component: LoginPage, title: 'Sign in' },
+  { path: 'register', component: RegisterPage, title: 'Create your account' },
+  { path: 'auth/callback', component: OidcCallback, title: 'Signing in' },
+  {
+    path: 'forgot-password',
+    component: ForgotPasswordPage,
+    title: 'Reset your password',
+  },
+  {
+    path: 'reset-password',
+    component: ResetPasswordPage,
+    title: 'Choose a new password',
+  },
+  { path: 'verify-email', component: VerifyEmailPage, title: 'Verify your email' },
+  { path: 'legal/cookies', component: CookiePolicy, title: 'Cookie policy' },
+  { path: 'legal/privacy', component: PrivacyPolicy, title: 'Privacy notice' },
+  { path: 'legal/notice', component: LegalNotice, title: 'Legal notice' },
   {
     path: 'app',
     canActivate: [authGuard],
     component: DashboardShell,
     children: [
-      { path: '', component: DashboardHome },
+      { path: '', component: DashboardHome, title: 'Home' },
       {
         path: 'admin',
         canActivate: [roleGuard('admin')],
         component: AdminTabsShell,
+        title: 'Admin',
         children: [
           {
             path: '',
@@ -72,4 +82,5 @@ export const appRoutes: Route[] = [
     ],
   },
   { path: '', pathMatch: 'full', redirectTo: 'app' },
+  { path: '**', component: NotFoundPage, title: 'Page not found' },
 ];

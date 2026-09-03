@@ -6,5 +6,5 @@ import { ProfilePage } from './profile-page';
  * `unsavedChangesGuard` (V2.3 step 49) prompts before navigating away from
  * an edited-but-unsaved form. */
 export const PROFILE_ROUTES: Route[] = [
-  { path: '', component: ProfilePage, canDeactivate: [unsavedChangesGuard] },
+  { path: '', component: ProfilePage, title: 'Profile', canDeactivate: [unsavedChangesGuard] },
 ];

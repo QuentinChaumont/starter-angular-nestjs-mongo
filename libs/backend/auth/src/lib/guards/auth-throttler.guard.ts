@@ -32,9 +32,14 @@ export class AuthThrottlerGuard implements CanActivate {
 
     if (recent.length >= limit) {
       this.hits.set(key, recent);
+      const retryAfterSeconds = Math.max(
+        1,
+        Math.ceil((windowMs - (now - recent[0])) / 1000),
+      );
       throw new TooManyRequestsError(
         'TOO_MANY_REQUESTS',
         'Too many attempts. Please wait a moment and try again.',
+        { retryAfterSeconds },
       );
     }
 

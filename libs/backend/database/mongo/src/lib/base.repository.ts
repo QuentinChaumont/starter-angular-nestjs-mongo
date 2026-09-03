@@ -14,6 +14,9 @@ export interface FindManyOptions {
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_PAGE_SIZE = 20;
+/** Upper bound on `pageSize` — a client can't ask for an unbounded scan
+ * (`?pageSize=1000000` would otherwise become `.limit(1_000_000)`). */
+const MAX_PAGE_SIZE = 100;
 
 /**
  * A thin, generic wrapper around a Mongoose Model. It exposes the handful
@@ -63,7 +66,7 @@ export abstract class BaseRepository<TRawDoc, TCreateInput = Partial<TRawDoc>> {
       pagination.page && pagination.page > 0 ? pagination.page : DEFAULT_PAGE;
     const pageSize =
       pagination.pageSize && pagination.pageSize > 0
-        ? pagination.pageSize
+        ? Math.min(pagination.pageSize, MAX_PAGE_SIZE)
         : DEFAULT_PAGE_SIZE;
     const skip = (page - 1) * pageSize;
 
