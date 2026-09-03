@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { PassportModule } from '@nestjs/passport';
@@ -29,6 +29,7 @@ import {
 } from './refresh/refresh-token.schema';
 import { RefreshTokenRepository } from './refresh/refresh-token.repository';
 import { RefreshTokenService } from './refresh/refresh-token.service';
+import { RequestActorInterceptor } from './request-actor.interceptor';
 import { resolveJwtConfig } from './resolve-jwt-config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TwoFactorController } from './two-factor/two-factor.controller';
@@ -81,6 +82,10 @@ import { TwoFactorService } from './two-factor/two-factor.service';
     // them, without importing the auth brick.
     { provide: APP_GUARD, useClass: OptionalJwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    // After the guards above resolve `request.user`, stash the caller in
+    // the request context so cross-cutting concerns (audit log) can
+    // attribute actions without an `actor` parameter everywhere.
+    { provide: APP_INTERCEPTOR, useClass: RequestActorInterceptor },
   ],
   exports: [AuthService, AuthEvents, RefreshTokenService],
 })

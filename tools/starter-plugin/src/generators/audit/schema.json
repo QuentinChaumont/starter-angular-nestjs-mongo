@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "Audit",
+  "title": "Install the optional audit-log brick",
+  "type": "object",
+  "properties": {}
+}

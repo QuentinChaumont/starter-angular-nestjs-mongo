@@ -1,0 +1,47 @@
+{
+  "name": "@org/backend-features-audit",
+  "version": "0.0.1",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "nx": {
+    "name": "backend-features-audit",
+    "tags": [
+      "scope:backend",
+      "type:feature"
+    ],
+    "targets": {
+      "test": {
+        "options": {
+          "passWithNoTests": true
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/mongoose": "^11.0.0",
+    "@nestjs/swagger": "^11.4.7",
+    "@org/backend-auth": "0.0.1",
+    "@org/backend-core": "0.0.1",
+    "@org/backend-database-mongo": "0.0.1",
+    "@org/backend-features-user": "0.0.1",
+    "@org/shared-contracts": "0.0.1",
+    "mongoose": "^9.9.3"
+  },
+  "devDependencies": {
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/testing": "^11.0.0",
+    "@org/backend-testing": "0.0.1",
+    "mongodb-memory-server": "^11.2.0"
+  }
+}

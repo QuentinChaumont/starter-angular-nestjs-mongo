@@ -74,6 +74,12 @@
     },
     {
       "path": "./libs/frontend/features/admin-roles"
+    },
+    {
+      "path": "./libs/backend/features/audit"
+    },
+    {
+      "path": "./libs/frontend/features/admin-audit"
     }
   ],
   "compilerOptions": {}

@@ -85,29 +85,40 @@ export class AuthService {
   ): Promise<LoginResult | PendingTwoFactorResult> {
     const user = await this.users.findByEmailWithPassword(email);
 
+    const fail = (reason: string): never => {
+      this.events.emitLoginFailed({
+        email,
+        ip: context.ip,
+        userAgent: context.userAgent,
+        reason,
+      });
+      if (reason === 'ACCOUNT_DISABLED') {
+        throw new ForbiddenError(reason, 'This account has been disabled');
+      }
+      if (reason === 'EMAIL_NOT_VERIFIED') {
+        throw new ForbiddenError(
+          reason,
+          'Please verify your email address before signing in',
+        );
+      }
+      throw new UnauthorizedError(
+        'INVALID_CREDENTIALS',
+        'Invalid email or password',
+      );
+    };
+
     if (
       !user ||
       !user.password ||
       !(await verifyPassword(password, user.password))
     ) {
-      throw new UnauthorizedError(
-        'INVALID_CREDENTIALS',
-        'Invalid email or password',
-      );
+      return fail('INVALID_CREDENTIALS');
     }
-
     if (user.disabledAt) {
-      throw new ForbiddenError(
-        'ACCOUNT_DISABLED',
-        'This account has been disabled',
-      );
+      return fail('ACCOUNT_DISABLED');
     }
-
     if (this.config.auth.requireVerifiedEmail && !user.emailVerifiedAt) {
-      throw new ForbiddenError(
-        'EMAIL_NOT_VERIFIED',
-        'Please verify your email address before signing in',
-      );
+      return fail('EMAIL_NOT_VERIFIED');
     }
 
     const authenticatedUser: AuthenticatedUser = {
@@ -115,7 +126,16 @@ export class AuthService {
       roles: user.roles,
     };
 
-    return this.issueSession(authenticatedUser, context);
+    const result = await this.issueSession(authenticatedUser, context);
+    if (!isPendingTwoFactor(result)) {
+      this.events.emitLoginSucceeded({
+        userId: authenticatedUser.id,
+        ip: context.ip,
+        userAgent: context.userAgent,
+        method: 'password',
+      });
+    }
+    return result;
   }
 
   /**
@@ -304,6 +324,8 @@ export class AuthService {
     } else {
       await this.refreshTokens.revokeAllForUser(userId);
     }
+
+    this.events.emitPasswordChanged({ userId });
   }
 
   private async currentRoles(userId: string): Promise<string[]> {

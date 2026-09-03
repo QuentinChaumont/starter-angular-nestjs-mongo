@@ -40,7 +40,9 @@ test.describe('role management', () => {
     await page.getByRole('link', { name: 'Roles' }).click();
     await roleRow.getByRole('button', { name: 'Delete' }).click();
     await page.getByRole('button', { name: 'Delete role' }).click();
-    await expect(page.getByText(/still assigned to 1 user/i)).toBeVisible();
+    await expect(
+      page.getByText(/still assigned to 1 user/i).first(),
+    ).toBeVisible();
     await expect(roleRow).toBeVisible();
 
     // ---- remove it from the user, then delete succeeds ----

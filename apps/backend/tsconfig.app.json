@@ -35,6 +35,9 @@
       "path": "../../libs/backend/features/role/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/backend/features/audit/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/backend/database/mongo/tsconfig.lib.json"
     },
     {

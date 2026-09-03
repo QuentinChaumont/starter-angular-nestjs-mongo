@@ -6,6 +6,7 @@ import {
 } from '@org/backend-core';
 import { UserService } from '@org/backend-features-user';
 import { toDataURL } from 'qrcode';
+import { AuthEvents } from '../auth-events';
 import { resolveJwtConfig } from '../resolve-jwt-config';
 import {
   consumeBackupCode,
@@ -35,6 +36,7 @@ export class TwoFactorService {
   constructor(
     private readonly users: UserService,
     private readonly config: AppConfigService,
+    private readonly events: AuthEvents,
   ) {}
 
   private get key(): string {
@@ -86,6 +88,7 @@ export class TwoFactorService {
     user.twoFactorBackupCodes = await hashBackupCodes(backupCodes);
     await user.save();
 
+    this.events.emitTwoFactorEnabled({ userId });
     return { backupCodes };
   }
 
@@ -105,6 +108,8 @@ export class TwoFactorService {
     withSecrets.twoFactorPendingSecret = undefined;
     withSecrets.twoFactorBackupCodes = undefined;
     await withSecrets.save();
+
+    this.events.emitTwoFactorDisabled({ userId });
   }
 
   /**

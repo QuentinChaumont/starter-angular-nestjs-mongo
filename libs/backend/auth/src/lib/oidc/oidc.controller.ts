@@ -3,6 +3,7 @@ import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { ApplicationError, UnauthorizedError } from '@org/backend-core';
 import type { OidcProviderInfo } from '@org/shared-contracts';
 import type { Request, Response } from 'express';
+import { AuthEvents } from '../auth-events';
 import { AuthService, isPendingTwoFactor } from '../auth.service';
 import { AuthCookieService } from '../cookies/auth-cookie.service';
 import { OidcClaims } from './oidc-claims';
@@ -22,6 +23,7 @@ export class OidcController {
     private readonly linker: OidcUserLinker,
     private readonly auth: AuthService,
     private readonly cookies: AuthCookieService,
+    private readonly events: AuthEvents,
   ) {}
 
   @Get('oidc/providers')
@@ -141,6 +143,12 @@ export class OidcController {
     }
 
     this.cookies.setSession(res, result.session);
+    this.events.emitLoginSucceeded({
+      userId: user.id,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      method: `oidc:${provider.id}`,
+    });
     const fragment =
       `access_token=${encodeURIComponent(result.accessToken)}` +
       `&expires_in=${result.expiresIn}` +

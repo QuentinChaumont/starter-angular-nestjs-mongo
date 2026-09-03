@@ -11,6 +11,7 @@ import {
   useRequestIdMiddleware,
 } from '@org/backend-core';
 import { buildTestConfig, listenOnRandomPort } from '@org/backend-testing';
+import { AuthEvents } from '../auth-events';
 import { AuthService } from '../auth.service';
 import { AuthCookieService } from '../cookies/auth-cookie.service';
 import { OidcUserLinker } from './oidc-user.linker';
@@ -120,6 +121,7 @@ describe('OidcController (integration)', () => {
       controllers: [OidcController],
       providers: [
         AuthCookieService,
+        AuthEvents,
         { provide: OidcService, useValue: fakeOidcService },
         { provide: OidcUserLinker, useValue: fakeLinker },
         { provide: AuthService, useValue: fakeAuthService },

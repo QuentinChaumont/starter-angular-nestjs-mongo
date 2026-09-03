@@ -137,6 +137,7 @@ failing later at first use.
 | `AUTH_REQUIRE_VERIFIED_EMAIL`  | no                         | `false`                      | `true` → `POST /auth/login` returns `403` until the email is verified (`auth-reset` brick)                                   |
 | `RESET_TOKEN_TTL_MINUTES`      | no                         | `60`                         | Password-reset link lifetime                                                                                                 |
 | `VERIFICATION_TOKEN_TTL_HOURS` | no                         | `24`                         | Email-verification link lifetime                                                                                             |
+| `AUDIT_RETENTION_DAYS`         | no                         | `90`                         | Audit brick — days an event is kept (TTL index); `0` keeps forever                                                            |
 | `SMTP_URL`                     | no                         | —                            | Set to deliver mail over SMTP (needs `nodemailer`); otherwise console + `.eml` previews                                      |
 | `MAIL_FROM`                    | no                         | `no-reply@localhost`         | `From` address for the mailer brick                                                                                          |
 | `MAIL_PREVIEW_DIR`             | no                         | `tmp/mail`                   | Where the console transport writes `.eml` previews                                                                           |
@@ -292,6 +293,24 @@ verification email. Verification is **soft** by default
 `/forgot-password`, `/reset-password` and `/verify-email` frontend routes
 plus the banner when `frontend-auth` is installed. See
 `libs/backend/auth-reset/README.md`.
+
+### Audit log (V2.3 step 45)
+
+```bash
+npx nx g @org/starter-plugin:audit
+```
+
+Needs the `auth` brick. Adds an append-only `audit_events` collection
+filled **best-effort** (a failed write never breaks the traced action)
+from the `auth` / `user` bricks' lifecycle events — login (success +
+failure), password change, 2FA on/off, refresh-token reuse, identity
+link/unlink, admin role and status changes. The caller is attributed via a
+request-scoped interceptor, so services stay `actor`-free. Read-only,
+admin-only `GET /api/audit` (paginated, `?actor=`, `?action=` substring,
+`?from=` / `?to=`) + `GET /api/audit/actions`, and the `/app/admin/audit`
+console. Retention: a TTL index sized from
+`AUDIT_RETENTION_DAYS` (default 90, `0` = keep forever), re-synced at
+bootstrap. `meta` never stores secret-ish keys.
 
 ### Roles (V2.2 step 44)
 

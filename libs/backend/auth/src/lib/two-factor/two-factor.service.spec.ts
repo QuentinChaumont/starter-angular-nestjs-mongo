@@ -1,6 +1,7 @@
 import { hashPassword } from '@org/backend-core';
 import { buildTestConfig } from '@org/backend-testing';
 import type { UserService } from '@org/backend-features-user';
+import { AuthEvents } from '../auth-events';
 import { TwoFactorService } from './two-factor.service';
 import { generateTotp } from './totp';
 
@@ -24,6 +25,7 @@ function build(user: FakeUser) {
   const service = new TwoFactorService(
     users,
     buildTestConfig({ JWT_SECRET }),
+    new AuthEvents(),
   );
   return { service, user };
 }

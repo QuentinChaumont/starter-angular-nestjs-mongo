@@ -99,6 +99,14 @@ export class AppConfigService {
     };
   }
 
+  get audit() {
+    return {
+      // Days an audit event is kept; 0 = keep forever (TTL index dropped).
+      retentionDays:
+        this.configService.get('AUDIT_RETENTION_DAYS', { infer: true }) ?? 90,
+    };
+  }
+
   get mailer() {
     return {
       smtpUrl: this.configService.get('SMTP_URL', { infer: true }),

@@ -1,4 +1,5 @@
 import { buildTestConfig } from '@org/backend-testing';
+import { AuthEvents } from '../auth-events';
 import { hashToken } from './opaque-token';
 import { RefreshTokenRepository } from './refresh-token.repository';
 import { RefreshTokenService } from './refresh-token.service';
@@ -75,6 +76,7 @@ function buildService(): {
   const service = new RefreshTokenService(
     repo as unknown as RefreshTokenRepository,
     buildTestConfig({ REFRESH_EXPIRES_IN: '30d' }),
+    new AuthEvents(),
   );
   return { service, repo };
 }

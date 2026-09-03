@@ -33,6 +33,9 @@ export interface EnvironmentVariables {
   /** Min seconds between two manual "resend verification email" requests
    * for one account (default 300). `auth-reset`. */
   VERIFICATION_RESEND_COOLDOWN_SECONDS?: number;
+  /** Days an audit event is kept before the TTL index drops it (default
+   * 90). `0` disables the TTL (keep forever). `audit` brick (V2.3). */
+  AUDIT_RETENTION_DAYS?: number;
   OIDC_ISSUER?: string;
   OIDC_CLIENT_ID?: string;
   OIDC_CLIENT_SECRET?: string;
@@ -95,6 +98,7 @@ export const ENVIRONMENT_VARIABLE_NAMES: readonly (keyof EnvironmentVariables)[]
     'RESET_TOKEN_TTL_MINUTES',
     'VERIFICATION_TOKEN_TTL_HOURS',
     'VERIFICATION_RESEND_COOLDOWN_SECONDS',
+    'AUDIT_RETENTION_DAYS',
     'OIDC_ISSUER',
     'OIDC_CLIENT_ID',
     'OIDC_CLIENT_SECRET',

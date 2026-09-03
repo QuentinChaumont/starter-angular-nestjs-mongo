@@ -18,6 +18,7 @@ import type {
   TwoFactorSetupResponse,
 } from '@org/shared-contracts';
 import type { Request, Response } from 'express';
+import { AuthEvents } from '../auth-events';
 import { AuthService } from '../auth.service';
 import { AuthCookieService } from '../cookies/auth-cookie.service';
 import {
@@ -43,6 +44,7 @@ export class TwoFactorController {
     private readonly auth: AuthService,
     private readonly users: UserService,
     private readonly cookies: AuthCookieService,
+    private readonly events: AuthEvents,
   ) {}
 
   @ApiBearerAuth()
@@ -97,6 +99,12 @@ export class TwoFactorController {
       { userAgent: req.headers['user-agent'], ip: req.ip },
     );
     this.cookies.setSession(res, result.session);
+    this.events.emitLoginSucceeded({
+      userId,
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      method: '2fa',
+    });
 
     return {
       accessToken: result.accessToken,

@@ -10,4 +10,10 @@ export const DASHBOARD_NAV: NavItem[] = [
     route: 'admin/roles',
     roles: ['admin'],
   },
+  {
+    label: 'Audit',
+    icon: 'receipt_long',
+    route: 'admin/audit',
+    roles: ['admin'],
+  },
 ];

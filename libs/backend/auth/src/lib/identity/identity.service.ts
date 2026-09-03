@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ConflictError, NotFoundError } from '@org/backend-core';
+import { AuthEvents } from '../auth-events';
 import { IdentityRepository } from './identity.repository';
 import { IdentityDocument } from './identity.schema';
 
@@ -27,7 +28,10 @@ export interface IdentityLink {
  */
 @Injectable()
 export class IdentityService {
-  constructor(private readonly repository: IdentityRepository) {}
+  constructor(
+    private readonly repository: IdentityRepository,
+    private readonly events: AuthEvents,
+  ) {}
 
   /** The identity for this `(provider, subject)`, or `null`. */
   find(provider: string, subject: string): Promise<IdentityDocument | null> {
@@ -64,12 +68,17 @@ export class IdentityService {
     }
 
     try {
-      return await this.repository.create({
+      const created = await this.repository.create({
         userId: input.userId,
         provider: input.provider,
         subject: input.subject,
         email: input.email,
       });
+      this.events.emitIdentityLinked({
+        userId: input.userId,
+        provider: input.provider,
+      });
+      return created;
     } catch (error) {
       // Lost a race against a concurrent link of the same identity.
       if (isDuplicateKeyError(error)) {
@@ -106,5 +115,6 @@ export class IdentityService {
       );
     }
     await this.repository.deleteForUserProvider(userId, provider);
+    this.events.emitIdentityUnlinked({ userId, provider });
   }
 }

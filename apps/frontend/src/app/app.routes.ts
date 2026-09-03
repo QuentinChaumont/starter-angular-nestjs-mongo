@@ -36,6 +36,14 @@ export const appRoutes: Route[] = [
           ),
       },
       {
+        path: 'admin/audit',
+        canActivate: [roleGuard('admin')],
+        loadChildren: () =>
+          import('@org/frontend-features-admin-audit').then(
+            (m) => m.ADMIN_AUDIT_ROUTES,
+          ),
+      },
+      {
         path: 'admin',
         canActivate: [roleGuard('admin')],
         loadChildren: () =>

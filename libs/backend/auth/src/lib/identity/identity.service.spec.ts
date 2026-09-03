@@ -1,3 +1,4 @@
+import { AuthEvents } from '../auth-events';
 import type { IdentityRepository } from './identity.repository';
 import { IdentityDocument } from './identity.schema';
 import { IdentityService } from './identity.service';
@@ -46,7 +47,10 @@ class FakeIdentityRepository {
 
 function build(): { service: IdentityService; repo: FakeIdentityRepository } {
   const repo = new FakeIdentityRepository();
-  const service = new IdentityService(repo as unknown as IdentityRepository);
+  const service = new IdentityService(
+    repo as unknown as IdentityRepository,
+    new AuthEvents(),
+  );
   return { service, repo };
 }
 

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AppConfigService, UnauthorizedError } from '@org/backend-core';
+import { AuthEvents } from '../auth-events';
 import { generateOpaqueToken, hashToken } from './opaque-token';
 import { RefreshTokenRepository } from './refresh-token.repository';
 import { resolveRefreshTtlMs } from './resolve-refresh-config';
@@ -27,6 +28,7 @@ export class RefreshTokenService {
   constructor(
     private readonly repository: RefreshTokenRepository,
     private readonly config: AppConfigService,
+    private readonly events: AuthEvents,
   ) {}
 
   async issue(
@@ -71,6 +73,10 @@ export class RefreshTokenService {
     }
     if (existing.revokedAt) {
       await this.repository.revokeFamily(existing.family);
+      this.events.emitTokenReused({
+        userId: existing.userId,
+        familyId: existing.family,
+      });
       throw new UnauthorizedError(
         'REFRESH_TOKEN_REUSED',
         'Refresh token has already been used',

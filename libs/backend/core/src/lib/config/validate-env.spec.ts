@@ -147,6 +147,19 @@ describe('validateEnv', () => {
     );
   });
 
+  it('parses AUDIT_RETENTION_DAYS (non-negative int, 0 allowed)', () => {
+    expect(validateEnv({}).AUDIT_RETENTION_DAYS).toBeUndefined();
+    expect(validateEnv({ AUDIT_RETENTION_DAYS: '30' }).AUDIT_RETENTION_DAYS).toBe(
+      30,
+    );
+    expect(validateEnv({ AUDIT_RETENTION_DAYS: '0' }).AUDIT_RETENTION_DAYS).toBe(
+      0,
+    );
+    expect(() => validateEnv({ AUDIT_RETENTION_DAYS: '-1' })).toThrow(
+      /AUDIT_RETENTION_DAYS must be a non-negative integer/,
+    );
+  });
+
   it('throws a readable error for a non-boolean AUTH_COOKIE_SECURE', () => {
     expect(() => validateEnv({ AUTH_COOKIE_SECURE: 'maybe' })).toThrow(
       /AUTH_COOKIE_SECURE must be a boolean/,

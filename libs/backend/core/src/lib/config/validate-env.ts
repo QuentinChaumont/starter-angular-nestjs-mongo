@@ -81,6 +81,26 @@ function parseOptionalPositiveInt(
   return value;
 }
 
+function parseOptionalNonNegativeInt(
+  key: string,
+  raw: unknown,
+  errors: string[],
+): number | undefined {
+  if (raw === undefined || raw === '') {
+    return undefined;
+  }
+
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value < 0) {
+    errors.push(
+      `${key} must be a non-negative integer, received "${String(raw)}"`,
+    );
+    return undefined;
+  }
+
+  return value;
+}
+
 function parseCorsOrigins(raw: unknown): string[] {
   if (raw === undefined || raw === '') {
     return DEFAULT_CORS_ORIGINS;
@@ -230,6 +250,12 @@ export function validateEnv(
     errors,
   );
 
+  const AUDIT_RETENTION_DAYS = parseOptionalNonNegativeInt(
+    'AUDIT_RETENTION_DAYS',
+    rawEnv['AUDIT_RETENTION_DAYS'],
+    errors,
+  );
+
   const OIDC_ISSUER = parseOptionalString(
     'OIDC_ISSUER',
     rawEnv['OIDC_ISSUER'],
@@ -361,6 +387,7 @@ export function validateEnv(
     ...(VERIFICATION_RESEND_COOLDOWN_SECONDS !== undefined
       ? { VERIFICATION_RESEND_COOLDOWN_SECONDS }
       : {}),
+    ...(AUDIT_RETENTION_DAYS !== undefined ? { AUDIT_RETENTION_DAYS } : {}),
     ...(OIDC_ISSUER !== undefined ? { OIDC_ISSUER } : {}),
     ...(OIDC_CLIENT_ID !== undefined ? { OIDC_CLIENT_ID } : {}),
     ...(OIDC_CLIENT_SECRET !== undefined ? { OIDC_CLIENT_SECRET } : {}),

@@ -204,6 +204,23 @@ describe('AppConfigService', () => {
     });
   });
 
+  it('defaults the audit retention to 90 days, 0 to keep forever', () => {
+    const base = {
+      NODE_ENV: 'development' as const,
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
+    };
+    expect(createService(base).audit).toEqual({ retentionDays: 90 });
+    expect(
+      createService({ ...base, AUDIT_RETENTION_DAYS: 0 }).audit,
+    ).toEqual({ retentionDays: 0 });
+    expect(
+      createService({ ...base, AUDIT_RETENTION_DAYS: 30 }).audit,
+    ).toEqual({ retentionDays: 30 });
+  });
+
   it('exposes mailer config with console-transport defaults', () => {
     const base = {
       NODE_ENV: 'development' as const,

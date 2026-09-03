@@ -256,6 +256,7 @@ export class UserService {
 
     user.roles = [...new Set(roles)];
     await user.save();
+    this.events.emitRolesChanged({ userId: id, roles: user.roles });
     return toUserSummary(user);
   }
 
@@ -264,6 +265,7 @@ export class UserService {
   async setStatus(id: string, active: boolean): Promise<UserSummary> {
     const user = await this.findById(id);
 
+    const wasActive = !user.disabledAt;
     if (active) {
       user.disabledAt = undefined;
     } else if (!user.disabledAt) {
@@ -271,6 +273,9 @@ export class UserService {
     }
     await user.save();
 
+    if (wasActive !== active) {
+      this.events.emitStatusChanged({ userId: id, active });
+    }
     return toUserSummary(user);
   }
 

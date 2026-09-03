@@ -82,6 +82,11 @@
       "schema": "./src/generators/role/schema.json",
       "description": "Install the role-management brick (V2.2 step 44): a Role catalogue with an admin-only CRUD and the /app/admin/roles console. Needs the auth + user bricks."
     },
+    "audit": {
+      "factory": "./src/generators/audit/generator",
+      "schema": "./src/generators/audit/schema.json",
+      "description": "Install the audit-log brick (V2.3 step 45): an append-only audit_events collection filled from auth/user events, a read-only GET /api/audit and the /app/admin/audit console. Needs the auth brick."
+    },
     "docker": {
       "factory": "./src/generators/docker/generator",
       "schema": "./src/generators/docker/schema.json",
