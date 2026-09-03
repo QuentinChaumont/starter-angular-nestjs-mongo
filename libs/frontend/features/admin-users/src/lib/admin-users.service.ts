@@ -2,15 +2,20 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { API_BASE_URL } from '@org/frontend-core';
 import type { DataPage, DataQuery } from '@org/frontend-ui';
-import type { PaginatedUsers, UserSummary } from '@org/shared-contracts';
-import { Observable, map } from 'rxjs';
+import type {
+  PaginatedRoles,
+  PaginatedUsers,
+  UserSummary,
+} from '@org/shared-contracts';
+import { Observable, catchError, map, of } from 'rxjs';
 
 /** HTTP for the admin console (V2.1 step 35). Every route is admin-only
  * server-side (`roleGuard('admin')` also gates the page). */
 @Injectable({ providedIn: 'root' })
 export class AdminUsersService {
   private readonly http = inject(HttpClient);
-  private readonly base = `${inject(API_BASE_URL)}/users`;
+  private readonly apiBase = inject(API_BASE_URL);
+  private readonly base = `${this.apiBase}/users`;
 
   /** `<lib-data-table>` data source: column keys (`email` / `name` /
    * `roles`) map straight onto the list endpoint's filter + sort params. */
@@ -27,6 +32,21 @@ export class AdminUsersService {
     return this.http
       .get<PaginatedUsers>(this.base, { params, withCredentials: true })
       .pipe(map((page) => ({ items: page.items, total: page.total })));
+  }
+
+  /** Assignable role names from the catalogue (V2.2 step 44). Empty when
+   * the `role` brick isn't installed — the roles dialog then just lets the
+   * admin type names. */
+  roleNames(): Observable<string[]> {
+    return this.http
+      .get<PaginatedRoles>(`${this.apiBase}/roles`, {
+        params: new HttpParams().set('pageSize', 200).set('sort', 'name'),
+        withCredentials: true,
+      })
+      .pipe(
+        map((page) => page.items.map((r) => r.name)),
+        catchError(() => of<string[]>([])),
+      );
   }
 
   setRoles(id: string, roles: string[]): Observable<UserSummary> {

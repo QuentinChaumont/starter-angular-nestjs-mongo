@@ -28,6 +28,14 @@ export const appRoutes: Route[] = [
     children: [
       { path: '', component: DashboardHome },
       {
+        path: 'admin/roles',
+        canActivate: [roleGuard('admin')],
+        loadChildren: () =>
+          import('@org/frontend-features-admin-roles').then(
+            (m) => m.ADMIN_ROLES_ROUTES,
+          ),
+      },
+      {
         path: 'admin',
         canActivate: [roleGuard('admin')],
         loadChildren: () =>

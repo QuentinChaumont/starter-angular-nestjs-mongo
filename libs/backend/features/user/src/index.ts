@@ -1,5 +1,6 @@
 export * from './lib/user.module';
 export * from './lib/user.service';
+export * from './lib/role-catalog';
 export * from './lib/user-events';
 export * from './lib/user.repository';
 export * from './lib/user.schema';

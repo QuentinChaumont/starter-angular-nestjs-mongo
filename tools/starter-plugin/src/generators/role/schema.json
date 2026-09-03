@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "Role",
+  "title": "Install the optional role-management brick (CRUD role catalogue)",
+  "type": "object",
+  "properties": {}
+}

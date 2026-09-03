@@ -29,15 +29,25 @@ describe('AdminUsersPage', () => {
   const list = jest.fn();
   const setRoles = jest.fn();
   const setStatus = jest.fn();
+  const roleNames = jest.fn();
+  const dialogOpen = jest.fn();
 
   function build(): ComponentFixture<AdminUsersPage> {
     list.mockReturnValue(of({ items: [user], total: 1 }));
     setRoles.mockReturnValue(of({ ...user, roles: ['admin'] }));
+    roleNames.mockReturnValue(of(['admin', 'editor']));
+    dialogOpen.mockReturnValue({ afterClosed: () => of(['admin', 'editor']) });
     TestBed.configureTestingModule({
       imports: [AdminUsersPage],
       providers: [
-        { provide: AdminUsersService, useValue: { list, setRoles, setStatus } },
-        { provide: DialogService, useValue: { confirm: () => of(true) } },
+        {
+          provide: AdminUsersService,
+          useValue: { list, setRoles, setStatus, roleNames },
+        },
+        {
+          provide: DialogService,
+          useValue: { confirm: () => of(true), open: dialogOpen },
+        },
         {
           provide: NotificationService,
           useValue: { success: jest.fn(), error: jest.fn() },
@@ -53,6 +63,8 @@ describe('AdminUsersPage', () => {
     list.mockReset();
     setRoles.mockReset();
     setStatus.mockReset();
+    roleNames.mockReset();
+    dialogOpen.mockReset();
   });
 
   it('loads the user list and renders a row with the unverified tag', async () => {
@@ -67,16 +79,20 @@ describe('AdminUsersPage', () => {
     expect(text).toContain('unverified');
   });
 
-  it('grants admin through the confirm dialog', async () => {
+  it('opens the roles dialog and saves the new selection', async () => {
     const fixture = build();
     await settle(fixture);
 
-    const grant = [...fixture.nativeElement.querySelectorAll('button')].find(
-      (b: HTMLButtonElement) => b.textContent?.includes('Grant admin'),
-    ) as HTMLButtonElement;
-    grant.click();
+    const rolesBtn = [
+      ...fixture.nativeElement.querySelectorAll('button'),
+    ].find((b: HTMLButtonElement) => b.textContent?.trim() === 'Roles') as
+      | HTMLButtonElement
+      | undefined;
+    rolesBtn?.click();
     await settle(fixture);
 
-    expect(setRoles).toHaveBeenCalledWith('u1', ['admin']);
+    expect(dialogOpen).toHaveBeenCalled();
+    // dialog resolved to ['admin', 'editor'] — differs from the user's []
+    expect(setRoles).toHaveBeenCalledWith('u1', ['admin', 'editor']);
   });
 });

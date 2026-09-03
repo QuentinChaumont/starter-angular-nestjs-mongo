@@ -26,7 +26,7 @@ test.describe('admin console', () => {
     await expect(page.getByText(SEEDED_USER.email)).toHaveCount(0);
   });
 
-  test('grants a role through the confirm dialog', async ({ page }) => {
+  test('assigns a role through the roles dialog', async ({ page }) => {
     const email = `grantee.${Date.now()}@example.com`;
     await apiRegister({
       email,
@@ -38,12 +38,11 @@ test.describe('admin console', () => {
 
     const row = page.locator('tbody tr', { hasText: email });
     await expect(row).toBeVisible();
-    await row.getByRole('button', { name: 'Grant admin' }).click();
-    await page.getByRole('button', { name: 'Confirm' }).click();
+    await row.getByRole('button', { name: 'Roles' }).click();
+
+    await page.getByRole('checkbox', { name: 'admin' }).check();
+    await page.getByRole('button', { name: 'Save' }).click();
 
     await expect(row).toContainText('admin');
-    await expect(
-      row.getByRole('button', { name: 'Revoke admin' }),
-    ).toBeVisible();
   });
 });

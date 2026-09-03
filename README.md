@@ -293,6 +293,24 @@ verification email. Verification is **soft** by default
 plus the banner when `frontend-auth` is installed. See
 `libs/backend/auth-reset/README.md`.
 
+### Roles (V2.2 step 44)
+
+```bash
+npx nx g @org/starter-plugin:role
+```
+
+Needs the `auth` + `user` bricks. Adds a `Role` catalogue
+(`{ name, description, system }`) with an admin-only CRUD
+(`GET/POST/PATCH/DELETE /api/roles`, paginated). `RolesGuard` is
+**unchanged** — it still compares `@Roles('admin')` against `user.roles`
+names; the collection is just the editable list the console assigns from.
+The `admin` system role is seeded on startup and can't be renamed or
+deleted (`409 ROLE_SYSTEM_PROTECTED`); deleting a role still assigned to
+users is a `409 ROLE_IN_USE`; assigning an unknown role name to a user is a
+`400 UNKNOWN_ROLE` (write-time only — existing `user.roles` are never
+retro-validated). Wires the `/app/admin/roles` console when
+`frontend-admin-users` is installed. No new environment variable.
+
 ### Healthchecks
 
 ```bash
@@ -443,8 +461,10 @@ server-side pagination.
   → **server-side** paginated `UserSummary` list. `search` matches
   email/name at once; `email` / `name` / `roles` are per-column (contains,
   case-insensitive); `sort` ∈ {email,name,status,verified,createdAt}.
-- `PATCH /api/users/:id/roles` — grant/revoke roles; removing `admin` from
-  the **last** admin is refused (`400 LAST_ADMIN`).
+- `PATCH /api/users/:id/roles` — set the user's roles from the "Roles"
+  dialog (a multi-select fed by `GET /api/roles` when the `role` brick is
+  installed, a free-text list otherwise); removing `admin` from the
+  **last** admin is refused (`400 LAST_ADMIN`).
 - `PATCH /api/users/:id/status` `{ active }` — a disabled account can no
   longer `login` or `refresh` (`403 ACCOUNT_DISABLED`, `disabledAt` set).
   No hard delete — disable instead.

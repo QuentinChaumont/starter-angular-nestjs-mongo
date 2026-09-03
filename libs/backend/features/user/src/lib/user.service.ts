@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import {
   ConflictError,
   NotFoundError,
@@ -6,6 +6,7 @@ import {
   hashPassword,
   verifyPassword,
 } from '@org/backend-core';
+import { ROLE_CATALOG, type RoleCatalog } from './role-catalog';
 import type {
   PaginatedResponse,
   UserProfile,
@@ -71,6 +72,10 @@ export class UserService {
   constructor(
     private readonly repository: UserRepository,
     private readonly events: UserEvents,
+    // Present only when the `role` brick (V2.2 step 44) is installed.
+    @Optional()
+    @Inject(ROLE_CATALOG)
+    private readonly roleCatalog?: RoleCatalog,
   ) {}
 
   async findById(id: string): Promise<UserDocument> {
@@ -231,9 +236,11 @@ export class UserService {
     return { ...page, items: page.items.map(toUserSummary) };
   }
 
-  /** Sets a user's roles. Refuses to remove `admin` from the last admin. */
+  /** Sets a user's roles. Refuses to remove `admin` from the last admin.
+   * With the `role` brick installed, every name must be in the catalogue. */
   async setRoles(id: string, roles: string[]): Promise<UserSummary> {
     const user = await this.findById(id);
+    await this.roleCatalog?.assertAllExist(roles);
 
     const losesAdmin =
       user.roles.includes(ADMIN_ROLE) && !roles.includes(ADMIN_ROLE);
@@ -285,6 +292,9 @@ export class UserService {
   }
 
   async updateById(id: string, update: Partial<User>): Promise<UserDocument> {
+    if (update.roles) {
+      await this.roleCatalog?.assertAllExist(update.roles);
+    }
     const toUpdate = update.password
       ? { ...update, password: await hashPassword(update.password) }
       : update;
@@ -310,5 +320,11 @@ export class UserService {
     if (!deleted) {
       throw new NotFoundError('USER_NOT_FOUND', 'User not found');
     }
+  }
+
+  /** How many accounts currently carry `role` — the `role` brick's
+   * `ROLE_IN_USE` guard (V2.2 step 44). */
+  countByRole(role: string): Promise<number> {
+    return this.repository.count({ roles: role });
   }
 }

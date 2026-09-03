@@ -24,7 +24,9 @@ import { DASHBOARD_NAV } from '../nav.tokens';
           <a
             mat-list-item
             class="nav__item"
-            [routerLink]="item.route ? ['/app', item.route] : ['/app']"
+            [routerLink]="
+              item.route ? ['/app', ...item.route.split('/')] : ['/app']
+            "
             routerLinkActive="active-link"
             [routerLinkActiveOptions]="{ exact: item.route === '' }"
             (click)="navigated.emit()"

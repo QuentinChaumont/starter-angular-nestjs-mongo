@@ -19,10 +19,15 @@ import {
   type DataQuery,
 } from '@org/frontend-ui';
 import { AdminUsersService } from './admin-users.service';
+import { UserRolesDialog, type UserRolesData } from './user-roles-dialog';
 
 function apiMessage(err: unknown, fallback: string): string {
   const body = err instanceof HttpErrorResponse ? err.error : null;
   return isApiError(body) ? body.message : fallback;
+}
+
+function sameRoles(a: string[], b: string[]): boolean {
+  return a.length === b.length && [...a].sort().join() === [...b].sort().join();
 }
 
 @Component({
@@ -55,9 +60,7 @@ function apiMessage(err: unknown, fallback: string): string {
         errorMessage="Could not load users."
       >
         <ng-template libDataTableRowActions let-user>
-          <button mat-button (click)="toggleAdmin(user)">
-            {{ isAdmin(user) ? 'Revoke admin' : 'Grant admin' }}
-          </button>
+          <button mat-button (click)="manageRoles(user)">Roles</button>
           <button
             mat-button
             class="admin-users__danger"
@@ -166,23 +169,19 @@ export class AdminUsersPage {
 
   protected readonly load = (query: DataQuery) => this.service.list(query);
 
-  protected isAdmin(user: UserSummary): boolean {
-    return user.roles.includes('admin');
-  }
-
-  protected toggleAdmin(user: UserSummary): void {
-    const grant = !this.isAdmin(user);
-    const roles = grant
-      ? [...user.roles, 'admin']
-      : user.roles.filter((r) => r !== 'admin');
-    this.confirmThen(
-      {
-        title: grant ? 'Grant admin?' : 'Revoke admin?',
-        message: `${user.email} will ${grant ? 'gain' : 'lose'} the admin role.`,
-        danger: !grant,
-      },
-      () => this.apply(this.service.setRoles(user.id, roles)),
-    );
+  /** Opens the role multi-select (V2.2 step 44); the dialog loads the
+   * catalogue's names itself. */
+  protected manageRoles(user: UserSummary): void {
+    this.dialog
+      ?.open<UserRolesDialog, UserRolesData, string[]>(UserRolesDialog, {
+        data: { user },
+      })
+      .afterClosed()
+      .subscribe((roles) => {
+        if (roles && !sameRoles(roles, user.roles)) {
+          this.apply(this.service.setRoles(user.id, roles));
+        }
+      });
   }
 
   protected toggleStatus(user: UserSummary): void {

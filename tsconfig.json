@@ -68,6 +68,12 @@
     },
     {
       "path": "./libs/frontend/ui"
+    },
+    {
+      "path": "./libs/backend/features/role"
+    },
+    {
+      "path": "./libs/frontend/features/admin-roles"
     }
   ],
   "compilerOptions": {}

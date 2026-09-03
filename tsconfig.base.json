@@ -29,6 +29,9 @@
       "@org/frontend-design": ["./libs/frontend/design/src/index.ts"],
       "@org/frontend-feedback": ["./libs/frontend/feedback/src/index.ts"],
       "@org/frontend-ui": ["./libs/frontend/ui/src/index.ts"],
+      "@org/frontend-features-admin-roles": [
+        "./libs/frontend/features/admin-roles/src/index.ts"
+      ],
       "@org/frontend-features-admin-users": [
         "./libs/frontend/features/admin-users/src/index.ts"
       ],

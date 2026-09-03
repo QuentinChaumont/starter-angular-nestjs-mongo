@@ -4,7 +4,8 @@ export interface NavItem {
   label: string;
   /** `mat-icon` ligature name. */
   icon: string;
-  /** Path relative to `/app` (`''` for the landing route). */
+  /** Path relative to `/app` (`''` for the landing route). May be nested
+   * (`'admin/roles'`) — split into segments for the router link. */
   route: string;
   /** If set, the entry shows only for a user holding one of these roles. */
   roles?: string[];

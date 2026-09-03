@@ -4,4 +4,10 @@ import { NavItem } from '@org/frontend-dashboard';
 export const DASHBOARD_NAV: NavItem[] = [
   { label: 'Home', icon: 'home', route: '' },
   { label: 'Admin', icon: 'shield', route: 'admin', roles: ['admin'] },
+  {
+    label: 'Roles',
+    icon: 'key',
+    route: 'admin/roles',
+    roles: ['admin'],
+  },
 ];
