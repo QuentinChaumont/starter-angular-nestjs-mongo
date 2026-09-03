@@ -65,4 +65,36 @@ export class RefreshTokenRepository extends BaseRepository<RefreshToken> {
       .deleteMany({ userId, expiresAt: { $lt: new Date() } })
       .exec();
   }
+
+  /** Live (non-revoked, non-expired) tokens for a user, newest first — one
+   * per `family` in practice. (V2.3 step 46) */
+  async findLiveForUser(userId: string): Promise<RefreshTokenDocument[]> {
+    return this.model
+      .find({
+        userId,
+        revokedAt: { $exists: false },
+        expiresAt: { $gt: new Date() },
+      })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  /** Revokes every live token of `family`, but only if it belongs to
+   * `userId`. Returns `false` when the family isn't the user's. */
+  async revokeFamilyForUser(
+    userId: string,
+    family: string,
+  ): Promise<boolean> {
+    const owns = await this.model.exists({ userId, family });
+    if (!owns) {
+      return false;
+    }
+    await this.model
+      .updateMany(
+        { userId, family, revokedAt: { $exists: false } },
+        { revokedAt: new Date() },
+      )
+      .exec();
+    return true;
+  }
 }

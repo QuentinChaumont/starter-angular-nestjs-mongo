@@ -98,6 +98,25 @@ export interface VerifyEmailRequest {
 /** Body returned by `GET /api/auth/me`. */
 export type MeResponse = AuthenticatedUserDto;
 
+/* ---- sessions / devices (V2.3 step 46) ---- */
+
+/**
+ * One active sign-in, as listed by `GET /api/auth/sessions`. Maps to a
+ * refresh-token `family` — every rotation stays in the same session.
+ */
+export interface SessionInfo {
+  /** Opaque family id — pass to `DELETE /api/auth/sessions/:id`. */
+  id: string;
+  ip: string | null;
+  userAgent: string | null;
+  /** When the login that started the session happened (ISO). */
+  createdAt: string;
+  /** Last time the session refreshed its token (ISO). */
+  lastUsedAt: string;
+  /** The session making this request. */
+  current: boolean;
+}
+
 /* ---- two-factor authentication (V2.2 step 43) ---- */
 
 /**

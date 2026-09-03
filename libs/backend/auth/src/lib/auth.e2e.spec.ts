@@ -871,6 +871,151 @@ describe('Auth (e2e, real Mongo instance)', () => {
     });
   });
 
+  describe('sessions / devices (V2.3 step 46)', () => {
+    const cookie = (response: Response, name: string): string => {
+      const line = response.headers
+        .getSetCookie()
+        .find((c) => c.startsWith(`${name}=`));
+      return line ? line.slice(name.length + 1).split(';')[0] : '';
+    };
+
+    const openSession = async () => {
+      const { response, body } = await login(credentials);
+      return {
+        accessToken: body.accessToken as string,
+        refresh: cookie(response, 'refresh_token'),
+        csrf: cookie(response, 'csrf-token'),
+      };
+    };
+
+    const listSessions = (s: { accessToken: string; refresh: string }) =>
+      fetch(`${authBaseUrl}/sessions`, {
+        headers: {
+          authorization: `Bearer ${s.accessToken}`,
+          cookie: `refresh_token=${s.refresh}`,
+        },
+      });
+
+    const tryRefresh = (refresh: string, csrf: string) =>
+      fetch(`${authBaseUrl}/refresh`, {
+        method: 'POST',
+        headers: {
+          cookie: `refresh_token=${refresh}; csrf-token=${csrf}`,
+          'x-csrf-token': csrf,
+        },
+      });
+
+    it('lists one entry per session and flags the current one', async () => {
+      const a = await openSession();
+      await openSession();
+
+      const res = await listSessions(a);
+      expect(res.status).toBe(200);
+      const sessions = (await res.json()) as any[];
+      expect(sessions.length).toBeGreaterThanOrEqual(2);
+      expect(sessions.filter((s) => s.current)).toHaveLength(1);
+      const current = sessions.find((s) => s.current);
+      expect(current).toMatchObject({
+        id: expect.any(String),
+        createdAt: expect.any(String),
+        lastUsedAt: expect.any(String),
+      });
+    });
+
+    it('revokes another session; its refresh then 401s', async () => {
+      const a = await openSession();
+      const b = await openSession();
+
+      const sessions = (await (await listSessions(a)).json()) as any[];
+      const other = sessions.find((s) => !s.current);
+      expect(other).toBeDefined();
+
+      const del = await fetch(`${authBaseUrl}/sessions/${other.id}`, {
+        method: 'DELETE',
+        headers: {
+          authorization: `Bearer ${a.accessToken}`,
+          cookie: `refresh_token=${a.refresh}`,
+        },
+      });
+      expect(del.status).toBe(204);
+
+      // b was the other session
+      expect((await tryRefresh(b.refresh, b.csrf)).status).toBe(401);
+      // a still works
+      expect((await tryRefresh(a.refresh, a.csrf)).status).toBe(201);
+    });
+
+    it('409s when trying to revoke the current session', async () => {
+      const a = await openSession();
+      const sessions = (await (await listSessions(a)).json()) as any[];
+      const current = sessions.find((s) => s.current);
+
+      const del = await fetch(`${authBaseUrl}/sessions/${current.id}`, {
+        method: 'DELETE',
+        headers: {
+          authorization: `Bearer ${a.accessToken}`,
+          cookie: `refresh_token=${a.refresh}`,
+        },
+      });
+      expect(del.status).toBe(409);
+      expect(((await del.json()) as any).code).toBe('SESSION_IS_CURRENT');
+    });
+
+    it('404s for a session that is not the caller\'s', async () => {
+      const a = await openSession();
+      const del = await fetch(`${authBaseUrl}/sessions/not-a-real-family`, {
+        method: 'DELETE',
+        headers: { authorization: `Bearer ${a.accessToken}` },
+      });
+      expect(del.status).toBe(404);
+    });
+
+    it('"sign out everywhere" keeps the current session alive', async () => {
+      const a = await openSession();
+      const b = await openSession();
+
+      const del = await fetch(`${authBaseUrl}/sessions`, {
+        method: 'DELETE',
+        headers: {
+          authorization: `Bearer ${a.accessToken}`,
+          cookie: `refresh_token=${a.refresh}`,
+        },
+      });
+      expect(del.status).toBe(204);
+
+      expect((await tryRefresh(b.refresh, b.csrf)).status).toBe(401);
+      expect((await tryRefresh(a.refresh, a.csrf)).status).toBe(201);
+    });
+
+    it('an admin can revoke every session of an account', async () => {
+      const victim = await openSession();
+      const { body: adminBody } = await login(adminCredentials);
+
+      const me = (await (
+        await fetch(`${authBaseUrl}/me`, {
+          headers: { authorization: `Bearer ${victim.accessToken}` },
+        })
+      ).json()) as any;
+
+      const res = await fetch(`${authBaseUrl}/sessions/revoke/${me.id}`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${adminBody.accessToken}` },
+      });
+      expect(res.status).toBe(204);
+
+      expect((await tryRefresh(victim.refresh, victim.csrf)).status).toBe(401);
+    });
+
+    it('rejects the admin revoke route for a non-admin (403)', async () => {
+      const a = await openSession();
+      const res = await fetch(`${authBaseUrl}/sessions/revoke/whoever`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${a.accessToken}` },
+      });
+      expect(res.status).toBe(403);
+    });
+  });
+
   describe('admin console — disable an account', () => {
     const cookie = (response: Response, name: string): string => {
       const line = response.headers

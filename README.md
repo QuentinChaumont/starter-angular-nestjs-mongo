@@ -245,6 +245,10 @@ entity with `--crud` — `AuthModule` logs users in against it. Provides:
   `POST /auth/identities/:id/link` + `DELETE /auth/identities/:id`, managed
   from `/app/profile`. An OIDC-only account is passwordless until it uses
   "forgot password".
+- **Sessions & devices** (V2.3 step 46): `GET/DELETE /auth/sessions` — one
+  entry per refresh-token family; end one, or "sign out everywhere else".
+  `POST /auth/sessions/revoke/:id` is admin-only. Surfaced as a "Devices"
+  section in the profile and a "Sessions" action in the admin console.
 - **Two-factor (TOTP)**: opt-in per account from `/app/profile`. Enabling
   it makes login (password **or** OIDC) return a challenge; the SPA then
   posts the 6-digit code (or a one-time backup code) to

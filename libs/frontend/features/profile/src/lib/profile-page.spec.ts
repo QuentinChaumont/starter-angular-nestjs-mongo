@@ -63,6 +63,9 @@ describe('ProfilePage — connected accounts', () => {
             setupTwoFactor,
             confirmTwoFactor,
             disableTwoFactor,
+            listSessions: () => of([]),
+            revokeSession: jest.fn(),
+            revokeOtherSessions: jest.fn(),
           },
         },
         { provide: AuthService, useValue: { oidcProviders, loadMe: () => of(null) } },
@@ -303,6 +306,124 @@ describe('ProfilePage — connected accounts', () => {
       expect(notify.success).toHaveBeenCalledWith(
         'Two-factor authentication is off.',
       );
+    });
+  });
+
+  describe('devices', () => {
+    const listSessions = jest.fn();
+    const revokeSession = jest.fn();
+    const revokeOtherSessions = jest.fn();
+
+    function buildDevices(): ComponentFixture<ProfilePage> {
+      idle();
+      getProfile.mockReturnValue(of(profile));
+      TestBed.configureTestingModule({
+        imports: [ProfilePage],
+        providers: [
+          provideRouter([]),
+          {
+            provide: ProfileService,
+            useValue: {
+              getProfile,
+              updateProfile: jest.fn(),
+              changePassword: jest.fn(),
+              deleteAccount: jest.fn(),
+              getConnectedAccounts,
+              startIdentityLink,
+              unlinkIdentity,
+              setupTwoFactor,
+              confirmTwoFactor,
+              disableTwoFactor,
+              listSessions,
+              revokeSession,
+              revokeOtherSessions,
+            },
+          },
+          { provide: AuthService, useValue: { oidcProviders, loadMe: () => of(null) } },
+          { provide: ResetService, useValue: { resendVerification: () => of(null) } },
+          { provide: DialogService, useValue: { confirm: () => of(true) } },
+          { provide: NotificationService, useValue: notify },
+          {
+            provide: ActivatedRoute,
+            useValue: { snapshot: { queryParamMap: convertToParamMap({}) } },
+          },
+        ],
+      });
+      const fixture = TestBed.createComponent(ProfilePage);
+      fixture.detectChanges();
+      return fixture;
+    }
+
+    beforeEach(() => {
+      listSessions.mockReset();
+      revokeSession.mockReset();
+      revokeOtherSessions.mockReset();
+    });
+
+    it('lists sessions and signs out a non-current one', async () => {
+      listSessions
+        .mockReturnValueOnce(
+          of([
+            {
+              id: 'fam-a',
+              ip: '10.0.0.1',
+              userAgent: 'Chrome',
+              createdAt: '2026-02-01T00:00:00.000Z',
+              lastUsedAt: '2026-02-02T00:00:00.000Z',
+              current: true,
+            },
+            {
+              id: 'fam-b',
+              ip: '10.0.0.2',
+              userAgent: 'Firefox',
+              createdAt: '2026-02-01T00:00:00.000Z',
+              lastUsedAt: '2026-02-01T12:00:00.000Z',
+              current: false,
+            },
+          ]),
+        )
+        .mockReturnValueOnce(of([]));
+      revokeSession.mockReturnValue(of(undefined));
+
+      const fixture = buildDevices();
+      await settle(fixture);
+
+      const text = fixture.nativeElement.textContent;
+      expect(text).toContain('This device');
+      expect(text).toContain('Firefox');
+
+      const btn = [
+        ...fixture.nativeElement.querySelectorAll('button'),
+      ].find((b: HTMLButtonElement) => b.textContent?.trim() === 'Sign out') as
+        | HTMLButtonElement
+        | undefined;
+      btn?.click();
+      await settle(fixture);
+
+      expect(revokeSession).toHaveBeenCalledWith('fam-b');
+    });
+
+    it('signs out everywhere else', async () => {
+      listSessions.mockReturnValue(
+        of([
+          { id: 'a', ip: null, userAgent: null, createdAt: '', lastUsedAt: '', current: true },
+          { id: 'b', ip: null, userAgent: null, createdAt: '', lastUsedAt: '', current: false },
+        ]),
+      );
+      revokeOtherSessions.mockReturnValue(of(undefined));
+
+      const fixture = buildDevices();
+      await settle(fixture);
+
+      const btn = [
+        ...fixture.nativeElement.querySelectorAll('button'),
+      ].find((b: HTMLButtonElement) =>
+        b.textContent?.includes('Sign out everywhere else'),
+      ) as HTMLButtonElement | undefined;
+      btn?.click();
+      await settle(fixture);
+
+      expect(revokeOtherSessions).toHaveBeenCalled();
     });
   });
 });

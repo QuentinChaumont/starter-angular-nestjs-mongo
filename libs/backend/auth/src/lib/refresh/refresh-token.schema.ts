@@ -34,6 +34,13 @@ export class RefreshToken {
   @Prop()
   ip?: string;
 
+  /** When the login that started this `family` happened — carried forward
+   * across rotations so "Devices" shows the real session age, not the last
+   * refresh (V2.3 step 46). Falls back to `createdAt` for pre-migration
+   * rows. */
+  @Prop()
+  sessionStartedAt?: Date;
+
   createdAt!: Date;
   updatedAt!: Date;
 }

@@ -30,6 +30,7 @@ import {
 import { RefreshTokenRepository } from './refresh/refresh-token.repository';
 import { RefreshTokenService } from './refresh/refresh-token.service';
 import { RequestActorInterceptor } from './request-actor.interceptor';
+import { SessionsController } from './sessions/sessions.controller';
 import { resolveJwtConfig } from './resolve-jwt-config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TwoFactorController } from './two-factor/two-factor.controller';
@@ -60,6 +61,7 @@ import { TwoFactorService } from './two-factor/two-factor.service';
     OidcController,
     IdentitiesController,
     TwoFactorController,
+    SessionsController,
   ],
   providers: [
     AuthService,

@@ -64,4 +64,13 @@ export class AdminUsersService {
       { withCredentials: true },
     );
   }
+
+  /** Ends every session of a user (V2.3 step 46). */
+  revokeSessions(id: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.apiBase}/auth/sessions/revoke/${id}`,
+      {},
+      { withCredentials: true },
+    );
+  }
 }

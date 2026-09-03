@@ -15,6 +15,7 @@ export const AUDIT_ACTION = {
   IDENTITY_UNLINKED: 'auth.identity-unlinked',
   ROLES_CHANGED: 'admin.roles-changed',
   STATUS_CHANGED: 'admin.status-changed',
+  SESSIONS_REVOKED: 'admin.sessions-revoked',
 } as const;
 
 export type AuditAction =

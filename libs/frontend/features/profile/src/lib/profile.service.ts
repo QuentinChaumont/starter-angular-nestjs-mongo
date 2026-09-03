@@ -5,6 +5,7 @@ import type {
   ChangePasswordRequest,
   ConnectedAccounts,
   DeleteAccountRequest,
+  SessionInfo,
   StartIdentityLinkResponse,
   TwoFactorConfirmResponse,
   TwoFactorSetupResponse,
@@ -98,5 +99,26 @@ export class ProfileService {
       { password },
       { withCredentials: true },
     );
+  }
+
+  /* ---- sessions / devices (V2.3 step 46) ---- */
+
+  listSessions(): Observable<SessionInfo[]> {
+    return this.http.get<SessionInfo[]>(`${this.base}/auth/sessions`, {
+      withCredentials: true,
+    });
+  }
+
+  revokeSession(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.base}/auth/sessions/${id}`, {
+      withCredentials: true,
+    });
+  }
+
+  /** End every session except this browser's. */
+  revokeOtherSessions(): Observable<void> {
+    return this.http.delete<void>(`${this.base}/auth/sessions`, {
+      withCredentials: true,
+    });
   }
 }

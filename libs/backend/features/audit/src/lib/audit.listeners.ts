@@ -107,5 +107,13 @@ export class AuditListeners implements OnModuleInit {
         meta: { active: e.active },
       }),
     );
+
+    this.authEvents.onSessionsRevoked((e) =>
+      this.audit.record({
+        action: AUDIT_ACTION.SESSIONS_REVOKED,
+        target: e.userId,
+        targetType: 'user',
+      }),
+    );
   }
 }

@@ -16,8 +16,11 @@ Optional JWT auth brick. Install it with `nx g @org/starter-plugin:auth`
 - `POST /auth/2fa/{setup,confirm,disable,verify}` — TOTP two-factor (see
   **Two-factor authentication** below).
 - `JwtAuthGuard`, `RolesGuard` + `@Roles(...)`, `@CurrentUser()`.
-- `RefreshTokenService.revokeAllForUser(userId)` — building block for a
-  future "sign out everywhere" (not wired to a route).
+- `GET/DELETE /auth/sessions` — list the account's active sessions
+  (one per refresh-token `family`), end one (`DELETE /auth/sessions/:id`,
+  `409` on the current one), or "sign out everywhere else"
+  (`DELETE /auth/sessions`). `POST /auth/sessions/revoke/:userId` is
+  admin-only. See **Sessions & devices** below.
 
 ## Session model
 
@@ -194,6 +197,30 @@ Roles are copied onto the local account **once**, when it is first
 created — later logins do not re-sync (the local role CRUD is the source of
 truth after that). No CI/E2E — needs an external Keycloak; verify once
 manually against `quay.io/keycloak/keycloak`.
+
+## Sessions & devices (V2.3 step 46)
+
+A "session" is a refresh-token **family** — every rotation stays in the
+same family, so one login = one row in the list regardless of how many
+times its token has rotated. `sessionStartedAt` is carried forward across
+rotations so the age shown is the login's, not the last refresh's.
+
+Bearer-authenticated (no CSRF — like `change-password`); the refresh
+cookie is only *read*, to flag the caller's own session.
+
+- `GET /auth/sessions` → `SessionInfo[]` (`{ id, ip, userAgent, createdAt,
+  lastUsedAt, current }`), newest activity first.
+- `DELETE /auth/sessions/:familyId` → ends that session. `409
+  SESSION_IS_CURRENT` for the caller's own (use `/logout`); `404
+  SESSION_NOT_FOUND` when it isn't the caller's.
+- `DELETE /auth/sessions` → "sign out everywhere else"
+  (`revokeAllForUserExcept`).
+- `POST /auth/sessions/revoke/:userId` → admin-only, ends every session of
+  an account and emits `auth.sessions-revoked` (logged by the `audit`
+  brick as `admin.sessions-revoked`).
+
+The profile brick renders a "Devices" section; the admin-users console
+adds a "Sessions" row action.
 
 ## Config
 

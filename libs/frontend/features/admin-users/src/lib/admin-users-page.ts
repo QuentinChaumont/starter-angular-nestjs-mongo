@@ -18,6 +18,7 @@ import {
   type DataColumn,
   type DataQuery,
 } from '@org/frontend-ui';
+import type { Observable } from 'rxjs';
 import { AdminUsersService } from './admin-users.service';
 import { UserRolesDialog, type UserRolesData } from './user-roles-dialog';
 
@@ -61,6 +62,7 @@ function sameRoles(a: string[], b: string[]): boolean {
       >
         <ng-template libDataTableRowActions let-user>
           <button mat-button (click)="manageRoles(user)">Roles</button>
+          <button mat-button (click)="revokeSessions(user)">Sessions</button>
           <button
             mat-button
             class="admin-users__danger"
@@ -184,6 +186,17 @@ export class AdminUsersPage {
       });
   }
 
+  protected revokeSessions(user: UserSummary): void {
+    this.confirmThen(
+      {
+        title: 'Revoke sessions?',
+        message: `${user.email} will be signed out of every device.`,
+        danger: true,
+      },
+      () => this.apply(this.service.revokeSessions(user.id)),
+    );
+  }
+
   protected toggleStatus(user: UserSummary): void {
     const enable = Boolean(user.disabledAt);
     this.confirmThen(
@@ -211,7 +224,7 @@ export class AdminUsersPage {
     });
   }
 
-  private apply(request$: ReturnType<AdminUsersService['setRoles']>): void {
+  private apply(request$: Observable<unknown>): void {
     request$.subscribe({
       next: () => {
         this.notify?.success('User updated.');

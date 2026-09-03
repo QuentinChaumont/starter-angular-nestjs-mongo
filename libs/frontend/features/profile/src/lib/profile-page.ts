@@ -1,4 +1,4 @@
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -17,6 +17,7 @@ import { isApiError } from '@org/shared-contracts';
 import type {
   ConnectedAccounts,
   OidcProviderInfo,
+  SessionInfo,
   TwoFactorSetupResponse,
   UserProfile,
 } from '@org/shared-contracts';
@@ -37,6 +38,7 @@ function apiMessage(err: unknown, fallback: string): string {
   imports: [
     ReactiveFormsModule,
     RouterLink,
+    DatePipe,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
@@ -404,6 +406,61 @@ function apiMessage(err: unknown, fallback: string): string {
           </div>
         </section>
 
+        <!-- devices / sessions -->
+        <section class="panel">
+          <div class="panel__head">
+            <h2>Devices</h2>
+            @if (sessions().length > 1) {
+              <button
+                mat-stroked-button
+                type="button"
+                [disabled]="sessionsBusy()"
+                (click)="signOutOthers()"
+              >
+                Sign out everywhere else
+              </button>
+            }
+          </div>
+          <div class="panel__body">
+            <p class="profile__hint">
+              Every browser or device currently signed in to your account.
+            </p>
+            <ul class="accounts">
+              @for (session of sessions(); track session.id) {
+                <li class="accounts__row">
+                  <div class="accounts__meta">
+                    <span class="accounts__name">
+                      {{ session.userAgent || 'Unknown device' }}
+                      @if (session.current) {
+                        <span class="profile__status profile__status--ok">
+                          This device
+                        </span>
+                      }
+                    </span>
+                    <span class="accounts__sub">
+                      {{ session.ip || 'no IP' }} · last active
+                      {{ session.lastUsedAt | date: 'short' }}
+                    </span>
+                  </div>
+                  @if (!session.current) {
+                    <button
+                      mat-stroked-button
+                      type="button"
+                      [disabled]="sessionsBusy()"
+                      (click)="signOut(session.id)"
+                    >
+                      Sign out
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+            @if (sessionsError()) {
+              <p class="profile__error" role="alert">{{ sessionsError() }}</p>
+            }
+          </div>
+        </section>
+
         <!-- delete -->
         <section class="panel panel--danger">
           <div class="panel__head"><h2>Delete account</h2></div>
@@ -656,6 +713,10 @@ export class ProfilePage {
     password: ['', [Validators.required]],
   });
 
+  protected readonly sessions = signal<SessionInfo[]>([]);
+  protected readonly sessionsBusy = signal(false);
+  protected readonly sessionsError = signal<string | null>(null);
+
   protected readonly roleLabel = computed(() =>
     (this.profile()?.roles ?? []).join(', '),
   );
@@ -695,7 +756,51 @@ export class ProfilePage {
       this.providers.set(providers);
     });
     this.loadConnectedAccounts();
+    this.loadSessions();
     this.consumeLinkResult();
+  }
+
+  private loadSessions(): void {
+    this.service.listSessions().subscribe({
+      next: (sessions) => this.sessions.set(sessions),
+      error: () => this.sessionsError.set('Could not load your devices.'),
+    });
+  }
+
+  protected signOut(id: string): void {
+    if (this.sessionsBusy()) return;
+    this.sessionsBusy.set(true);
+    this.sessionsError.set(null);
+    this.service.revokeSession(id).subscribe({
+      next: () => {
+        this.sessionsBusy.set(false);
+        this.notify?.success('Device signed out.');
+        this.loadSessions();
+      },
+      error: (err: unknown) => {
+        this.sessionsBusy.set(false);
+        this.sessionsError.set(apiMessage(err, 'Could not sign out that device.'));
+      },
+    });
+  }
+
+  protected signOutOthers(): void {
+    if (this.sessionsBusy()) return;
+    this.sessionsBusy.set(true);
+    this.sessionsError.set(null);
+    this.service.revokeOtherSessions().subscribe({
+      next: () => {
+        this.sessionsBusy.set(false);
+        this.notify?.success('Signed out everywhere else.');
+        this.loadSessions();
+      },
+      error: (err: unknown) => {
+        this.sessionsBusy.set(false);
+        this.sessionsError.set(
+          apiMessage(err, 'Could not sign out the other devices.'),
+        );
+      },
+    });
   }
 
   private loadProfile(): void {

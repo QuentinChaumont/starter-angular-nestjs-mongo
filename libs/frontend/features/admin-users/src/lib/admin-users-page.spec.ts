@@ -30,6 +30,7 @@ describe('AdminUsersPage', () => {
   const setRoles = jest.fn();
   const setStatus = jest.fn();
   const roleNames = jest.fn();
+  const revokeSessions = jest.fn();
   const dialogOpen = jest.fn();
 
   function build(): ComponentFixture<AdminUsersPage> {
@@ -42,7 +43,7 @@ describe('AdminUsersPage', () => {
       providers: [
         {
           provide: AdminUsersService,
-          useValue: { list, setRoles, setStatus, roleNames },
+          useValue: { list, setRoles, setStatus, roleNames, revokeSessions },
         },
         {
           provide: DialogService,
@@ -64,6 +65,7 @@ describe('AdminUsersPage', () => {
     setRoles.mockReset();
     setStatus.mockReset();
     roleNames.mockReset();
+    revokeSessions.mockReset();
     dialogOpen.mockReset();
   });
 
@@ -94,5 +96,21 @@ describe('AdminUsersPage', () => {
     expect(dialogOpen).toHaveBeenCalled();
     // dialog resolved to ['admin', 'editor'] — differs from the user's []
     expect(setRoles).toHaveBeenCalledWith('u1', ['admin', 'editor']);
+  });
+
+  it('revokes a user\'s sessions through the confirm dialog', async () => {
+    revokeSessions.mockReturnValue(of(undefined));
+    const fixture = build();
+    await settle(fixture);
+
+    const btn = [
+      ...fixture.nativeElement.querySelectorAll('button'),
+    ].find((b: HTMLButtonElement) => b.textContent?.trim() === 'Sessions') as
+      | HTMLButtonElement
+      | undefined;
+    btn?.click();
+    await settle(fixture);
+
+    expect(revokeSessions).toHaveBeenCalledWith('u1');
   });
 });

@@ -109,4 +109,12 @@ export class AuthEvents extends EventEmitter {
   onIdentityUnlinked(listener: (event: IdentityLinkEvent) => void): void {
     this.on('auth.identity-unlinked', listener);
   }
+
+  /** An admin ended every session of an account (V2.3 step 46). */
+  emitSessionsRevoked(payload: AccountSecurityEvent): void {
+    this.emit('auth.sessions-revoked', payload);
+  }
+  onSessionsRevoked(listener: (event: AccountSecurityEvent) => void): void {
+    this.on('auth.sessions-revoked', listener);
+  }
 }

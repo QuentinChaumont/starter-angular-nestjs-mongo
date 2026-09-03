@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { AppConfigService, UnauthorizedError } from '@org/backend-core';
+import {
+  AppConfigService,
+  NotFoundError,
+  UnauthorizedError,
+} from '@org/backend-core';
+import type { SessionInfo } from '@org/shared-contracts';
 import { AuthEvents } from '../auth-events';
 import { generateOpaqueToken, hashToken } from './opaque-token';
 import { RefreshTokenRepository } from './refresh-token.repository';
@@ -35,6 +40,7 @@ export class RefreshTokenService {
     userId: string,
     context: SessionContext = {},
     family?: string,
+    sessionStartedAt?: Date,
   ): Promise<IssuedRefreshToken> {
     const token = generateOpaqueToken();
     const resolvedFamily = family ?? generateOpaqueToken(FAMILY_BYTE_LENGTH);
@@ -47,6 +53,7 @@ export class RefreshTokenService {
       expiresAt,
       userAgent: context.userAgent,
       ip: context.ip,
+      sessionStartedAt: sessionStartedAt ?? new Date(),
     });
 
     return { token, expiresAt, family: resolvedFamily };
@@ -89,7 +96,12 @@ export class RefreshTokenService {
       );
     }
 
-    const issued = await this.issue(existing.userId, context, existing.family);
+    const issued = await this.issue(
+      existing.userId,
+      context,
+      existing.family,
+      existing.sessionStartedAt ?? existing.createdAt,
+    );
     await this.repository.markRotated(existing.id, hashToken(issued.token));
     await this.repository.deleteExpiredForUser(existing.userId);
 
@@ -117,5 +129,52 @@ export class RefreshTokenService {
    */
   revokeAllForUserExcept(userId: string, keepToken: string): Promise<void> {
     return this.repository.revokeAllForUserExcept(userId, hashToken(keepToken));
+  }
+
+  /* ---- sessions / devices (V2.3 step 46) ---- */
+
+  /**
+   * The user's live sessions, one per token `family`, newest activity
+   * first. `current` marks the family whose live token hashes to
+   * `currentToken` (the caller's refresh cookie).
+   */
+  async listSessions(
+    userId: string,
+    currentToken?: string,
+  ): Promise<SessionInfo[]> {
+    const currentHash = currentToken ? hashToken(currentToken) : undefined;
+    const rows = await this.repository.findLiveForUser(userId);
+
+    const seen = new Set<string>();
+    const sessions: SessionInfo[] = [];
+    for (const row of rows) {
+      if (seen.has(row.family)) {
+        continue;
+      }
+      seen.add(row.family);
+      sessions.push({
+        id: row.family,
+        ip: row.ip ?? null,
+        userAgent: row.userAgent ?? null,
+        createdAt: (row.sessionStartedAt ?? row.createdAt).toISOString(),
+        lastUsedAt: row.createdAt.toISOString(),
+        current: currentHash !== undefined && row.tokenHash === currentHash,
+      });
+    }
+    return sessions.sort((a, b) => b.lastUsedAt.localeCompare(a.lastUsedAt));
+  }
+
+  /** `family` of the session that owns `token` (raw), or `undefined`. */
+  async familyOfToken(token: string): Promise<string | undefined> {
+    const row = await this.repository.findByHash(hashToken(token));
+    return row?.family;
+  }
+
+  /** Ends one session. `404` when `family` isn't the user's. */
+  async revokeSession(userId: string, family: string): Promise<void> {
+    const ok = await this.repository.revokeFamilyForUser(userId, family);
+    if (!ok) {
+      throw new NotFoundError('SESSION_NOT_FOUND', 'No such session');
+    }
   }
 }
