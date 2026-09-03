@@ -20,6 +20,9 @@
       "path": "../ui/tsconfig.lib.json"
     },
     {
+      "path": "../i18n/tsconfig.lib.json"
+    },
+    {
       "path": "../../shared/contracts/tsconfig.lib.json"
     },
     {

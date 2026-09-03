@@ -6,6 +6,7 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { API_BASE_URL } from '@org/frontend-core';
+import { provideTranslocoTesting } from '@org/frontend-i18n';
 import { AuthStore } from '../auth.store';
 import { OidcCallback } from './oidc-callback';
 
@@ -20,6 +21,7 @@ function configure(hash: string) {
     providers: [
       provideHttpClient(),
       provideHttpClientTesting(),
+      provideTranslocoTesting(),
       { provide: API_BASE_URL, useValue: '/api' },
       { provide: Router, useValue: { navigate, navigateByUrl } },
     ],

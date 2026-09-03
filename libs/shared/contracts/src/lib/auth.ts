@@ -75,6 +75,9 @@ export interface AuthenticatedUserDto {
   firstName?: string;
   lastName?: string;
   createdAt?: string;
+  /** UI language (V2.3 step 47) — `null` when the account has never
+   * chosen one. Populated by `GET /api/users/me`. */
+  locale?: string | null;
 }
 
 /** Body of `POST /api/auth/forgot-password`. Always answered `202`, whether

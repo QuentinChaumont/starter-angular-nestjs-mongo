@@ -14,6 +14,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PasswordRevealButton } from '@org/frontend-ui';
 import { isApiError, OidcProviderInfo } from '@org/shared-contracts';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../auth.service';
 import { sanitizeRedirect } from '../sanitize-redirect';
 import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
@@ -29,6 +30,7 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
     MatProgressBarModule,
     PasswordRevealButton,
     TwoFactorPrompt,
+    TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -39,11 +41,11 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
       @if (submitting()) {
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       }
-      <h1>Sign in</h1>
+      <h1>{{ 'auth.login.title' | transloco }}</h1>
 
       <form [formGroup]="form" (ngSubmit)="submit()">
         <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
+          <mat-label>{{ 'common.email' | transloco }}</mat-label>
           <input
             matInput
             type="email"
@@ -53,7 +55,7 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
+          <mat-label>{{ 'common.password' | transloco }}</mat-label>
           <input
             #password
             matInput
@@ -74,10 +76,10 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
           type="submit"
           [disabled]="form.invalid || submitting()"
         >
-          Sign in
+          {{ 'auth.login.submit' | transloco }}
         </button>
       </form>
-      <a routerLink="/forgot-password">Forgot your password?</a>
+      <a routerLink="/forgot-password">{{ 'auth.login.forgot' | transloco }}</a>
 
       @for (provider of oidcProviders(); track provider.id) {
         <a
@@ -111,13 +113,13 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
               />
             </svg>
           }
-          Sign in with {{ provider.label }}
+          {{ 'auth.login.with' | transloco: { provider: provider.label } }}
         </a>
       }
 
       @if (registrationEnabled()) {
         <a routerLink="/register" [queryParams]="{ redirectTo: redirectTo }">
-          Create an account
+          {{ 'auth.login.createAccount' | transloco }}
         </a>
       }
     </section>
@@ -158,6 +160,7 @@ export class LoginPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -205,7 +208,9 @@ export class LoginPage {
         this.submitting.set(false);
         const body = err instanceof HttpErrorResponse ? err.error : null;
         this.error.set(
-          isApiError(body) ? body.message : 'Invalid email or password',
+          isApiError(body)
+            ? body.message
+            : this.transloco.translate('auth.login.invalid'),
         );
       },
     });

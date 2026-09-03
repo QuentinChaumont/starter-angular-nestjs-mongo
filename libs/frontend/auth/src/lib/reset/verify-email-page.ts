@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../auth.service';
 import { ResetService } from './reset.service';
 
@@ -9,24 +10,28 @@ type State = 'pending' | 'ok' | 'error';
 
 @Component({
   selector: 'lib-verify-email-page',
-  imports: [RouterLink, MatButtonModule, MatProgressBarModule],
+  imports: [RouterLink, MatButtonModule, MatProgressBarModule, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="verify">
       @switch (state()) {
         @case ('pending') {
           <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-          <p>Verifying your email address…</p>
+          <p>{{ 'auth.verify.checking' | transloco }}</p>
         }
         @case ('ok') {
-          <h1>Email verified</h1>
-          <p>Thanks — your email address is confirmed.</p>
-          <a mat-flat-button color="primary" routerLink="/app">Continue</a>
+          <h1>{{ 'auth.verify.okTitle' | transloco }}</h1>
+          <p>{{ 'auth.verify.okBody' | transloco }}</p>
+          <a mat-flat-button color="primary" routerLink="/app">
+            {{ 'auth.verify.goToApp' | transloco }}
+          </a>
         }
         @case ('error') {
-          <h1>Verification failed</h1>
-          <p>This link is invalid or has expired. Request a new one.</p>
-          <a mat-stroked-button routerLink="/app">Back to the app</a>
+          <h1>{{ 'auth.verify.failedTitle' | transloco }}</h1>
+          <p>{{ 'auth.verify.failedBody' | transloco }}</p>
+          <a mat-stroked-button routerLink="/app">
+            {{ 'auth.verify.backToApp' | transloco }}
+          </a>
         }
       }
     </section>

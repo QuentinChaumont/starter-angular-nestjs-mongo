@@ -12,6 +12,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterOutlet } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
+import { LangSwitcher } from '@org/frontend-i18n';
 import { map } from 'rxjs';
 import { SidenavNav } from './sidenav-nav';
 import { UserMenu } from './user-menu';
@@ -50,6 +52,8 @@ function writeOpenPref(open: boolean): void {
     RouterOutlet,
     SidenavNav,
     UserMenu,
+    LangSwitcher,
+    TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -58,7 +62,7 @@ function writeOpenPref(open: boolean): void {
         mat-icon-button
         class="shell__toggle"
         (click)="toggle()"
-        aria-label="Toggle navigation"
+        [attr.aria-label]="'dashboard.toggleNav' | transloco"
       >
         <mat-icon>{{ opened() ? 'menu_open' : 'menu' }}</mat-icon>
       </button>
@@ -67,6 +71,7 @@ function writeOpenPref(open: boolean): void {
         <span class="shell__title">{{ title }}</span>
       </span>
       <span class="shell__spacer"></span>
+      <lib-lang-switcher></lib-lang-switcher>
       <lib-user-menu></lib-user-menu>
     </mat-toolbar>
 

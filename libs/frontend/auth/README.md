@@ -2,8 +2,8 @@
 
 Client side of authentication: local login + OIDC, an in-memory session
 store, HTTP interceptors and route guards. Install with
-`nx g @org/starter-plugin:frontend-auth` (needs `frontend-design` and the
-backend `auth` brick).
+`nx g @org/starter-plugin:frontend-auth` (needs `frontend-design`,
+`frontend-i18n` and the backend `auth` brick).
 
 ## Exposes (`@org/frontend-auth`)
 
@@ -15,6 +15,10 @@ backend `auth` brick).
 | `authGuard`, `roleGuard(...roles)` | `CanActivateFn` route guards. |
 | `LoginPage`, `OidcCallback` | Standalone route components (`/login`, `/auth/callback`). |
 | `authInterceptor`, `csrfInterceptor` | Exported for apps that own `provideHttpClient` themselves. |
+
+`AuthService.loadMe()` applies the user's stored `locale` to Transloco
+(`frontend-i18n` brick) when it's one of the configured languages, so a
+signed-in account sees the app in its own language after a reload.
 
 ## Session model
 

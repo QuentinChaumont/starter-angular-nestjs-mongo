@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { AuthStore } from '@org/frontend-auth';
 import { DASHBOARD_NAV, NavItem } from '../nav.tokens';
+import { provideTranslocoTesting } from '@org/frontend-i18n';
 import { SidenavNav } from './sidenav-nav';
 
 @Component({ template: '' })
@@ -19,6 +20,7 @@ function render() {
     imports: [SidenavNav],
     providers: [
       provideRouter([{ path: '**', component: Blank }]),
+      provideTranslocoTesting(),
       { provide: DASHBOARD_NAV, useValue: NAV },
     ],
   });

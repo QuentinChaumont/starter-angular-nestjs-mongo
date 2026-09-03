@@ -47,10 +47,15 @@
       "schema": "./src/generators/frontend-design/schema.json",
       "description": "Install the frontend design brick: Angular Material + CDK, the M3 theme and the brand charter, wired into apps/frontend."
     },
+    "frontend-i18n": {
+      "factory": "./src/generators/frontend-i18n/generator",
+      "schema": "./src/generators/frontend-i18n/schema.json",
+      "description": "Install the frontend i18n brick (V2.3 step 47): Transloco with en/fr bundled, provideI18n() wired into app.config.ts and the <lib-lang-switcher> in the shell toolbar. Needs the design brick."
+    },
     "frontend-auth": {
       "factory": "./src/generators/frontend-auth/generator",
       "schema": "./src/generators/frontend-auth/schema.json",
-      "description": "Install the frontend auth brick: session store, HTTP interceptors, route guards and the /login + /auth/callback routes. Pass --profile to also add the /app/profile page."
+      "description": "Install the frontend auth brick: session store, HTTP interceptors, route guards and the /login + /auth/callback routes. Pass --profile to also add the /app/profile page. Needs the design + i18n bricks."
     },
     "frontend-dashboard": {
       "factory": "./src/generators/frontend-dashboard/generator",

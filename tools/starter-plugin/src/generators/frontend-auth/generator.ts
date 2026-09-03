@@ -45,6 +45,11 @@ export default async function frontendAuthGenerator(
       'frontend-auth needs the backend auth brick. Run `nx g @org/starter-plugin:auth` first.',
     );
   }
+  if (!tree.exists('libs/frontend/i18n/project.json')) {
+    throw new Error(
+      'frontend-auth needs the i18n brick (its pages use the `| transloco` pipe). Run `nx g @org/starter-plugin:frontend-i18n` first.',
+    );
+  }
 
   ensureLibCopied(tree, LIB_ROOT, SOURCE_LIB_ROOT, 'project.json');
 

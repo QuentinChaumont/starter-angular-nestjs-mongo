@@ -17,6 +17,7 @@ const profile: UserProfile = {
   firstName: 'Ada',
   lastName: 'Lovelace',
   roles: [],
+  locale: null,
   emailVerifiedAt: '2026-01-01T00:00:00.000Z',
   twoFactorEnabled: false,
   createdAt: '2026-01-01T00:00:00.000Z',

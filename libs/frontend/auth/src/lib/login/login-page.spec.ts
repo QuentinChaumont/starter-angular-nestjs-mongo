@@ -6,6 +6,7 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { API_BASE_URL } from '@org/frontend-core';
+import { provideTranslocoTesting } from '@org/frontend-i18n';
 import { LoginPage } from './login-page';
 
 describe('LoginPage', () => {
@@ -16,6 +17,7 @@ describe('LoginPage', () => {
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideTranslocoTesting(),
         { provide: API_BASE_URL, useValue: '/api' },
       ],
     });

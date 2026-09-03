@@ -27,6 +27,40 @@ describe('email templates', () => {
     expect(mail.html).toContain('href="https://app.example/verify?token=xyz"');
   });
 
+  it('renders the password-reset email in French for a fr locale', () => {
+    const mail = renderPasswordReset({
+      url: 'https://app.example/reset?token=abc',
+      expiresInMinutes: 60,
+      locale: 'fr',
+    });
+
+    expect(mail.subject).toMatch(/Réinitialisez/);
+    expect(mail.text).toContain('60 minutes');
+    expect(mail.text).toContain('mot de passe');
+    expect(mail.html).toContain('href="https://app.example/reset?token=abc"');
+  });
+
+  it('renders the verification email in French for a fr locale', () => {
+    const mail = renderEmailVerification({
+      url: 'https://app.example/verify?token=xyz',
+      locale: 'fr',
+    });
+
+    expect(mail.subject).toMatch(/Vérifiez/);
+    expect(mail.text).toContain('adresse e-mail');
+  });
+
+  it('falls back to English for an unknown locale', () => {
+    const mail = renderPasswordReset({
+      url: 'https://app.example/reset?token=abc',
+      expiresInMinutes: 30,
+      locale: 'de',
+    });
+
+    expect(mail.subject).toMatch(/reset/i);
+    expect(mail.text).toContain('30 minutes');
+  });
+
   it('renders the welcome email and falls back to a generic greeting', () => {
     expect(renderWelcome({ firstName: 'Ada' }).text).toContain('Hi Ada');
     expect(renderWelcome({ firstName: '   ' }).text).toContain('Hi there');

@@ -17,6 +17,7 @@ import { provideConsent } from '@org/frontend-consent';
 import { ME_ENDPOINT, SESSION_CONTROL } from '@org/frontend-core';
 import { provideDashboard } from '@org/frontend-dashboard';
 import { materialProviders, provideTheme } from '@org/frontend-design';
+import { provideI18n } from '@org/frontend-i18n';
 import {
   DialogService,
   httpErrorInterceptor,
@@ -38,6 +39,7 @@ export const appConfig: ApplicationConfig = {
     ),
     ...materialProviders,
     provideTheme(),
+    provideI18n(),
     provideAuth(),
     provideFeedback(),
     provideConsent(),

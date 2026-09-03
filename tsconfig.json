@@ -80,6 +80,9 @@
     },
     {
       "path": "./libs/frontend/features/admin-audit"
+    },
+    {
+      "path": "./libs/frontend/i18n"
     }
   ],
   "compilerOptions": {}

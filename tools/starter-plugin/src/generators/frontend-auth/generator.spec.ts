@@ -7,6 +7,7 @@ const APP_ROUTES = 'apps/frontend/src/app/app.routes.ts';
 
 function seed(tree: Tree): void {
   tree.write('libs/frontend/design/project.json', '{}');
+  tree.write('libs/frontend/i18n/project.json', '{}');
   tree.write('libs/backend/auth/package.json', '{}');
   tree.write('libs/frontend/core/src/index.ts', '');
   tree.write(
@@ -51,6 +52,11 @@ describe('frontend-auth generator', () => {
     await expect(frontendAuthGenerator(tree)).rejects.toThrow(
       /backend auth brick/,
     );
+  });
+
+  it('refuses without the i18n brick', async () => {
+    tree.delete('libs/frontend/i18n/project.json');
+    await expect(frontendAuthGenerator(tree)).rejects.toThrow(/i18n brick/);
   });
 
   it('copies the lib and wires providers + routes', async () => {

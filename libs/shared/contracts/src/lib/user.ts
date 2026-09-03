@@ -15,6 +15,8 @@ export interface UserProfile {
   emailVerifiedAt: string | null;
   /** Whether TOTP two-factor is active on the account (V2.2 step 43). */
   twoFactorEnabled: boolean;
+  /** Preferred UI + email language (V2.3 step 47), or `null` if unset. */
+  locale: string | null;
   /** ISO timestamp. */
   createdAt: string;
 }
@@ -26,6 +28,8 @@ export interface UpdateProfileRequest {
   firstName?: string;
   lastName?: string;
   email?: string;
+  /** UI + email language (V2.3 step 47). */
+  locale?: string;
 }
 
 /** Body of `POST /api/auth/change-password`. A successful change revokes

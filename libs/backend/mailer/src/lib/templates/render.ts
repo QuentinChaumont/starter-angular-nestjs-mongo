@@ -37,42 +37,83 @@ function link(url: string): string {
   return `<a href="${safe}">${safe}</a>`;
 }
 
+/**
+ * Transactional-email strings by locale (V2.3 step 47). No Transloco on the
+ * backend — a plain dictionary is enough for two emails, and it keeps the
+ * mailer brick free of a frontend dependency. Unknown locales fall back to
+ * English.
+ */
+type EmailLocale = 'en' | 'fr';
+
+const EMAIL_STRINGS: Record<EmailLocale, {
+  reset: { subject: string; intro: string; action: (m: number) => string; ignore: string };
+  verify: { subject: string; textIntro: string; htmlIntro: string };
+}> = {
+  en: {
+    reset: {
+      subject: 'Reset your password',
+      intro: 'We received a request to reset your password.',
+      action: (m) =>
+        `Click the link below to choose a new one. It is valid for ${m} minutes.`,
+      ignore: "If you didn't request this, you can safely ignore this email.",
+    },
+    verify: {
+      subject: 'Verify your email address',
+      textIntro: 'Please confirm your email address by opening this link:',
+      htmlIntro:
+        'Please confirm your email address by clicking the link below.',
+    },
+  },
+  fr: {
+    reset: {
+      subject: 'Réinitialisez votre mot de passe',
+      intro:
+        'Nous avons reçu une demande de réinitialisation de votre mot de passe.',
+      action: (m) =>
+        `Cliquez sur le lien ci-dessous pour en choisir un nouveau. Il est valable ${m} minutes.`,
+      ignore:
+        "Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.",
+    },
+    verify: {
+      subject: 'Vérifiez votre adresse e-mail',
+      textIntro:
+        'Veuillez confirmer votre adresse e-mail en ouvrant ce lien :',
+      htmlIntro:
+        'Veuillez confirmer votre adresse e-mail en cliquant sur le lien ci-dessous.',
+    },
+  },
+};
+
+function stringsFor(locale: string | undefined) {
+  return EMAIL_STRINGS[(locale as EmailLocale) in EMAIL_STRINGS ? (locale as EmailLocale) : 'en'];
+}
+
 export function renderPasswordReset(params: {
   url: string;
   expiresInMinutes: number;
+  locale?: string;
 }): RenderedEmail {
-  const { url, expiresInMinutes } = params;
+  const { url, expiresInMinutes, locale } = params;
+  const t = stringsFor(locale).reset;
   return {
-    subject: 'Reset your password',
-    text: [
-      'We received a request to reset your password.',
-      '',
-      `Open this link to choose a new one (valid for ${expiresInMinutes} minutes):`,
-      url,
-      '',
-      "If you didn't request this, you can safely ignore this email.",
-    ].join('\n'),
-    html: layout('Reset your password', [
-      'We received a request to reset your password.',
-      `Click the link below to choose a new one. It is valid for ${expiresInMinutes} minutes.`,
-      link(url),
-      "If you didn't request this, you can safely ignore this email.",
-    ]),
+    subject: t.subject,
+    text: [t.intro, '', t.action(expiresInMinutes), url, '', t.ignore].join(
+      '\n',
+    ),
+    html: layout(t.subject, [t.intro, t.action(expiresInMinutes), link(url), t.ignore]),
   };
 }
 
-export function renderEmailVerification(params: { url: string }): RenderedEmail {
-  const { url } = params;
+export function renderEmailVerification(params: {
+  url: string;
+  locale?: string;
+}): RenderedEmail {
+  const { url, locale } = params;
+  const t = stringsFor(locale).verify;
   return {
-    subject: 'Verify your email address',
-    text: [
-      'Please confirm your email address by opening this link:',
-      url,
-    ].join('\n'),
-    html: layout('Verify your email address', [
-      'Please confirm your email address by clicking the link below.',
-      link(url),
-    ]),
+    subject: t.subject,
+    text: [t.textIntro, url].join('\n'),
+    html: layout(t.subject, [t.htmlIntro, link(url)]),
   };
 }
 

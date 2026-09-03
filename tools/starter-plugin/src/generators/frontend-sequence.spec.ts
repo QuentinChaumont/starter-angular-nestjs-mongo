@@ -6,6 +6,7 @@ import frontendDashboardGenerator from './frontend-dashboard/generator';
 import frontendDesignGenerator from './frontend-design/generator';
 import frontendFeatureGenerator from './frontend-feature/generator';
 import frontendFeedbackGenerator from './frontend-feedback/generator';
+import frontendI18nGenerator from './frontend-i18n/generator';
 
 const APP_CONFIG = 'apps/frontend/src/app/app.config.ts';
 const APP_COMPONENT = 'apps/frontend/src/app/app.ts';
@@ -65,6 +66,7 @@ export class App {}
 
 async function runFrontendSequence(tree: Tree): Promise<void> {
   await frontendDesignGenerator(tree);
+  await frontendI18nGenerator(tree);
   await frontendAuthGenerator(tree);
   await frontendDashboardGenerator(tree);
   await frontendFeedbackGenerator(tree);
@@ -82,7 +84,14 @@ describe('frontend brick sequence', () => {
   it('installs every frontend brick and wires the app end to end', async () => {
     await runFrontendSequence(tree);
 
-    for (const name of ['design', 'auth', 'dashboard', 'feedback', 'consent']) {
+    for (const name of [
+      'design',
+      'i18n',
+      'auth',
+      'dashboard',
+      'feedback',
+      'consent',
+    ]) {
       expect(tree.exists(`libs/frontend/${name}/project.json`)).toBe(true);
     }
 
@@ -93,12 +102,14 @@ describe('frontend brick sequence', () => {
       '@org/frontend-dashboard',
       '@org/frontend-design',
       '@org/frontend-feedback',
+      '@org/frontend-i18n',
     ]);
 
     const config = tree.read(APP_CONFIG, 'utf-8') as string;
     for (const provider of [
       '...materialProviders',
       'provideTheme()',
+      'provideI18n()',
       'provideAuth()',
       'provideFeedback()',
       'provideConsent()',
@@ -197,6 +208,9 @@ describe('frontend brick sequence', () => {
     await expect(frontendAuthGenerator(tree)).rejects.toThrow(/design brick/);
 
     await frontendDesignGenerator(tree);
+    await expect(frontendAuthGenerator(tree)).rejects.toThrow(/i18n brick/);
+
+    await expect(frontendI18nGenerator(tree)).resolves.toBeDefined();
     await expect(frontendDashboardGenerator(tree)).rejects.toThrow(
       /auth brick/,
     );

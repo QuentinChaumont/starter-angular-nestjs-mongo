@@ -11,6 +11,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { isApiError } from '@org/shared-contracts';
 import { PasswordRevealButton } from '@org/frontend-ui';
 import { AuthService } from '../auth.service';
@@ -28,6 +29,7 @@ const MIN_PASSWORD_LENGTH = 8;
     MatButtonModule,
     MatProgressBarModule,
     PasswordRevealButton,
+    TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -35,12 +37,12 @@ const MIN_PASSWORD_LENGTH = 8;
       @if (submitting()) {
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       }
-      <h1>Create your account</h1>
+      <h1>{{ 'auth.register.title' | transloco }}</h1>
 
       <form [formGroup]="form" (ngSubmit)="submit()">
         <div class="register__row">
           <mat-form-field appearance="outline">
-            <mat-label>First name</mat-label>
+            <mat-label>{{ 'auth.register.firstName' | transloco }}</mat-label>
             <input
               matInput
               formControlName="firstName"
@@ -48,7 +50,7 @@ const MIN_PASSWORD_LENGTH = 8;
             />
           </mat-form-field>
           <mat-form-field appearance="outline">
-            <mat-label>Last name</mat-label>
+            <mat-label>{{ 'auth.register.lastName' | transloco }}</mat-label>
             <input
               matInput
               formControlName="lastName"
@@ -58,7 +60,7 @@ const MIN_PASSWORD_LENGTH = 8;
         </div>
 
         <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
+          <mat-label>{{ 'common.email' | transloco }}</mat-label>
           <input
             matInput
             type="email"
@@ -68,7 +70,7 @@ const MIN_PASSWORD_LENGTH = 8;
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>Password</mat-label>
+          <mat-label>{{ 'common.password' | transloco }}</mat-label>
           <input
             #password
             matInput
@@ -77,7 +79,12 @@ const MIN_PASSWORD_LENGTH = 8;
             autocomplete="new-password"
           />
           <lib-password-reveal-button matSuffix [input]="password" />
-          <mat-hint>At least {{ minPasswordLength }} characters</mat-hint>
+          <mat-hint>
+            {{
+              'auth.register.passwordHint'
+                | transloco: { count: minPasswordLength }
+            }}
+          </mat-hint>
         </mat-form-field>
 
         @if (error()) {
@@ -90,11 +97,11 @@ const MIN_PASSWORD_LENGTH = 8;
           type="submit"
           [disabled]="form.invalid || submitting()"
         >
-          Create account
+          {{ 'auth.register.submit' | transloco }}
         </button>
       </form>
 
-      <a routerLink="/login">Already have an account? Sign in</a>
+      <a routerLink="/login">{{ 'auth.register.haveAccount' | transloco }}</a>
     </section>
   `,
   styles: `
@@ -129,6 +136,7 @@ export class RegisterPage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly minPasswordLength = MIN_PASSWORD_LENGTH;
 
@@ -161,7 +169,9 @@ export class RegisterPage {
         this.submitting.set(false);
         const body = err instanceof HttpErrorResponse ? err.error : null;
         this.error.set(
-          isApiError(body) ? body.message : 'Could not create the account',
+          isApiError(body)
+            ? body.message
+            : this.transloco.translate('auth.register.failed'),
         );
       },
     });

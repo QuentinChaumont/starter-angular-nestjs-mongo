@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { TranslocoService } from '@jsverse/transloco';
 import { API_BASE_URL, ME_ENDPOINT } from '@org/frontend-core';
 import {
   AccessTokenResponse,
@@ -42,6 +43,8 @@ export class AuthService {
   private readonly base = inject(API_BASE_URL);
   private readonly meEndpoint = inject(ME_ENDPOINT);
   private readonly store = inject(AuthStore);
+  /** Optional: only present when the `frontend-i18n` brick is installed. */
+  private readonly transloco = inject(TranslocoService, { optional: true });
 
   /** Single in-flight refresh shared by every concurrent 401. */
   private refresh$: Observable<AccessTokenResponse> | null = null;
@@ -157,7 +160,26 @@ export class AuthService {
       .get<AuthenticatedUserDto>(`${this.base}${this.meEndpoint}`, {
         withCredentials: true,
       })
-      .pipe(tap((user) => this.store.setUser(user)));
+      .pipe(
+        tap((user) => {
+          this.store.setUser(user);
+          this.applyLocale(user.locale);
+        }),
+      );
+  }
+
+  /** Switch the UI to the account's saved language, if the i18n brick is
+   * installed and the value is one it knows. */
+  private applyLocale(locale: string | null | undefined): void {
+    if (!this.transloco || !locale) {
+      return;
+    }
+    const known = this.transloco
+      .getAvailableLangs()
+      .map((l) => (typeof l === 'string' ? l : l.id));
+    if (known.includes(locale)) {
+      this.transloco.setActiveLang(locale);
+    }
   }
 
   /** refresh + loadMe; resolves to whether a session could be restored. */

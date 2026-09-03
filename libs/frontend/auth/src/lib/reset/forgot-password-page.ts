@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { ResetService } from './reset.service';
 
 @Component({
@@ -16,6 +17,7 @@ import { ResetService } from './reset.service';
     MatInputModule,
     MatButtonModule,
     MatProgressBarModule,
+    TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -23,18 +25,15 @@ import { ResetService } from './reset.service';
       @if (submitting()) {
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       }
-      <h1>Reset your password</h1>
+      <h1>{{ 'auth.forgot.title' | transloco }}</h1>
 
       @if (done()) {
-        <p role="status">
-          If an account exists for that address, a reset link is on its way.
-          Check your inbox.
-        </p>
-        <a routerLink="/login">Back to sign in</a>
+        <p role="status">{{ 'auth.forgot.done' | transloco }}</p>
+        <a routerLink="/login">{{ 'auth.forgot.backToLogin' | transloco }}</a>
       } @else {
         <form [formGroup]="form" (ngSubmit)="submit()">
           <mat-form-field appearance="outline">
-            <mat-label>Email</mat-label>
+            <mat-label>{{ 'common.email' | transloco }}</mat-label>
             <input
               matInput
               type="email"
@@ -49,10 +48,10 @@ import { ResetService } from './reset.service';
             type="submit"
             [disabled]="form.invalid || submitting()"
           >
-            Send reset link
+            {{ 'auth.forgot.submit' | transloco }}
           </button>
         </form>
-        <a routerLink="/login">Back to sign in</a>
+        <a routerLink="/login">{{ 'auth.forgot.backToLogin' | transloco }}</a>
       }
     </section>
   `,

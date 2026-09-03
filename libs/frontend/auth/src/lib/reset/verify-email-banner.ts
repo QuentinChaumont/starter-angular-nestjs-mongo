@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { isApiError } from '@org/shared-contracts';
 import { AuthStore } from '../auth.store';
 import { ResetService } from './reset.service';
@@ -27,13 +28,13 @@ function apiMessage(err: unknown, fallback: string): string {
  */
 @Component({
   selector: 'lib-verify-email-banner',
-  imports: [MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (visible()) {
       <div class="verify-banner" role="status">
         <span class="verify-banner__text">
-          Please verify your email address to secure your account.
+          {{ 'auth.verify.banner' | transloco }}
         </span>
         @if (message(); as m) {
           <span class="verify-banner__sent">{{ m }}</span>
@@ -44,7 +45,7 @@ function apiMessage(err: unknown, fallback: string): string {
             [disabled]="sending()"
             (click)="resend()"
           >
-            Resend email
+            {{ 'auth.verify.resend' | transloco }}
           </button>
         }
         <button
@@ -82,6 +83,7 @@ function apiMessage(err: unknown, fallback: string): string {
 export class VerifyEmailBanner {
   private readonly store = inject(AuthStore);
   private readonly reset = inject(ResetService);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly sending = signal(false);
   protected readonly message = signal<string | null>(null);
@@ -99,7 +101,7 @@ export class VerifyEmailBanner {
     this.reset.resendVerification().subscribe({
       next: () => {
         this.sending.set(false);
-        this.message.set('Verification email sent.');
+        this.message.set(this.transloco.translate('auth.verify.resent'));
       },
       error: (err: unknown) => {
         this.sending.set(false);

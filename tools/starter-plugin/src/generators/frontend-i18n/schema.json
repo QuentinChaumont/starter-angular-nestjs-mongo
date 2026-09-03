@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "$id": "FrontendI18n",
+  "title": "Install the frontend i18n brick (Transloco, en/fr, language switcher)",
+  "type": "object",
+  "properties": {}
+}

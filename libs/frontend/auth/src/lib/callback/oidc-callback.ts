@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../auth.service';
 import { AuthStore } from '../auth.store';
 import { sanitizeRedirect } from '../sanitize-redirect';
@@ -23,7 +24,7 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
  */
 @Component({
   selector: 'lib-oidc-callback',
-  imports: [MatProgressSpinnerModule, TwoFactorPrompt],
+  imports: [MatProgressSpinnerModule, TwoFactorPrompt, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (pendingToken(); as token) {
@@ -34,7 +35,7 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
           mode="indeterminate"
           diameter="40"
         ></mat-progress-spinner>
-        <p>Signing you in…</p>
+        <p>{{ 'auth.callback.signingIn' | transloco }}</p>
       </section>
     }
   `,

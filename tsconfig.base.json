@@ -28,6 +28,7 @@
       "@org/frontend-dashboard": ["./libs/frontend/dashboard/src/index.ts"],
       "@org/frontend-design": ["./libs/frontend/design/src/index.ts"],
       "@org/frontend-feedback": ["./libs/frontend/feedback/src/index.ts"],
+      "@org/frontend-i18n": ["./libs/frontend/i18n/src/index.ts"],
       "@org/frontend-ui": ["./libs/frontend/ui/src/index.ts"],
       "@org/frontend-features-admin-audit": [
         "./libs/frontend/features/admin-audit/src/index.ts"

@@ -12,6 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { isApiError } from '@org/shared-contracts';
 import { AuthService } from '../auth.service';
 
@@ -28,6 +29,7 @@ import { AuthService } from '../auth.service';
     MatInputModule,
     MatButtonModule,
     MatProgressBarModule,
+    TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -35,15 +37,12 @@ import { AuthService } from '../auth.service';
       @if (submitting()) {
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       }
-      <h1>Two-factor authentication</h1>
-      <p class="tfa__hint">
-        Enter the 6-digit code from your authenticator app, or one of your
-        backup codes.
-      </p>
+      <h1>{{ 'auth.twoFactor.title' | transloco }}</h1>
+      <p class="tfa__hint">{{ 'auth.twoFactor.hint' | transloco }}</p>
 
       <form [formGroup]="form" (ngSubmit)="submit()">
         <mat-form-field appearance="outline">
-          <mat-label>Authentication code</mat-label>
+          <mat-label>{{ 'auth.twoFactor.code' | transloco }}</mat-label>
           <input
             matInput
             formControlName="code"
@@ -62,7 +61,7 @@ import { AuthService } from '../auth.service';
           type="submit"
           [disabled]="form.invalid || submitting()"
         >
-          Verify
+          {{ 'auth.twoFactor.verify' | transloco }}
         </button>
       </form>
     </section>
@@ -96,6 +95,7 @@ export class TwoFactorPrompt {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly transloco = inject(TranslocoService);
 
   readonly pendingToken = input.required<string>();
   readonly redirectTo = input('/app');
@@ -120,7 +120,9 @@ export class TwoFactorPrompt {
           this.submitting.set(false);
           const body = err instanceof HttpErrorResponse ? err.error : null;
           this.error.set(
-            isApiError(body) ? body.message : 'That code is not valid',
+            isApiError(body)
+              ? body.message
+              : this.transloco.translate('auth.twoFactor.invalid'),
           );
         },
       });

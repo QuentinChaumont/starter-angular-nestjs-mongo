@@ -4,6 +4,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { Router } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService, AuthStore } from '@org/frontend-auth';
 import { CONSENT_MANAGER } from '@org/frontend-core';
 import { ThemeSettingsPanel } from '@org/frontend-design';
@@ -15,7 +16,7 @@ import { ThemeSettingsPanel } from '@org/frontend-design';
  */
 @Component({
   selector: 'lib-user-menu',
-  imports: [MatButtonModule, MatIconModule, MatMenuModule],
+  imports: [MatButtonModule, MatIconModule, MatMenuModule, TranslocoPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <button
@@ -30,21 +31,21 @@ import { ThemeSettingsPanel } from '@org/frontend-design';
       <div class="user-menu__header">{{ roleLabel() }}</div>
       <button mat-menu-item (click)="goProfile()">
         <mat-icon>person</mat-icon>
-        <span>Profile</span>
+        <span>{{ 'dashboard.profile' | transloco }}</span>
       </button>
       <button mat-menu-item (click)="openTheme()">
         <mat-icon>palette</mat-icon>
-        <span>Appearance</span>
+        <span>{{ 'dashboard.appearance' | transloco }}</span>
       </button>
       @if (consent) {
         <button mat-menu-item (click)="consent.reopen()">
           <mat-icon>cookie</mat-icon>
-          <span>Manage cookies</span>
+          <span>{{ 'dashboard.manageCookies' | transloco }}</span>
         </button>
       }
       <button mat-menu-item (click)="signOut()">
         <mat-icon>logout</mat-icon>
-        <span>Sign out</span>
+        <span>{{ 'dashboard.signOut' | transloco }}</span>
       </button>
     </mat-menu>
   `,
@@ -67,9 +68,13 @@ export class UserMenu {
   /** Present only when the `frontend-consent` brick is installed. */
   protected readonly consent = inject(CONSENT_MANAGER, { optional: true });
 
+  private readonly transloco = inject(TranslocoService);
+
   protected roleLabel(): string {
     const roles = this.store.user()?.roles ?? [];
-    return roles.length ? roles.join(', ') : 'Signed in';
+    return roles.length
+      ? roles.join(', ')
+      : this.transloco.translate('dashboard.signedIn');
   }
 
   /** Present as a route only when the profile brick (V2.1 step 34) is

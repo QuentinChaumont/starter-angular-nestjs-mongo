@@ -43,7 +43,12 @@ export class AuthResetService implements OnModuleInit {
    */
   onModuleInit(): void {
     const send = (event: { userId: string; email: string }) =>
-      this.sendVerificationEmail(event).catch((error: unknown) => {
+      this.users
+        .findById(event.userId)
+        .then((u) =>
+          this.sendVerificationEmail({ ...event, locale: u.locale }),
+        )
+        .catch((error: unknown) => {
         this.logger.error(
           `Failed to send verification email: ${
             error instanceof Error ? error.message : String(error)
@@ -75,6 +80,7 @@ export class AuthResetService implements OnModuleInit {
       ...renderPasswordReset({
         url,
         expiresInMinutes: this.passwordReset.ttlMinutes,
+        locale: user.locale,
       }),
     });
     this.logLink('password-reset', user.email, url);
@@ -93,12 +99,13 @@ export class AuthResetService implements OnModuleInit {
   async sendVerificationEmail(user: {
     userId: string;
     email: string;
+    locale?: string;
   }): Promise<void> {
     const token = await this.emailVerification.issue(user.userId);
     const url = this.link('/verify-email', token);
     await this.mailer.send({
       to: user.email,
-      ...renderEmailVerification({ url }),
+      ...renderEmailVerification({ url, locale: user.locale }),
     });
     this.logLink('email-verification', user.email, url);
   }
@@ -136,7 +143,11 @@ export class AuthResetService implements OnModuleInit {
     }
 
     await this.emailVerification.invalidateAllForUser(userId);
-    await this.sendVerificationEmail({ userId, email: user.email });
+    await this.sendVerificationEmail({
+      userId,
+      email: user.email,
+      locale: user.locale,
+    });
   }
 
   private link(path: string, token: string): string {

@@ -3,6 +3,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { AuthService, AuthStore } from '@org/frontend-auth';
 import { of } from 'rxjs';
+import { provideTranslocoTesting } from '@org/frontend-i18n';
 import { UserMenu } from './user-menu';
 
 interface MenuInternals {
@@ -23,6 +24,7 @@ describe('UserMenu', () => {
     TestBed.configureTestingModule({
       imports: [UserMenu],
       providers: [
+        provideTranslocoTesting(),
         { provide: Router, useValue: { navigate } },
         { provide: AuthService, useValue: { logout } },
         { provide: MatDialog, useValue: { open: dialogOpen } },

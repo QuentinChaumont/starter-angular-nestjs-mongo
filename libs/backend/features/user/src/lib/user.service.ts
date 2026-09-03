@@ -41,6 +41,7 @@ export function toUserProfile(user: UserDocument): UserProfile {
       ? user.emailVerifiedAt.toISOString()
       : null,
     twoFactorEnabled: user.twoFactorEnabled ?? false,
+    locale: user.locale ?? null,
     createdAt: user.createdAt.toISOString(),
   };
 }
@@ -124,12 +125,18 @@ export class UserService {
    */
   async updateProfile(
     id: string,
-    input: { firstName?: string; lastName?: string; email?: string },
+    input: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      locale?: string;
+    },
   ): Promise<UserProfile> {
     const user = await this.findById(id);
 
     if (input.firstName !== undefined) user.firstName = input.firstName;
     if (input.lastName !== undefined) user.lastName = input.lastName;
+    if (input.locale !== undefined) user.locale = input.locale;
 
     const emailChanged =
       input.email !== undefined &&

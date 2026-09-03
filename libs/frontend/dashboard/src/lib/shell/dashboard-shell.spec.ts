@@ -1,6 +1,10 @@
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { API_BASE_URL } from '@org/frontend-core';
+import { provideTranslocoTesting } from '@org/frontend-i18n';
 import { BehaviorSubject } from 'rxjs';
 import { DASHBOARD_NAV } from '../nav.tokens';
 import { DashboardShell } from './dashboard-shell';
@@ -23,6 +27,10 @@ describe('DashboardShell', () => {
       imports: [DashboardShell],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTranslocoTesting(),
+        { provide: API_BASE_URL, useValue: '/api' },
         { provide: DASHBOARD_NAV, useValue: [] },
         { provide: BreakpointObserver, useValue: { observe: () => matches$ } },
       ],

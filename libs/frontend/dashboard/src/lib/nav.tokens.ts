@@ -1,7 +1,10 @@
 import { InjectionToken } from '@angular/core';
 
 export interface NavItem {
+  /** Fallback label, used when `labelKey` is unset or i18n isn't installed. */
   label: string;
+  /** Transloco key (V2.3 step 47) — takes precedence over `label`. */
+  labelKey?: string;
   /** `mat-icon` ligature name. */
   icon: string;
   /** Path relative to `/app` (`''` for the landing route). May be nested

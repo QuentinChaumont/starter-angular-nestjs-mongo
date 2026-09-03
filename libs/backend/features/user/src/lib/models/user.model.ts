@@ -11,6 +11,8 @@ export interface UserModel {
   roles: string[];
   emailVerifiedAt?: Date;
   disabledAt?: Date;
+  /** Preferred UI + email language (V2.3 step 47). */
+  locale?: string;
   /** Two-factor authentication (V2.2 step 43). */
   twoFactorSecret?: string;
   twoFactorPendingSecret?: string;

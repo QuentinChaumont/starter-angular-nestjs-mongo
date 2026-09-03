@@ -20,6 +20,7 @@
     { "path": "../../libs/frontend/features/profile/tsconfig.lib.json" },
     { "path": "../../libs/frontend/features/admin-users/tsconfig.lib.json" },
     { "path": "../../libs/frontend/features/admin-roles/tsconfig.lib.json" },
-    { "path": "../../libs/frontend/features/admin-audit/tsconfig.lib.json" }
+    { "path": "../../libs/frontend/features/admin-audit/tsconfig.lib.json" },
+    { "path": "../../libs/frontend/i18n/tsconfig.lib.json" }
   ]
 }

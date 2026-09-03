@@ -351,6 +351,7 @@ a generator, in this order (each checks its prerequisites):
 
 ```bash
 npx nx g @org/starter-plugin:frontend-design      # Material + M3 theme + charter
+npx nx g @org/starter-plugin:frontend-i18n        # Transloco (en/fr) + language switcher
 npx nx g @org/starter-plugin:frontend-auth        # login + OIDC, session, interceptors, guards
 npx nx g @org/starter-plugin:frontend-dashboard   # responsive sidenav shell for /app/**
 npx nx g @org/starter-plugin:frontend-feedback    # dialogs + toasts + ApiError bridge
@@ -360,9 +361,10 @@ npx nx g @org/starter-plugin:frontend-consent     # cookie banner + /legal pages
 Each generator copies its lib, wires `apps/frontend/src/app/app.config.ts`
 (and `app.routes.ts` / `app.ts` / `styles.scss` where needed), registers
 the `@org/frontend-*` path, and is idempotent. Prerequisites:
-`frontend-auth` → `frontend-design` + the backend `auth` brick;
-`frontend-dashboard` → `frontend-auth`; `frontend-feedback` /
-`frontend-consent` → `frontend-design`.
+`frontend-i18n` → `frontend-design`; `frontend-auth` → `frontend-design` +
+`frontend-i18n` + the backend `auth` brick; `frontend-dashboard` →
+`frontend-auth`; `frontend-feedback` / `frontend-consent` →
+`frontend-design`.
 
 ### `frontend-design` — theme & charter
 
@@ -376,6 +378,25 @@ Angular Material M3 and re-points its `--mat-sys-*` colour tokens at the
 Colours can also be changed **at runtime, per visitor**: `ThemeService`
 and `<lib-theme-settings-panel>` write inline overrides on `<html>`,
 persisted in `localStorage`, never touching the committed charter.
+
+### `frontend-i18n` — Transloco (en / fr)
+
+`provideI18n()` sets up [Transloco](https://jsverse.github.io/transloco/)
+with English and French **bundled** (no HTTP loader — the starter has few
+strings). At startup the active language is `localStorage['app.lang']` →
+the browser's language → `en`; once a user signs in, `frontend-auth`
+applies their stored `locale` on top. `<lib-lang-switcher>` in the shell
+toolbar changes the language, remembers it in `localStorage`, and — when
+signed in — persists it with `PATCH /users/me { locale }`. It renders
+nothing while only one language is configured.
+
+Every delivered frontend brick ships its `| transloco` keys and an English
+fallback, so the app keeps rendering English text even before the
+translations are loaded. Component specs pull in the real strings with
+`provideTranslocoTesting()` (from `@org/frontend-i18n`). The `mailer` /
+`auth-reset` bricks localise the password-reset and email-verification
+emails from a plain per-locale dictionary (no Transloco on the backend),
+keyed off `user.locale`.
 
 ### `frontend-auth` — session & OIDC
 
@@ -405,10 +426,11 @@ feedback bricks each contribute an interceptor (auth before feedback).
 the dashboard + feedback bricks) adds the **`/app/profile`** page — a lazy
 feature that manages the connected account:
 
-- `GET`/`PATCH /api/users/me` — edit first/last name **and email**.
-  Changing the email clears its verified status, rejects a duplicate
-  (`409`), and (with the `auth-reset` brick) re-sends a verification link
-  to the new address; the "verify your email" banner reappears.
+- `GET`/`PATCH /api/users/me` — edit first/last name, **email** and
+  `locale` (`'en' | 'fr'`, with the `frontend-i18n` brick). Changing the
+  email clears its verified status, rejects a duplicate (`409`), and (with
+  the `auth-reset` brick) re-sends a verification link to the new address;
+  the "verify your email" banner reappears.
 - `POST /api/auth/change-password` — a wrong current password is a `400`;
   a success revokes every **other** session and keeps this one.
 - `DELETE /api/users/me` `{ password }` — **permanently** deletes the

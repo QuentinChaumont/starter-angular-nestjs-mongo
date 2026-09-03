@@ -13,5 +13,8 @@
     "src/**/*.d.ts"
   ],
   "files": ["src/test-setup.ts"],
-  "references": [{ "path": "./tsconfig.lib.json" }]
+  "references": [
+    { "path": "./tsconfig.lib.json" },
+    { "path": "../i18n/tsconfig.lib.json" }
+  ]
 }

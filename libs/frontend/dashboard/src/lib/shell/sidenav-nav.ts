@@ -8,13 +8,20 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '@org/frontend-auth';
 import { DASHBOARD_NAV } from '../nav.tokens';
 
 /** Renders `DASHBOARD_NAV`, filtered by the current user's roles. */
 @Component({
   selector: 'lib-sidenav-nav',
-  imports: [MatListModule, MatIconModule, RouterLink, RouterLinkActive],
+  imports: [
+    MatListModule,
+    MatIconModule,
+    RouterLink,
+    RouterLinkActive,
+    TranslocoPipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <nav class="nav">
@@ -32,7 +39,9 @@ import { DASHBOARD_NAV } from '../nav.tokens';
             (click)="navigated.emit()"
           >
             <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-            <span matListItemTitle>{{ item.label }}</span>
+            <span matListItemTitle>
+              {{ item.labelKey ? (item.labelKey | transloco) : item.label }}
+            </span>
           </a>
         }
       </mat-nav-list>

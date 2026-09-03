@@ -11,6 +11,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { isApiError } from '@org/shared-contracts';
 import { PasswordRevealButton } from '@org/frontend-ui';
 import { ResetService } from './reset.service';
@@ -27,6 +28,7 @@ const MIN_PASSWORD_LENGTH = 8;
     MatButtonModule,
     MatProgressBarModule,
     PasswordRevealButton,
+    TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -34,17 +36,19 @@ const MIN_PASSWORD_LENGTH = 8;
       @if (submitting()) {
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       }
-      <h1>Choose a new password</h1>
+      <h1>{{ 'auth.reset.title' | transloco }}</h1>
 
       @if (!token) {
         <p class="reset__error" role="alert">
-          This reset link is missing its token. Request a new one.
+          {{ 'auth.reset.missingToken' | transloco }}
         </p>
-        <a routerLink="/forgot-password">Request a new link</a>
+        <a routerLink="/forgot-password">
+          {{ 'auth.reset.requestNew' | transloco }}
+        </a>
       } @else {
         <form [formGroup]="form" (ngSubmit)="submit()">
           <mat-form-field appearance="outline">
-            <mat-label>New password</mat-label>
+            <mat-label>{{ 'auth.reset.newPassword' | transloco }}</mat-label>
             <input
               #password
               matInput
@@ -53,7 +57,12 @@ const MIN_PASSWORD_LENGTH = 8;
               autocomplete="new-password"
             />
             <lib-password-reveal-button matSuffix [input]="password" />
-            <mat-hint>At least {{ minPasswordLength }} characters</mat-hint>
+            <mat-hint>
+              {{
+                'auth.reset.passwordHint'
+                  | transloco: { count: minPasswordLength }
+              }}
+            </mat-hint>
           </mat-form-field>
 
           @if (error()) {
@@ -66,7 +75,7 @@ const MIN_PASSWORD_LENGTH = 8;
             type="submit"
             [disabled]="form.invalid || submitting()"
           >
-            Reset password
+            {{ 'auth.reset.submit' | transloco }}
           </button>
         </form>
       }
@@ -97,6 +106,7 @@ export class ResetPasswordPage {
   private readonly reset = inject(ResetService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly transloco = inject(TranslocoService);
 
   protected readonly minPasswordLength = MIN_PASSWORD_LENGTH;
   protected readonly token = this.route.snapshot.queryParamMap.get('token');
@@ -130,7 +140,7 @@ export class ResetPasswordPage {
           this.error.set(
             isApiError(body)
               ? body.message
-              : 'Could not reset your password. The link may have expired.',
+              : this.transloco.translate('auth.reset.failed'),
           );
         },
       });

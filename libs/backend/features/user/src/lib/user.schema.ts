@@ -45,6 +45,10 @@ export class User {
   @Prop()
   emailVerifiedAt?: Date;
 
+  /** Preferred UI + email language (V2.3 step 47), e.g. `en` / `fr`. */
+  @Prop({ trim: true, lowercase: true })
+  locale?: string;
+
   /** Set when an admin disables the account (V2.1 step 35). A disabled
    * account can't `login` or `refresh`. */
   @Prop()
