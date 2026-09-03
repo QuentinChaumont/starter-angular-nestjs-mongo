@@ -45,6 +45,15 @@ these same provider routes to _link_ a provider to the already-signed-in
 account (`POST /auth/identities/:id/link` → navigate to the returned
 `authorizationUrl`; the callback returns to `/app/profile?linked=…`).
 
+## Two-factor (V2.2 step 43)
+
+When a login (password or OIDC) returns a 2FA challenge, `LoginPage` /
+`OidcCallback` swap to the shared `TwoFactorPrompt` — a 6-digit code form
+that posts to `POST /auth/2fa/verify` and, on success, forwards to the
+intended page. `AuthService.login()` resolves to a discriminated
+`LoginOutcome` (`authenticated` | `two-factor`); enrolling / disabling 2FA
+lives in the profile brick.
+
 ## API base URL
 
 Requests target `API_BASE_URL` (from `@org/frontend-core`, default `/api`).

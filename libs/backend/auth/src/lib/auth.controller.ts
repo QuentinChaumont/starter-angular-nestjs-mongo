@@ -14,6 +14,7 @@ import type {
   AccessTokenResponse,
   MeResponse,
   RegistrationInfo,
+  TwoFactorChallenge,
 } from '@org/shared-contracts';
 import type { Request, Response } from 'express';
 import {
@@ -22,7 +23,7 @@ import {
   Roles,
   RolesGuard,
 } from '@org/backend-core';
-import { AuthService } from './auth.service';
+import { AuthService, isPendingTwoFactor } from './auth.service';
 import { AuthCookieService } from './cookies/auth-cookie.service';
 import { CsrfGuard } from './csrf/csrf.guard';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
@@ -75,14 +76,24 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<AccessTokenResponse & { user: AuthenticatedUser }> {
+  ): Promise<
+    (AccessTokenResponse & { user: AuthenticatedUser }) | TwoFactorChallenge
+  > {
     const result = await this.authService.login(
       dto.email,
       dto.password,
       sessionContext(req),
     );
-    this.cookies.setSession(res, result.session);
 
+    if (isPendingTwoFactor(result)) {
+      return {
+        twoFactorRequired: true,
+        pendingToken: result.pendingToken,
+        expiresIn: result.expiresIn,
+      };
+    }
+
+    this.cookies.setSession(res, result.session);
     return {
       accessToken: result.accessToken,
       expiresIn: result.expiresIn,

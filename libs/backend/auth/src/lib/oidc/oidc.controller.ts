@@ -3,7 +3,7 @@ import { ApiExcludeEndpoint, ApiTags } from '@nestjs/swagger';
 import { ApplicationError, UnauthorizedError } from '@org/backend-core';
 import type { OidcProviderInfo } from '@org/shared-contracts';
 import type { Request, Response } from 'express';
-import { AuthService } from '../auth.service';
+import { AuthService, isPendingTwoFactor } from '../auth.service';
 import { AuthCookieService } from '../cookies/auth-cookie.service';
 import { OidcClaims } from './oidc-claims';
 import { OidcUserLinker } from './oidc-user.linker';
@@ -122,15 +122,25 @@ export class OidcController {
       userAgent: req.headers['user-agent'],
       ip: req.ip,
     });
-    this.cookies.setSession(res, result.session);
 
     // Always land on the SPA's dedicated callback route; it consumes the
-    // token from the fragment, scrubs the URL, then forwards to
-    // `redirect_to`.
+    // fragment, scrubs the URL, then forwards to `redirect_to`.
     const callbackUrl = new URL(
       '/auth/callback',
       provider.frontendUrl,
     ).toString();
+
+    // TOTP 2FA on (V2.2 step 43): no session yet — hand the SPA a
+    // `pending_2fa` token so it can prompt for a code.
+    if (isPendingTwoFactor(result)) {
+      const fragment =
+        `pending_2fa=${encodeURIComponent(result.pendingToken)}` +
+        `&redirect_to=${encodeURIComponent(tx.redirectTo)}`;
+      res.redirect(`${callbackUrl}#${fragment}`);
+      return;
+    }
+
+    this.cookies.setSession(res, result.session);
     const fragment =
       `access_token=${encodeURIComponent(result.accessToken)}` +
       `&expires_in=${result.expiresIn}` +

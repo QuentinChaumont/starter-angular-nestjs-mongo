@@ -13,6 +13,8 @@ Optional JWT auth brick. Install it with `nx g @org/starter-plugin:auth`
 - `POST /auth/logout` — revokes the current refresh token, clears the
   cookies. `204`. Guarded by `CsrfGuard`.
 - `GET /auth/me` — the current `AuthenticatedUser` (`JwtAuthGuard`).
+- `POST /auth/2fa/{setup,confirm,disable,verify}` — TOTP two-factor (see
+  **Two-factor authentication** below).
 - `JwtAuthGuard`, `RolesGuard` + `@Roles(...)`, `@CurrentUser()`.
 - `RefreshTokenService.revokeAllForUser(userId)` — building block for a
   future "sign out everywhere" (not wired to a route).
@@ -95,6 +97,31 @@ Endpoints (all bearer-authenticated, no CSRF guard — like
 - `DELETE /auth/identities/:providerId` → `204`. `404 IDENTITY_NOT_FOUND`
   if it isn't linked; `409 LAST_LOGIN_METHOD` if it's the only way in (no
   password, no other identity).
+
+## Two-factor authentication (V2.2 step 43)
+
+Optional TOTP (RFC 6238 — SHA-1, 6 digits, 30 s), enabled per account from
+the profile page. No new environment variable: the secret is encrypted at
+rest (AES-256-GCM) with a key derived from `JWT_SECRET` via HKDF. Backup
+codes are scrypt-hashed like passwords. The TOTP + base32 implementation is
+hand-rolled on `node:crypto`; only `qrcode` (for the data-URI) is a new
+dependency.
+
+- `POST /auth/2fa/setup` (bearer) → `{ otpauthUri, qrDataUri, secret }`. The
+  secret is stashed **pending** (encrypted) — nothing is active yet.
+- `POST /auth/2fa/confirm` (bearer, `{ code }`) → verifies the first code,
+  activates 2FA, returns **10 one-time backup codes** (shown once).
+- `POST /auth/2fa/disable` (bearer, `{ password }`) → clears the secret and
+  backup codes. `400 INVALID_PASSWORD` on a wrong password.
+- `POST /auth/2fa/verify` (`{ pendingToken, code }`) → the **second leg** of
+  a login: exchanges the `pending_2fa` token for a real session (cookies +
+  access token). `code` is a TOTP code or a backup code (consumed).
+
+When `twoFactorEnabled` is set, `AuthService.issueSession` (local login
+**and** the OIDC callback) returns
+`{ twoFactorRequired: true, pendingToken, expiresIn }` instead of a session.
+The `pending_2fa` JWT (~5 min) is rejected by `JwtStrategy` everywhere
+except `/auth/2fa/verify`.
 
 | Variable                      | Required  | Default                 | Notes                                       |
 | ----------------------------- | --------- | ----------------------- | ------------------------------------------- |

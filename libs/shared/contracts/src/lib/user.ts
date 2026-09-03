@@ -13,6 +13,8 @@ export interface UserProfile {
   roles: string[];
   /** `null` until the email address is verified, an ISO timestamp after. */
   emailVerifiedAt: string | null;
+  /** Whether TOTP two-factor is active on the account (V2.2 step 43). */
+  twoFactorEnabled: boolean;
   /** ISO timestamp. */
   createdAt: string;
 }
@@ -49,6 +51,8 @@ export interface UserSummary {
   lastName: string;
   roles: string[];
   emailVerifiedAt: string | null;
+  /** Whether TOTP two-factor is active (V2.2 step 43). */
+  twoFactorEnabled: boolean;
   /** ISO timestamp once the account is disabled, else `null`. A disabled
    * account can't `login` or `refresh`. */
   disabledAt: string | null;

@@ -39,6 +39,7 @@ export function toUserProfile(user: UserDocument): UserProfile {
     emailVerifiedAt: user.emailVerifiedAt
       ? user.emailVerifiedAt.toISOString()
       : null,
+    twoFactorEnabled: user.twoFactorEnabled ?? false,
     createdAt: user.createdAt.toISOString(),
   };
 }
@@ -90,6 +91,16 @@ export class UserService {
 
   async findByIdWithPassword(id: string): Promise<UserDocument> {
     const found = await this.repository.findByIdWithPassword(id);
+    if (!found) {
+      throw new NotFoundError('USER_NOT_FOUND', 'User not found');
+    }
+    return found;
+  }
+
+  /** Loads the account with its `select: false` two-factor fields (auth's
+   * 2FA setup / verify flows mutate the returned document directly). */
+  async findByIdWithTwoFactor(id: string): Promise<UserDocument> {
+    const found = await this.repository.findByIdWithTwoFactor(id);
     if (!found) {
       throw new NotFoundError('USER_NOT_FOUND', 'User not found');
     }

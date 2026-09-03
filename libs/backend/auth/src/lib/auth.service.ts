@@ -42,6 +42,26 @@ export interface LoginResult {
   session: AuthSession;
 }
 
+/**
+ * Returned by {@link AuthService.issueSession} when the account has TOTP
+ * two-factor on: no session yet, just a short-lived token to exchange for
+ * one via `POST /auth/2fa/verify` (V2.2 step 43).
+ */
+export interface PendingTwoFactorResult {
+  twoFactorRequired: true;
+  pendingToken: string;
+  expiresIn: number;
+}
+
+export function isPendingTwoFactor(
+  result: LoginResult | PendingTwoFactorResult,
+): result is PendingTwoFactorResult {
+  return 'twoFactorRequired' in result;
+}
+
+/** How long a `pending_2fa` token is valid — one prompt, no lingering. */
+const PENDING_TWO_FACTOR_TTL_SECONDS = 5 * 60;
+
 export interface RefreshResult {
   accessToken: string;
   expiresIn: number;
@@ -62,7 +82,7 @@ export class AuthService {
     email: string,
     password: string,
     context: SessionContext = {},
-  ): Promise<LoginResult> {
+  ): Promise<LoginResult | PendingTwoFactorResult> {
     const user = await this.users.findByEmailWithPassword(email);
 
     if (
@@ -129,18 +149,40 @@ export class AuthService {
       firstName: created.firstName,
     });
 
-    return this.issueSession(
+    // A brand-new account can't have 2FA yet — start the session directly.
+    return this.startSession(
       { id: created._id.toString(), roles: created.roles },
       context,
     );
   }
 
   /**
-   * Starts a session for an already-authenticated identity — used by the
-   * local login above and by the OIDC callback, which has verified the
-   * user through the identity provider instead of a password.
+   * Starts a session for an already-authenticated identity — used by local
+   * login and by the OIDC callback (which verified the user through the
+   * provider). If the account has TOTP two-factor on, returns a
+   * {@link PendingTwoFactorResult} instead: the caller must send the user
+   * through `POST /auth/2fa/verify` before a real session is issued.
    */
   async issueSession(
+    user: AuthenticatedUser,
+    context: SessionContext = {},
+  ): Promise<LoginResult | PendingTwoFactorResult> {
+    const account = await this.users.findById(user.id);
+    if (account.twoFactorEnabled) {
+      return {
+        twoFactorRequired: true,
+        pendingToken: await this.jwt.signAsync(
+          { sub: user.id, twoFactorPending: true },
+          { expiresIn: PENDING_TWO_FACTOR_TTL_SECONDS },
+        ),
+        expiresIn: PENDING_TWO_FACTOR_TTL_SECONDS,
+      };
+    }
+    return this.startSession(user, context);
+  }
+
+  /** The un-gated session core — also the second leg of a 2FA login. */
+  async startSession(
     user: AuthenticatedUser,
     context: SessionContext = {},
   ): Promise<LoginResult> {
@@ -153,6 +195,29 @@ export class AuthService {
       user,
       session: this.toSession(issued),
     };
+  }
+
+  /**
+   * Validates a `pending_2fa` token (from {@link issueSession}) and returns
+   * the user id it was minted for. `401` on anything else — it grants
+   * access to nothing but `POST /auth/2fa/verify`.
+   */
+  async consumePendingTwoFactor(token: string): Promise<string> {
+    try {
+      const payload = await this.jwt.verifyAsync<{
+        sub: string;
+        twoFactorPending?: boolean;
+      }>(token);
+      if (payload.twoFactorPending && payload.sub) {
+        return payload.sub;
+      }
+    } catch {
+      // fall through
+    }
+    throw new UnauthorizedError(
+      'TWO_FACTOR_PENDING_INVALID',
+      'This two-factor session has expired — sign in again',
+    );
   }
 
   async refresh(

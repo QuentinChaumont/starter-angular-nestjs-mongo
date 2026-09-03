@@ -17,6 +17,7 @@ import { isApiError } from '@org/shared-contracts';
 import type {
   ConnectedAccounts,
   OidcProviderInfo,
+  TwoFactorSetupResponse,
   UserProfile,
 } from '@org/shared-contracts';
 import { AuthService, ResetService } from '@org/frontend-auth';
@@ -206,6 +207,134 @@ function apiMessage(err: unknown, fallback: string): string {
           </div>
         </section>
 
+        <!-- two-factor authentication -->
+        <section class="panel">
+          <div class="panel__head">
+            <h2>Two-factor authentication</h2>
+            <span
+              class="profile__status"
+              [class.profile__status--ok]="p.twoFactorEnabled"
+            >
+              {{ p.twoFactorEnabled ? 'On' : 'Off' }}
+            </span>
+          </div>
+          <div class="panel__body">
+            @if (tfaMode() === 'idle') {
+              <p class="profile__hint">
+                Require a code from an authenticator app when signing in.
+              </p>
+              @if (tfaError()) {
+                <p class="profile__error" role="alert">{{ tfaError() }}</p>
+              }
+              @if (!p.twoFactorEnabled) {
+                <div class="profile__actions">
+                  <button
+                    mat-flat-button
+                    color="primary"
+                    type="button"
+                    [disabled]="tfaBusy()"
+                    (click)="startTwoFactor()"
+                  >
+                    Enable two-factor
+                  </button>
+                </div>
+              } @else {
+                <form
+                  [formGroup]="tfaDisableForm"
+                  (ngSubmit)="disableTwoFactor()"
+                >
+                  <mat-form-field appearance="outline">
+                    <mat-label>Password</mat-label>
+                    <input
+                      #tfaPw
+                      matInput
+                      type="password"
+                      formControlName="password"
+                      autocomplete="current-password"
+                    />
+                    <lib-password-reveal-button matSuffix [input]="tfaPw" />
+                  </mat-form-field>
+                  <div class="profile__actions">
+                    <button
+                      mat-stroked-button
+                      color="warn"
+                      type="submit"
+                      [disabled]="tfaDisableForm.invalid || tfaBusy()"
+                    >
+                      Disable two-factor
+                    </button>
+                  </div>
+                </form>
+              }
+            }
+
+            @if (tfaMode() === 'enrolling' && tfaSetup(); as setup) {
+              <p class="profile__hint">
+                Scan this with your authenticator app, or enter the key
+                manually, then type the 6-digit code it shows.
+              </p>
+              <img class="tfa__qr" [src]="setup.qrDataUri" alt="2FA QR code" />
+              <p class="tfa__secret">{{ setup.secret }}</p>
+
+              <form [formGroup]="tfaConfirmForm" (ngSubmit)="confirmTwoFactor()">
+                <mat-form-field appearance="outline">
+                  <mat-label>6-digit code</mat-label>
+                  <input
+                    matInput
+                    formControlName="code"
+                    inputmode="numeric"
+                    autocomplete="one-time-code"
+                  />
+                </mat-form-field>
+                @if (tfaError()) {
+                  <p class="profile__error" role="alert">{{ tfaError() }}</p>
+                }
+                <div class="profile__actions">
+                  <button
+                    mat-flat-button
+                    color="primary"
+                    type="submit"
+                    [disabled]="tfaConfirmForm.invalid || tfaBusy()"
+                  >
+                    Confirm
+                  </button>
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="tfaBusy()"
+                    (click)="cancelTwoFactor()"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            }
+
+            @if (tfaMode() === 'backup') {
+              <p class="profile__hint">
+                Two-factor is on. Save these backup codes somewhere safe —
+                each works once if you lose your authenticator, and they
+                <strong>won't be shown again</strong>.
+              </p>
+              <ul class="tfa__codes">
+                @for (code of tfaBackupCodes(); track code) {
+                  <li>{{ code }}</li>
+                }
+              </ul>
+              <div class="profile__actions">
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  (click)="finishTwoFactor()"
+                >
+                  I've saved my backup codes
+                </button>
+              </div>
+            }
+          </div>
+        </section>
+
         <!-- connected accounts -->
         <section class="panel">
           <div class="panel__head"><h2>Connected accounts</h2></div>
@@ -357,6 +486,10 @@ function apiMessage(err: unknown, fallback: string): string {
       );
     }
     .panel__head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: var(--app-space-3);
       padding: var(--app-space-3) var(--app-space-4);
       border-block-end: var(--app-border-hairline);
     }
@@ -448,6 +581,33 @@ function apiMessage(err: unknown, fallback: string): string {
       color: color-mix(in srgb, var(--app-color-on-surface) 55%, transparent);
       overflow-wrap: anywhere;
     }
+    .tfa__qr {
+      width: 168px;
+      height: 168px;
+      image-rendering: pixelated;
+      border: var(--app-border-hairline);
+      border-radius: var(--app-radius-sm);
+      background: #fff;
+      padding: var(--app-space-2);
+    }
+    .tfa__secret {
+      margin: 0;
+      font: 600 0.8125rem/1.4 var(--app-font-mono);
+      letter-spacing: 0.08em;
+      word-break: break-all;
+    }
+    .tfa__codes {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--app-space-1) var(--app-space-3);
+      margin: 0;
+      padding: var(--app-space-3);
+      list-style: none;
+      border: var(--app-border-hairline);
+      border-radius: var(--app-radius-sm);
+      font: 600 0.8125rem/1.6 var(--app-font-mono);
+      letter-spacing: 0.04em;
+    }
   `,
 })
 export class ProfilePage {
@@ -483,6 +643,19 @@ export class ProfilePage {
   /** Provider id whose Connect/Disconnect button is mid-request. */
   protected readonly busyProvider = signal<string | null>(null);
 
+  protected readonly tfaMode = signal<'idle' | 'enrolling' | 'backup'>('idle');
+  protected readonly tfaSetup = signal<TwoFactorSetupResponse | null>(null);
+  protected readonly tfaBackupCodes = signal<string[]>([]);
+  protected readonly tfaBusy = signal(false);
+  protected readonly tfaError = signal<string | null>(null);
+
+  protected readonly tfaConfirmForm = this.fb.nonNullable.group({
+    code: ['', [Validators.required, Validators.minLength(6)]],
+  });
+  protected readonly tfaDisableForm = this.fb.nonNullable.group({
+    password: ['', [Validators.required]],
+  });
+
   protected readonly roleLabel = computed(() =>
     (this.profile()?.roles ?? []).join(', '),
   );
@@ -517,6 +690,15 @@ export class ProfilePage {
   });
 
   constructor() {
+    this.loadProfile();
+    this.auth.oidcProviders().subscribe((providers) => {
+      this.providers.set(providers);
+    });
+    this.loadConnectedAccounts();
+    this.consumeLinkResult();
+  }
+
+  private loadProfile(): void {
     this.service.getProfile().subscribe({
       next: (p) => {
         this.profile.set(p);
@@ -532,12 +714,6 @@ export class ProfilePage {
         this.loading.set(false);
       },
     });
-
-    this.auth.oidcProviders().subscribe((providers) => {
-      this.providers.set(providers);
-    });
-    this.loadConnectedAccounts();
-    this.consumeLinkResult();
   }
 
   private loadConnectedAccounts(): void {
@@ -609,6 +785,83 @@ export class ProfilePage {
         );
       },
     });
+  }
+
+  /* ---- two-factor authentication (V2.2 step 43) ---- */
+
+  protected startTwoFactor(): void {
+    if (this.tfaBusy()) return;
+    this.tfaBusy.set(true);
+    this.tfaError.set(null);
+    this.service.setupTwoFactor().subscribe({
+      next: (setup) => {
+        this.tfaBusy.set(false);
+        this.tfaSetup.set(setup);
+        this.tfaConfirmForm.reset();
+        this.tfaMode.set('enrolling');
+      },
+      error: (err: unknown) => {
+        this.tfaBusy.set(false);
+        this.tfaError.set(
+          apiMessage(err, 'Could not start two-factor setup.'),
+        );
+      },
+    });
+  }
+
+  protected confirmTwoFactor(): void {
+    if (this.tfaConfirmForm.invalid || this.tfaBusy()) return;
+    this.tfaBusy.set(true);
+    this.tfaError.set(null);
+    this.service
+      .confirmTwoFactor(this.tfaConfirmForm.getRawValue().code.trim())
+      .subscribe({
+        next: ({ backupCodes }) => {
+          this.tfaBusy.set(false);
+          this.tfaBackupCodes.set(backupCodes);
+          this.tfaSetup.set(null);
+          this.tfaMode.set('backup');
+        },
+        error: (err: unknown) => {
+          this.tfaBusy.set(false);
+          this.tfaError.set(apiMessage(err, 'That code is not valid.'));
+        },
+      });
+  }
+
+  protected cancelTwoFactor(): void {
+    this.tfaSetup.set(null);
+    this.tfaError.set(null);
+    this.tfaMode.set('idle');
+  }
+
+  protected finishTwoFactor(): void {
+    this.tfaBackupCodes.set([]);
+    this.tfaMode.set('idle');
+    this.notify?.success('Two-factor authentication is on.');
+    this.loadProfile();
+  }
+
+  protected disableTwoFactor(): void {
+    if (this.tfaDisableForm.invalid || this.tfaBusy()) return;
+    this.tfaBusy.set(true);
+    this.tfaError.set(null);
+    this.service
+      .disableTwoFactor(this.tfaDisableForm.getRawValue().password)
+      .subscribe({
+        next: () => {
+          this.tfaBusy.set(false);
+          this.tfaDisableForm.reset();
+          this.notify?.success('Two-factor authentication is off.');
+          this.loadProfile();
+        },
+        error: (err: unknown) => {
+          this.tfaBusy.set(false);
+          this.tfaError.set(
+            apiMessage(err, 'Could not disable two-factor.'),
+          );
+        },
+      });
   }
 
   protected emailDirty(): boolean {

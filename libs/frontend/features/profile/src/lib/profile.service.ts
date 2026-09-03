@@ -6,6 +6,8 @@ import type {
   ConnectedAccounts,
   DeleteAccountRequest,
   StartIdentityLinkResponse,
+  TwoFactorConfirmResponse,
+  TwoFactorSetupResponse,
   UpdateProfileRequest,
   UserProfile,
 } from '@org/shared-contracts';
@@ -66,6 +68,34 @@ export class ProfileService {
   unlinkIdentity(provider: string): Observable<void> {
     return this.http.delete<void>(
       `${this.base}/auth/identities/${provider}`,
+      { withCredentials: true },
+    );
+  }
+
+  /* ---- two-factor authentication (V2.2 step 43) ---- */
+
+  /** Begin TOTP enrollment — nothing is active until `confirmTwoFactor`. */
+  setupTwoFactor(): Observable<TwoFactorSetupResponse> {
+    return this.http.post<TwoFactorSetupResponse>(
+      `${this.base}/auth/2fa/setup`,
+      {},
+      { withCredentials: true },
+    );
+  }
+
+  /** Verify the first code; returns the one-time backup codes. */
+  confirmTwoFactor(code: string): Observable<TwoFactorConfirmResponse> {
+    return this.http.post<TwoFactorConfirmResponse>(
+      `${this.base}/auth/2fa/confirm`,
+      { code },
+      { withCredentials: true },
+    );
+  }
+
+  disableTwoFactor(password: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.base}/auth/2fa/disable`,
+      { password },
       { withCredentials: true },
     );
   }

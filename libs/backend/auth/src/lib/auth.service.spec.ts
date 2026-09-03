@@ -19,7 +19,8 @@ function build(overrides: {
   const users = {
     findByEmailWithPassword: jest.fn().mockResolvedValue(overrides.user),
     create: jest.fn(),
-    findById: jest.fn(),
+    // `issueSession` re-loads the account to check the 2FA flag.
+    findById: jest.fn().mockResolvedValue(overrides.user ?? { roles: [] }),
   } as unknown as UserService;
   const refreshTokens = {
     issue: jest.fn().mockResolvedValue(issued),

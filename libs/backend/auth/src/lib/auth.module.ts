@@ -31,6 +31,8 @@ import { RefreshTokenRepository } from './refresh/refresh-token.repository';
 import { RefreshTokenService } from './refresh/refresh-token.service';
 import { resolveJwtConfig } from './resolve-jwt-config';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { TwoFactorController } from './two-factor/two-factor.controller';
+import { TwoFactorService } from './two-factor/two-factor.service';
 
 @Module({
   imports: [
@@ -52,7 +54,12 @@ import { JwtStrategy } from './strategies/jwt.strategy';
       },
     }),
   ],
-  controllers: [AuthController, OidcController, IdentitiesController],
+  controllers: [
+    AuthController,
+    OidcController,
+    IdentitiesController,
+    TwoFactorController,
+  ],
   providers: [
     AuthService,
     AuthEvents,
@@ -66,6 +73,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     OidcUserLinker,
     IdentityRepository,
     IdentityService,
+    TwoFactorService,
     // Global authz: `OptionalJwtAuthGuard` attaches `request.user` when a
     // valid bearer token is present (no-op otherwise), then `RolesGuard`
     // enforces `@Roles(...)` — so any controller in the app (e.g. the

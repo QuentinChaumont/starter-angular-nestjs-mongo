@@ -8,6 +8,7 @@ export { csrfInterceptor } from './lib/csrf.interceptor';
 export { LoginPage } from './lib/login/login-page';
 export { RegisterPage } from './lib/register/register-page';
 export { OidcCallback } from './lib/callback/oidc-callback';
+export { TwoFactorPrompt } from './lib/two-factor/two-factor-prompt';
 
 // auth-reset brick (V2.1 step 33) — wired by `nx g @org/starter-plugin:auth-reset`.
 export * from './lib/reset/reset.service';

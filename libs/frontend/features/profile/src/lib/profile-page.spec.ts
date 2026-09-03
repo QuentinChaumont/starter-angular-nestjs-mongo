@@ -18,6 +18,7 @@ const profile: UserProfile = {
   lastName: 'Lovelace',
   roles: [],
   emailVerifiedAt: '2026-01-01T00:00:00.000Z',
+  twoFactorEnabled: false,
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 
@@ -35,10 +36,16 @@ describe('ProfilePage — connected accounts', () => {
   const startIdentityLink = jest.fn();
   const unlinkIdentity = jest.fn();
   const oidcProviders = jest.fn();
+  const setupTwoFactor = jest.fn();
+  const confirmTwoFactor = jest.fn();
+  const disableTwoFactor = jest.fn();
   const notify = { success: jest.fn(), error: jest.fn() };
 
-  function build(queryParams: Record<string, string> = {}): ComponentFixture<ProfilePage> {
-    getProfile.mockReturnValue(of(profile));
+  function build(
+    queryParams: Record<string, string> = {},
+    profileOverride: Partial<UserProfile> = {},
+  ): ComponentFixture<ProfilePage> {
+    getProfile.mockReturnValue(of({ ...profile, ...profileOverride }));
     TestBed.configureTestingModule({
       imports: [ProfilePage],
       providers: [
@@ -53,6 +60,9 @@ describe('ProfilePage — connected accounts', () => {
             getConnectedAccounts,
             startIdentityLink,
             unlinkIdentity,
+            setupTwoFactor,
+            confirmTwoFactor,
+            disableTwoFactor,
           },
         },
         { provide: AuthService, useValue: { oidcProviders, loadMe: () => of(null) } },
@@ -76,9 +86,32 @@ describe('ProfilePage — connected accounts', () => {
     startIdentityLink.mockReset();
     unlinkIdentity.mockReset();
     oidcProviders.mockReset();
+    setupTwoFactor.mockReset();
+    confirmTwoFactor.mockReset();
+    disableTwoFactor.mockReset();
     notify.success.mockReset();
     notify.error.mockReset();
   });
+
+  const idle = () => {
+    getConnectedAccounts.mockReturnValue(
+      of<ConnectedAccounts>({ hasPassword: true, identities: [] }),
+    );
+    oidcProviders.mockReturnValue(of([]));
+  };
+
+  const clickButton = (
+    fixture: ComponentFixture<ProfilePage>,
+    label: string,
+  ): void => {
+    const btn = [
+      ...fixture.nativeElement.querySelectorAll('button'),
+    ].find((b: HTMLButtonElement) => b.textContent?.includes(label)) as
+      | HTMLButtonElement
+      | undefined;
+    if (!btn) throw new Error(`no button matching "${label}"`);
+    btn.click();
+  };
 
   it('renders the password status, a linked provider and a connectable one', async () => {
     getConnectedAccounts.mockReturnValue(
@@ -200,5 +233,76 @@ describe('ProfilePage — connected accounts', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('Not set');
     expect(text).toContain('Set a password');
+  });
+
+  describe('two-factor authentication', () => {
+    it('enrolls: Enable → QR + confirm → backup codes shown once', async () => {
+      idle();
+      setupTwoFactor.mockReturnValue(
+        of({
+          otpauthUri: 'otpauth://totp/App:ada',
+          qrDataUri: 'data:image/png;base64,AAAA',
+          secret: 'JBSWY3DPEHPK3PXP',
+        }),
+      );
+      confirmTwoFactor.mockReturnValue(
+        of({ backupCodes: ['aaaaa-11111', 'bbbbb-22222'] }),
+      );
+
+      const fixture = build();
+      await settle(fixture);
+
+      clickButton(fixture, 'Enable two-factor');
+      await settle(fixture);
+      expect(setupTwoFactor).toHaveBeenCalled();
+      expect(
+        fixture.nativeElement.querySelector('img.tfa__qr')?.getAttribute('src'),
+      ).toBe('data:image/png;base64,AAAA');
+      expect(fixture.nativeElement.textContent).toContain('JBSWY3DPEHPK3PXP');
+
+      const code = fixture.nativeElement.querySelector(
+        'input[formcontrolname="code"]',
+      ) as HTMLInputElement;
+      code.value = '123456';
+      code.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+      clickButton(fixture, 'Confirm');
+      await settle(fixture);
+
+      expect(confirmTwoFactor).toHaveBeenCalledWith('123456');
+      const text = fixture.nativeElement.textContent;
+      expect(text).toContain('aaaaa-11111');
+      expect(text).toContain('bbbbb-22222');
+      expect(text).toContain("won't be shown again");
+    });
+
+    it('shows a Disable form when 2FA is already on', async () => {
+      idle();
+      disableTwoFactor.mockReturnValue(of(undefined));
+
+      const fixture = build({}, { twoFactorEnabled: true });
+      await settle(fixture);
+
+      expect(fixture.nativeElement.textContent).toContain('On');
+      const tfaPanel = [
+        ...fixture.nativeElement.querySelectorAll('section.panel'),
+      ].find((s: HTMLElement) =>
+        s.textContent?.includes('Two-factor authentication'),
+      ) as HTMLElement;
+      const pw = tfaPanel.querySelector(
+        'input[formcontrolname="password"]',
+      ) as HTMLInputElement;
+      pw.value = 'secret';
+      pw.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+
+      clickButton(fixture, 'Disable two-factor');
+      await settle(fixture);
+
+      expect(disableTwoFactor).toHaveBeenCalledWith('secret');
+      expect(notify.success).toHaveBeenCalledWith(
+        'Two-factor authentication is off.',
+      );
+    });
   });
 });

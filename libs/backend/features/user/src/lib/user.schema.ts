@@ -17,6 +17,9 @@ import { HydratedDocument } from 'mongoose';
   toJSON: {
     transform: (_doc, ret: Record<string, unknown>) => {
       delete ret['password'];
+      delete ret['twoFactorSecret'];
+      delete ret['twoFactorPendingSecret'];
+      delete ret['twoFactorBackupCodes'];
       return ret;
     },
   },
@@ -46,6 +49,24 @@ export class User {
    * account can't `login` or `refresh`. */
   @Prop()
   disabledAt?: Date;
+
+  /* ---- two-factor authentication (V2.2 step 43) ---- */
+
+  /** Encrypted (AES-256-GCM) TOTP secret, once 2FA is confirmed. */
+  @Prop({ select: false })
+  twoFactorSecret?: string;
+
+  /** Encrypted TOTP secret during enrollment, before the first code is
+   * confirmed. Cleared on confirm / disable. */
+  @Prop({ select: false })
+  twoFactorPendingSecret?: string;
+
+  @Prop({ default: false })
+  twoFactorEnabled?: boolean;
+
+  /** scrypt hashes of the remaining one-time backup codes. */
+  @Prop({ type: [String], select: false })
+  twoFactorBackupCodes?: string[];
 
   createdAt!: Date;
   updatedAt!: Date;

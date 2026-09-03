@@ -32,15 +32,44 @@ describe('AuthService', () => {
 
   afterEach(() => http.verify());
 
-  it('login stores the session and returns the user', () => {
+  it('login stores the session and returns the authenticated user', () => {
     let received: unknown;
-    service.login({ email: 'a@b.com', password: 'pw' }).subscribe((u) => {
-      received = u;
+    service.login({ email: 'a@b.com', password: 'pw' }).subscribe((o) => {
+      received = o;
     });
 
     const req = http.expectOne(`${BASE}/auth/login`);
     expect(req.request.method).toBe('POST');
     expect(req.request.withCredentials).toBe(true);
+    req.flush({ ...TOKENS, user: USER });
+
+    expect(received).toEqual({ kind: 'authenticated', user: USER });
+    expect(store.token()).toBe('a1');
+    expect(store.isAuthenticated()).toBe(true);
+  });
+
+  it('login surfaces a 2FA challenge without opening a session', () => {
+    let received: unknown;
+    service.login({ email: 'a@b.com', password: 'pw' }).subscribe((o) => {
+      received = o;
+    });
+
+    http
+      .expectOne(`${BASE}/auth/login`)
+      .flush({ twoFactorRequired: true, pendingToken: 'pt-1', expiresIn: 300 });
+
+    expect(received).toEqual({ kind: 'two-factor', pendingToken: 'pt-1' });
+    expect(store.isAuthenticated()).toBe(false);
+  });
+
+  it('verifyTwoFactor exchanges the code for a session', () => {
+    let received: unknown;
+    service.verifyTwoFactor('pt-1', '123456').subscribe((u) => {
+      received = u;
+    });
+
+    const req = http.expectOne(`${BASE}/auth/2fa/verify`);
+    expect(req.request.body).toEqual({ pendingToken: 'pt-1', code: '123456' });
     req.flush({ ...TOKENS, user: USER });
 
     expect(received).toEqual(USER);

@@ -16,6 +16,7 @@ import { isApiError, OidcProviderInfo } from '@org/shared-contracts';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../auth.service';
 import { sanitizeRedirect } from '../sanitize-redirect';
+import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
 
 @Component({
   selector: 'lib-login-page',
@@ -27,9 +28,13 @@ import { sanitizeRedirect } from '../sanitize-redirect';
     MatButtonModule,
     MatProgressBarModule,
     PasswordRevealButton,
+    TwoFactorPrompt,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    @if (pendingToken(); as token) {
+      <lib-two-factor-prompt [pendingToken]="token" [redirectTo]="redirectTo" />
+    } @else {
     <section class="login">
       @if (submitting()) {
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
@@ -116,6 +121,7 @@ import { sanitizeRedirect } from '../sanitize-redirect';
         </a>
       }
     </section>
+    }
   `,
   styles: `
     .login {
@@ -160,6 +166,8 @@ export class LoginPage {
 
   protected readonly submitting = signal(false);
   protected readonly error = signal<string | null>(null);
+  /** Set once a password login comes back with a 2FA challenge. */
+  protected readonly pendingToken = signal<string | null>(null);
 
   protected readonly redirectTo = sanitizeRedirect(
     this.route.snapshot.queryParamMap.get('redirectTo'),
@@ -185,7 +193,14 @@ export class LoginPage {
     this.submitting.set(true);
     this.error.set(null);
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => this.router.navigateByUrl(this.redirectTo),
+      next: (outcome) => {
+        if (outcome.kind === 'two-factor') {
+          this.submitting.set(false);
+          this.pendingToken.set(outcome.pendingToken);
+          return;
+        }
+        this.router.navigateByUrl(this.redirectTo);
+      },
       error: (err: unknown) => {
         this.submitting.set(false);
         const body = err instanceof HttpErrorResponse ? err.error : null;

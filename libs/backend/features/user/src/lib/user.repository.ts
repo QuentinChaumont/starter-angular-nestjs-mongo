@@ -31,4 +31,17 @@ export class UserRepository extends BaseRepository<User> {
   async findByEmail(email: string): Promise<UserDocument | null> {
     return this.model.findOne({ email }).exec();
   }
+
+  /** Opts into the `select: false` two-factor fields (auth's 2FA flows). */
+  async findByIdWithTwoFactor(id: string): Promise<UserDocument | null> {
+    if (!isValidObjectId(id)) {
+      return null;
+    }
+    return this.model
+      .findById(id)
+      .select(
+        '+twoFactorSecret +twoFactorPendingSecret +twoFactorBackupCodes',
+      )
+      .exec();
+  }
 }

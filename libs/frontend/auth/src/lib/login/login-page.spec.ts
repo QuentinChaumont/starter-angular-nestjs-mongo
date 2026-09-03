@@ -65,6 +65,43 @@ describe('LoginPage', () => {
     http.verify();
   });
 
+  it('swaps to the code prompt when login returns a 2FA challenge', async () => {
+    const fixture = TestBed.createComponent(LoginPage);
+    fixture.detectChanges();
+
+    const http = TestBed.inject(HttpTestingController);
+    http.expectOne('/api/auth/oidc/providers').flush([]);
+    http.expectOne('/api/auth/registration').flush({ enabled: false });
+    fixture.detectChanges();
+
+    const html = fixture.nativeElement as HTMLElement;
+    const fill = (selector: string, value: string): void => {
+      const input = html.querySelector(selector) as HTMLInputElement;
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+    };
+    fill('input[type="email"]', 'a@b.com');
+    fill('input[type="password"]', 'pw');
+    fixture.detectChanges();
+
+    (html.querySelector('form') as HTMLFormElement).dispatchEvent(
+      new Event('submit'),
+    );
+
+    http.expectOne('/api/auth/login').flush({
+      twoFactorRequired: true,
+      pendingToken: 'pt-1',
+      expiresIn: 300,
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'Two-factor authentication',
+    );
+    http.verify();
+  });
+
   it('shows the "create an account" link when registration is enabled', () => {
     const fixture = TestBed.createComponent(LoginPage);
     fixture.detectChanges();

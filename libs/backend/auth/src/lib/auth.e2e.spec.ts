@@ -18,6 +18,7 @@ import {
 } from '@org/backend-testing';
 import { AuthModule } from './auth.module';
 import { IdentityService } from './identity/identity.service';
+import { generateTotp } from './two-factor/totp';
 
 @Module({
   imports: [
@@ -718,6 +719,155 @@ describe('Auth (e2e, real Mongo instance)', () => {
       });
       expect(del.status).toBe(404);
       expect(((await del.json()) as any).code).toBe('IDENTITY_NOT_FOUND');
+    });
+  });
+
+  describe('two-factor (2FA / TOTP)', () => {
+    const tfaUser = {
+      email: 'tfa@example.com',
+      password: 'Str0ng!Passw0rd',
+    };
+    let secret: string;
+    let backupCodes: string[];
+
+    const bearer = (token: string) => ({ authorization: `Bearer ${token}` });
+
+    const post = (
+      path: string,
+      body: unknown,
+      headers: Record<string, string> = {},
+    ) =>
+      fetch(`${authBaseUrl}${path}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...headers },
+        body: JSON.stringify(body),
+      });
+
+    const challenge = async () => {
+      const res = await fetch(`${authBaseUrl}/login`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(tfaUser),
+      });
+      return { res, body: (await res.json()) as any };
+    };
+
+    beforeAll(async () => {
+      await app
+        .get(UserService)
+        .create({ ...tfaUser, firstName: 'Two', lastName: 'Factor' });
+    });
+
+    it('enrolls: setup returns a QR, confirm returns backup codes', async () => {
+      const { body: creds } = await login(tfaUser);
+
+      const setup = await post('/2fa/setup', {}, bearer(creds.accessToken));
+      expect(setup.status).toBe(201);
+      const setupBody = (await setup.json()) as any;
+      expect(setupBody.qrDataUri).toMatch(/^data:image\/png;base64,/);
+      expect(setupBody.otpauthUri).toMatch(/^otpauth:\/\/totp\//);
+      secret = setupBody.secret;
+
+      const confirm = await post(
+        '/2fa/confirm',
+        { code: generateTotp(secret) },
+        bearer(creds.accessToken),
+      );
+      expect(confirm.status).toBe(201);
+      backupCodes = ((await confirm.json()) as any).backupCodes;
+      expect(backupCodes).toHaveLength(10);
+    });
+
+    it('login now returns a challenge and sets no session cookie', async () => {
+      const { res, body } = await challenge();
+
+      expect(res.status).toBe(201);
+      expect(body).toEqual({
+        twoFactorRequired: true,
+        pendingToken: expect.any(String),
+        expiresIn: expect.any(Number),
+      });
+      expect(
+        res.headers.getSetCookie().some((c) => c.startsWith('refresh_token=')),
+      ).toBe(false);
+    });
+
+    it('a pending_2fa token is rejected on a normal protected route', async () => {
+      const { body } = await challenge();
+      const me = await fetch(`${authBaseUrl}/me`, {
+        headers: bearer(body.pendingToken),
+      });
+      expect(me.status).toBe(401);
+    });
+
+    it('rejects /2fa/verify with a wrong code (401)', async () => {
+      const { body } = await challenge();
+      const res = await post('/2fa/verify', {
+        pendingToken: body.pendingToken,
+        code: '000000',
+      });
+      expect(res.status).toBe(401);
+      expect(((await res.json()) as any).code).toBe('TWO_FACTOR_INVALID');
+    });
+
+    it('completes the login with a valid TOTP code', async () => {
+      const { body } = await challenge();
+      const res = await post('/2fa/verify', {
+        pendingToken: body.pendingToken,
+        code: generateTotp(secret),
+      });
+
+      expect(res.status).toBe(201);
+      const session = (await res.json()) as any;
+      expect(typeof session.accessToken).toBe('string');
+      expect(session.user).toEqual({ id: expect.any(String), roles: [] });
+      expect(
+        res.headers.getSetCookie().some((c) => c.startsWith('refresh_token=')),
+      ).toBe(true);
+    });
+
+    it('accepts a backup code exactly once', async () => {
+      const first = await challenge();
+      const ok = await post('/2fa/verify', {
+        pendingToken: first.body.pendingToken,
+        code: backupCodes[0],
+      });
+      expect(ok.status).toBe(201);
+
+      const second = await challenge();
+      const reused = await post('/2fa/verify', {
+        pendingToken: second.body.pendingToken,
+        code: backupCodes[0],
+      });
+      expect(reused.status).toBe(401);
+    });
+
+    it('disables 2FA (wrong password 400, right password 204) and stops challenging', async () => {
+      const { body: pending } = await challenge();
+      const session = (await (
+        await post('/2fa/verify', {
+          pendingToken: pending.pendingToken,
+          code: generateTotp(secret),
+        })
+      ).json()) as any;
+
+      const wrong = await post(
+        '/2fa/disable',
+        { password: 'nope' },
+        bearer(session.accessToken),
+      );
+      expect(wrong.status).toBe(400);
+
+      const disabled = await post(
+        '/2fa/disable',
+        { password: tfaUser.password },
+        bearer(session.accessToken),
+      );
+      expect(disabled.status).toBe(204);
+
+      const after = await challenge();
+      expect(typeof after.body.accessToken).toBe('string');
+      expect(after.body.twoFactorRequired).toBeUndefined();
     });
   });
 

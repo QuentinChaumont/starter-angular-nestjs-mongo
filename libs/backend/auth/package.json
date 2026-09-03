@@ -40,7 +40,8 @@
     "mongoose": "^9.9.3",
     "openid-client": "^5.7.1",
     "passport": "^0.7.0",
-    "passport-jwt": "^4.0.1"
+    "passport-jwt": "^4.0.1",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@nestjs/config": "^4.0.4",

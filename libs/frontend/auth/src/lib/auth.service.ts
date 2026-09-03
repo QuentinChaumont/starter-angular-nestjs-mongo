@@ -8,6 +8,7 @@ import {
   OidcProviderInfo,
   RegisterRequest,
   RegistrationInfo,
+  TwoFactorChallenge,
 } from '@org/shared-contracts';
 import {
   Observable,
@@ -26,6 +27,15 @@ interface LoginResponse extends AccessTokenResponse {
   user: AuthenticatedUserDto;
 }
 
+/**
+ * Outcome of {@link AuthService.login}: either a live session, or a TOTP
+ * challenge (V2.2 step 43) — the caller must collect a code and call
+ * {@link AuthService.verifyTwoFactor} with `pendingToken`.
+ */
+export type LoginOutcome =
+  | { kind: 'authenticated'; user: AuthenticatedUserDto }
+  | { kind: 'two-factor'; pendingToken: string };
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
@@ -36,12 +46,43 @@ export class AuthService {
   /** Single in-flight refresh shared by every concurrent 401. */
   private refresh$: Observable<AccessTokenResponse> | null = null;
 
-  login(credentials: LoginRequest): Observable<AuthenticatedUserDto> {
+  login(credentials: LoginRequest): Observable<LoginOutcome> {
     this.store.markAuthenticating();
     return this.http
-      .post<LoginResponse>(`${this.base}/auth/login`, credentials, {
-        withCredentials: true,
-      })
+      .post<LoginResponse | TwoFactorChallenge>(
+        `${this.base}/auth/login`,
+        credentials,
+        { withCredentials: true },
+      )
+      .pipe(
+        map((res): LoginOutcome => {
+          if ('twoFactorRequired' in res) {
+            // Not signed in yet — wait for the code.
+            this.store.reset();
+            return { kind: 'two-factor', pendingToken: res.pendingToken };
+          }
+          this.store.setSession(res.accessToken, res.user);
+          return { kind: 'authenticated', user: res.user };
+        }),
+        catchError((err) => {
+          this.store.reset();
+          return throwError(() => err);
+        }),
+      );
+  }
+
+  /** Second leg of a 2FA login: exchange the pending token + code for a session. */
+  verifyTwoFactor(
+    pendingToken: string,
+    code: string,
+  ): Observable<AuthenticatedUserDto> {
+    this.store.markAuthenticating();
+    return this.http
+      .post<LoginResponse>(
+        `${this.base}/auth/2fa/verify`,
+        { pendingToken, code },
+        { withCredentials: true },
+      )
       .pipe(
         tap((res) => this.store.setSession(res.accessToken, res.user)),
         map((res) => res.user),

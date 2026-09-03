@@ -244,6 +244,12 @@ entity with `--crud` — `AuthModule` logs users in against it. Provides:
   `POST /auth/identities/:id/link` + `DELETE /auth/identities/:id`, managed
   from `/app/profile`. An OIDC-only account is passwordless until it uses
   "forgot password".
+- **Two-factor (TOTP)**: opt-in per account from `/app/profile`. Enabling
+  it makes login (password **or** OIDC) return a challenge; the SPA then
+  posts the 6-digit code (or a one-time backup code) to
+  `POST /auth/2fa/verify`. No new env var — the secret is encrypted with a
+  key derived from `JWT_SECRET`. RFC 6238 is hand-rolled on `node:crypto`;
+  `qrcode` is the only added dependency.
 
 See `libs/backend/auth/README.md` for the full contract.
 

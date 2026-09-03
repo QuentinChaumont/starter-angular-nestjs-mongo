@@ -98,6 +98,59 @@ export interface VerifyEmailRequest {
 /** Body returned by `GET /api/auth/me`. */
 export type MeResponse = AuthenticatedUserDto;
 
+/* ---- two-factor authentication (V2.2 step 43) ---- */
+
+/**
+ * Returned by `POST /api/auth/login` (and the OIDC callback fragment)
+ * **instead of** an `AccessTokenResponse` when the account has TOTP 2FA on:
+ * no session is issued yet. The SPA then collects a code and posts it to
+ * `POST /api/auth/2fa/verify` together with `pendingToken`.
+ */
+export interface TwoFactorChallenge {
+  twoFactorRequired: true;
+  /** Opaque, short-lived (~5 min). Grants access to nothing but
+   * `/auth/2fa/verify`. */
+  pendingToken: string;
+  /** `pendingToken` lifetime, in seconds. */
+  expiresIn: number;
+}
+
+/** Body of `POST /api/auth/2fa/verify`. */
+export interface VerifyTwoFactorRequest {
+  pendingToken: string;
+  /** A 6-digit TOTP code or an `xxxxx-xxxxx` backup code. */
+  code: string;
+}
+
+/** `POST /api/auth/2fa/setup` — the enrollment payload (secret not yet
+ * persisted; nothing is active until `confirm`). */
+export interface TwoFactorSetupResponse {
+  /** `otpauth://` URI to import into an authenticator app. */
+  otpauthUri: string;
+  /** PNG data-URI of the QR code encoding `otpauthUri`. */
+  qrDataUri: string;
+  /** Base32 secret, for manual entry when the QR can't be scanned. */
+  secret: string;
+}
+
+/** Body of `POST /api/auth/2fa/confirm`. */
+export interface ConfirmTwoFactorRequest {
+  /** The first 6-digit code from the authenticator, to prove enrollment. */
+  code: string;
+}
+
+/** `POST /api/auth/2fa/confirm` response — the backup codes are shown
+ * **once**, here, and never again. */
+export interface TwoFactorConfirmResponse {
+  backupCodes: string[];
+}
+
+/** Body of `POST /api/auth/2fa/disable`. */
+export interface DisableTwoFactorRequest {
+  /** Re-confirm with the account password. */
+  password: string;
+}
+
 /** Query accepted by `GET /api/auth/oidc/:providerId/login`. */
 export interface OidcAuthorizeQuery {
   /**

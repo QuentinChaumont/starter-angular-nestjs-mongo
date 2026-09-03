@@ -11,6 +11,11 @@ export interface UserModel {
   roles: string[];
   emailVerifiedAt?: Date;
   disabledAt?: Date;
+  /** Two-factor authentication (V2.2 step 43). */
+  twoFactorSecret?: string;
+  twoFactorPendingSecret?: string;
+  twoFactorEnabled?: boolean;
+  twoFactorBackupCodes?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
