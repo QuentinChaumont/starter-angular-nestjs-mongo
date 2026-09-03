@@ -5,23 +5,19 @@ import { MailerModule } from '@org/backend-mailer';
 import { UserModule } from '@org/backend-features-user';
 import { AuthResetController } from './reset/auth-reset.controller';
 import { AuthResetService } from './reset/auth-reset.service';
-import { PasswordResetTokenRepository } from './reset/password-reset-token.repository';
-import {
-  PasswordResetToken,
-  PasswordResetTokenSchema,
-} from './reset/password-reset-token.schema';
 import { PasswordResetService } from './reset/password-reset.service';
-import { EmailVerificationTokenRepository } from './verification/email-verification-token.repository';
 import {
-  EmailVerificationToken,
-  EmailVerificationTokenSchema,
-} from './verification/email-verification-token.schema';
+  SingleUseToken,
+  SingleUseTokenSchema,
+} from './single-use-token.schema';
+import { SingleUseTokenRepository } from './single-use-token.repository';
 import { EmailVerificationService } from './verification/email-verification.service';
 
 /**
  * The `auth-reset` brick (V2.1 step 33): "forgot password" + email
- * verification. Opt-in, and needs the `mailer` brick — installed by
- * `nx g @org/starter-plugin:auth-reset`.
+ * verification. Both flows persist their links in one `single_use_tokens`
+ * collection (told apart by `purpose`). Opt-in, and needs the `mailer`
+ * brick — installed by `nx g @org/starter-plugin:auth-reset`.
  */
 @Module({
   imports: [
@@ -29,18 +25,13 @@ import { EmailVerificationService } from './verification/email-verification.serv
     UserModule,
     MailerModule,
     MongooseModule.forFeature([
-      { name: PasswordResetToken.name, schema: PasswordResetTokenSchema },
-      {
-        name: EmailVerificationToken.name,
-        schema: EmailVerificationTokenSchema,
-      },
+      { name: SingleUseToken.name, schema: SingleUseTokenSchema },
     ]),
   ],
   controllers: [AuthResetController],
   providers: [
-    PasswordResetTokenRepository,
+    SingleUseTokenRepository,
     PasswordResetService,
-    EmailVerificationTokenRepository,
     EmailVerificationService,
     AuthResetService,
   ],

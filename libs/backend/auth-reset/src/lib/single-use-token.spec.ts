@@ -1,12 +1,14 @@
 import { ApplicationError } from '@org/backend-core';
 import {
   SingleUseTokenFields,
-  SingleUseTokenRepository,
+  SingleUseTokenPurpose,
   SingleUseTokenService,
 } from './single-use-token';
+import type { SingleUseTokenRepository } from './single-use-token.repository';
 
 interface Row extends SingleUseTokenFields {
   id: string;
+  createdAt: Date;
 }
 
 /** In-memory stand-in for the Mongo-backed repository. */
@@ -14,12 +16,16 @@ class FakeRepo {
   rows: Row[] = [];
   private seq = 0;
 
-  async create(input: Partial<SingleUseTokenFields>): Promise<Row> {
+  async create(input: {
+    userId: string;
+    purpose: SingleUseTokenPurpose;
+    tokenHash: string;
+    expiresAt: Date;
+  }): Promise<Row> {
     const row: Row = {
       id: `row-${this.seq++}`,
-      userId: input.userId as string,
-      tokenHash: input.tokenHash as string,
-      expiresAt: input.expiresAt as Date,
+      createdAt: new Date(),
+      ...input,
     };
     this.rows.push(row);
     return row;
@@ -34,24 +40,46 @@ class FakeRepo {
     if (row) row.consumedAt = new Date();
   }
 
-  async consumeAllForUser(userId: string): Promise<void> {
+  async consumeAllForUser(
+    userId: string,
+    purpose: SingleUseTokenPurpose,
+  ): Promise<void> {
     for (const row of this.rows) {
-      if (row.userId === userId && !row.consumedAt) row.consumedAt = new Date();
+      if (row.userId === userId && row.purpose === purpose && !row.consumedAt) {
+        row.consumedAt = new Date();
+      }
     }
+  }
+
+  async latestIssuedAt(
+    userId: string,
+    purpose: SingleUseTokenPurpose,
+  ): Promise<Date | null> {
+    const matches = this.rows
+      .filter((r) => r.userId === userId && r.purpose === purpose)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return matches[0]?.createdAt ?? null;
   }
 }
 
-class TestTokenService extends SingleUseTokenService<SingleUseTokenFields> {
-  protected readonly repository: SingleUseTokenRepository<SingleUseTokenFields>;
+class TestTokenService extends SingleUseTokenService {
+  protected readonly repository: SingleUseTokenRepository;
 
-  constructor(repo: FakeRepo, private readonly ttl: number) {
+  constructor(
+    repo: FakeRepo,
+    private readonly ttl: number,
+    private readonly forPurpose: SingleUseTokenPurpose = 'reset-password',
+  ) {
     super();
-    this.repository =
-      repo as unknown as SingleUseTokenRepository<SingleUseTokenFields>;
+    this.repository = repo as unknown as SingleUseTokenRepository;
   }
 
   protected ttlMs(): number {
     return this.ttl;
+  }
+
+  protected purpose(): SingleUseTokenPurpose {
+    return this.forPurpose;
   }
 }
 
@@ -64,7 +92,7 @@ function makeService(ttlMs = 60_000): {
 }
 
 describe('SingleUseTokenService', () => {
-  it('issues an opaque token and stores only its hash', async () => {
+  it('issues an opaque token and stores only its hash + purpose', async () => {
     const { repo, service } = makeService();
 
     const token = await service.issue('user-1');
@@ -72,6 +100,7 @@ describe('SingleUseTokenService', () => {
     expect(token).toMatch(/^[a-f0-9]{64}$/);
     expect(repo.rows).toHaveLength(1);
     expect(repo.rows[0].tokenHash).not.toBe(token);
+    expect(repo.rows[0].purpose).toBe('reset-password');
   });
 
   it('consumes a valid token once, returning the owner id', async () => {
@@ -97,7 +126,20 @@ describe('SingleUseTokenService', () => {
     });
   });
 
-  it('invalidateAllForUser burns every outstanding token', async () => {
+  it('will not consume a token issued for a different purpose', async () => {
+    const repo = new FakeRepo();
+    const reset = new TestTokenService(repo, 60_000, 'reset-password');
+    const verify = new TestTokenService(repo, 60_000, 'verify-email');
+
+    const token = await reset.issue('user-1');
+
+    await expect(verify.consume(token)).rejects.toMatchObject({
+      statusCode: 400,
+    });
+    await expect(reset.consume(token)).resolves.toBe('user-1');
+  });
+
+  it('invalidateAllForUser burns every outstanding token of that purpose', async () => {
     const { service } = makeService();
     const a = await service.issue('user-1');
     const b = await service.issue('user-1');

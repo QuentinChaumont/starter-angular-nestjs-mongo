@@ -19,11 +19,23 @@ above so one account can't be used to spray mail.
 
 ## Tokens
 
-Opaque, 32-byte random strings, stored **hashed** (SHA-256) in
-`password_reset_tokens` / `email_verification_tokens`. Single-use, TTL'd
+Opaque, 32-byte random strings, stored **hashed** (SHA-256) in one
+`single_use_tokens` collection — reset links and verification links have
+the same shape and the same "look it up by its hash" access pattern, so
+they share a collection and are told apart by a `purpose` field
+(`reset-password` | `verify-email`). Single-use, TTL'd
 (`RESET_TOKEN_TTL_MINUTES` default 60, `VERIFICATION_TOKEN_TTL_HOURS`
 default 24), swept by a Mongo TTL index. A password reset also invalidates
 the user's other outstanding reset links.
+
+`consume()` checks `purpose`, so a reset token can never be replayed as a
+verification token (or vice-versa) even though the hash index is global.
+
+> **Migration.** Earlier versions used two collections,
+> `password_reset_tokens` and `email_verification_tokens`. After upgrading,
+> new links go to `single_use_tokens`; the old collections just TTL-expire
+> themselves within the hour / day and can then be dropped. Links issued
+> right before the upgrade stop working — the user re-requests one.
 
 ## Email verification
 

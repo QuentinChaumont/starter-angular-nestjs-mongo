@@ -1,18 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { AppConfigService } from '@org/backend-core';
-import { SingleUseTokenService } from '../single-use-token';
-import { PasswordResetToken } from './password-reset-token.schema';
-import { PasswordResetTokenRepository } from './password-reset-token.repository';
+import { SingleUseTokenPurpose, SingleUseTokenService } from '../single-use-token';
+import { SingleUseTokenRepository } from '../single-use-token.repository';
 
 const MS_PER_MINUTE = 60_000;
 
 @Injectable()
-export class PasswordResetService extends SingleUseTokenService<PasswordResetToken> {
+export class PasswordResetService extends SingleUseTokenService {
   constructor(
-    protected readonly repository: PasswordResetTokenRepository,
+    protected readonly repository: SingleUseTokenRepository,
     private readonly config: AppConfigService,
   ) {
     super();
+  }
+
+  protected purpose(): SingleUseTokenPurpose {
+    return 'reset-password';
   }
 
   protected ttlMs(): number {

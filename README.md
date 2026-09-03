@@ -293,10 +293,11 @@ Needs the `auth` and `mailer` bricks. Adds `POST /api/auth/forgot-password`
 `POST /api/auth/resend-verification`. On registration the `auth` brick
 emits a `user.registered` event this brick listens for to send the
 verification email. Verification is **soft** by default
-(`AUTH_REQUIRE_VERIFIED_EMAIL=false`) — a banner nudges the user. Wires the
-`/forgot-password`, `/reset-password` and `/verify-email` frontend routes
-plus the banner when `frontend-auth` is installed. See
-`libs/backend/auth-reset/README.md`.
+(`AUTH_REQUIRE_VERIFIED_EMAIL=false`) — a banner nudges the user. Reset and
+verification links share one hashed, TTL'd `single_use_tokens` collection
+(a `purpose` field tells them apart). Wires the `/forgot-password`,
+`/reset-password` and `/verify-email` frontend routes plus the banner when
+`frontend-auth` is installed. See `libs/backend/auth-reset/README.md`.
 
 ### Audit log (V2.3 step 45)
 
