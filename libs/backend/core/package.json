@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@nestjs/platform-express": "^11.0.0",
-    "@nestjs/testing": "^11.0.0",
+    "@nestjs/testing": "^11.2.3",
     "@types/compression": "^1.8.1",
     "@types/express": "^4.17.0"
   }
