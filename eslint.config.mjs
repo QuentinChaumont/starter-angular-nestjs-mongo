@@ -22,13 +22,17 @@ export default [
         {
           enforceBuildableLibDependency: true,
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
-          // `frontend-dashboard` is deliberately both: `provideDashboard`
-          // (a small DI provider) is eager, the shell UI is lazily routed
-          // via `@org/frontend-dashboard/shell` etc. Don't treat the deep
+          // `frontend-dashboard` / `frontend-design` are deliberately both:
+          // a small DI provider (`provideDashboard` / `materialProviders`)
+          // is eager, while the shell UI and the theme dialog are lazily
+          // loaded via deep entry points (`@org/frontend-dashboard/shell`,
+          // `@org/frontend-design/theme-panel`, …). Don't treat those
           // dynamic imports as making the whole project lazy.
           checkDynamicDependenciesExceptions: [
             '@org/frontend-dashboard',
             '@org/frontend-dashboard/*',
+            '@org/frontend-design',
+            '@org/frontend-design/*',
           ],
           depConstraints: [
             {

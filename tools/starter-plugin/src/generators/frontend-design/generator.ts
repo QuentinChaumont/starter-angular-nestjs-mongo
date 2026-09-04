@@ -77,6 +77,10 @@ export default async function frontendDesignGenerator(
     json.compilerOptions.paths['@org/frontend-design'] ??= [
       './libs/frontend/design/src/index.ts',
     ];
+    // Lazy entry point for the theme dialog (kept out of the eager barrel).
+    json.compilerOptions.paths['@org/frontend-design/theme-panel'] ??= [
+      './libs/frontend/design/src/lib/theme/theme-settings-panel/theme-settings-panel.ts',
+    ];
     return json;
   });
 

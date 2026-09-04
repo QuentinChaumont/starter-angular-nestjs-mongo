@@ -36,8 +36,14 @@
         "./libs/frontend/dashboard/src/lib/admin/admin-tabs-shell.ts"
       ],
       "@org/frontend-design": ["./libs/frontend/design/src/index.ts"],
+      "@org/frontend-design/theme-panel": [
+        "./libs/frontend/design/src/lib/theme/theme-settings-panel/theme-settings-panel.ts"
+      ],
       "@org/frontend-feedback": ["./libs/frontend/feedback/src/index.ts"],
       "@org/frontend-i18n": ["./libs/frontend/i18n/src/index.ts"],
+      "@org/frontend-i18n/lang-switcher": [
+        "./libs/frontend/i18n/src/lib/lang-switcher.ts"
+      ],
       "@org/frontend-ui": ["./libs/frontend/ui/src/index.ts"],
       "@org/frontend-features-admin-audit": [
         "./libs/frontend/features/admin-audit/src/index.ts"

@@ -1,4 +1,5 @@
 import {
+  ApplicationRef,
   ChangeDetectionStrategy,
   Component,
   effect,
@@ -8,7 +9,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { CONSENT_CONFIG } from '../consent.config';
 import { ConsentService } from '../consent.service';
-import { ConsentPreferences } from '../preferences/consent-preferences.component';
 
 /**
  * Bottom-of-page consent notice. Non-blocking: the page paints and stays
@@ -87,6 +87,7 @@ export class ConsentBanner {
   protected readonly consent = inject(ConsentService);
   protected readonly config = inject(CONSENT_CONFIG);
   private readonly dialog = inject(MatDialog);
+  private readonly appRef = inject(ApplicationRef);
 
   constructor() {
     // "Manage cookies" / "Customise" both funnel through the service tick.
@@ -101,7 +102,16 @@ export class ConsentBanner {
     this.openPreferences();
   }
 
+  /** The preferences dialog (with its `MatSlideToggle`) is lazily loaded —
+   * it's only reachable on demand. `appRef.tick()` after opening because
+   * we're past the click handler's synchronous window (zoneless). */
   private openPreferences(): void {
-    this.dialog.open(ConsentPreferences, { width: '480px', maxWidth: '92vw' });
+    void import('../preferences/consent-preferences.component').then((m) => {
+      this.dialog.open(m.ConsentPreferences, {
+        width: '480px',
+        maxWidth: '92vw',
+      });
+      this.appRef.tick();
+    });
   }
 }

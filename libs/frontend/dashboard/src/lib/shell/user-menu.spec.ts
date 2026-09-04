@@ -42,8 +42,10 @@ describe('UserMenu', () => {
     expect(menu.roleLabel()).toBe('admin');
   });
 
-  it('opens the theme panel in a dialog', () => {
+  it('opens the theme panel in a dialog', async () => {
     build().openTheme();
+    // the panel component is lazily imported — let the microtask settle
+    await new Promise((r) => setTimeout(r, 10));
     expect(dialogOpen).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ width: '320px' }),

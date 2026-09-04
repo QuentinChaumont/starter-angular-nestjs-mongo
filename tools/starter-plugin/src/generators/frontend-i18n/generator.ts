@@ -49,6 +49,10 @@ export default async function frontendI18nGenerator(
     json.compilerOptions.paths['@org/frontend-i18n'] ??= [
       './libs/frontend/i18n/src/index.ts',
     ];
+    // Lazy entry point for `<lib-lang-switcher>` (kept out of the eager barrel).
+    json.compilerOptions.paths['@org/frontend-i18n/lang-switcher'] ??= [
+      './libs/frontend/i18n/src/lib/lang-switcher.ts',
+    ];
     return json;
   });
 

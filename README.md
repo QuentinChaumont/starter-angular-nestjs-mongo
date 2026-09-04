@@ -390,19 +390,30 @@ The app shell itself carries a `TitleStrategy` (each route's `title` →
 `document.title`, with the app name appended — rename `APP_NAME` in
 `title-strategy.ts`) and a `**` catch-all route rendering a 404 page.
 
-**Bundle.** Initial JS is ~765 kB raw / ~168 kB gzipped (Angular + Material
-+ Router + Forms + Transloco). The production `initial` budget is 1 mb
-warning / 1.3 mb error — the raw figure; what ships is the transfer size.
+**Bundle.** Initial JS is ~575 kB raw / ~138 kB gzipped (Angular + Router +
+Forms + Transloco + ~90 kB of always-on Material chrome). The production
+`initial` budget is 650 kB warning / 900 kB error — the raw figure; what
+ships is the transfer size.
 
 Every feature lib keeps its app-facing API (services, guards, providers)
-apart from its route components. `frontend-auth` / `frontend-consent`
-export a `*_ROUTES` array whose entries use `loadComponent`; the dashboard
-shell (`DashboardShell` / `DashboardHome` / `AdminTabsShell`) is routed
-through per-component lazy entry points (`@org/frontend-dashboard/shell`
-etc.). So importing `AuthService` / `provideDashboard` eagerly doesn't drag
-`LoginPage` or `MatSidenav` / `MatList` into the initial chunk. Remaining
-eager offenders are `ThemeSettingsPanel`, `ConsentPreferences`, and the
-`MAT_FORM_FIELD_DEFAULT_OPTIONS` provider (~100 kB combined).
+apart from its UI:
+
+- `frontend-auth` / `frontend-consent` export a `*_ROUTES` array whose
+  entries use `loadComponent` — never the page component.
+- The dashboard shell, the theme dialog and the language switcher are
+  reached through per-component lazy entry points
+  (`@org/frontend-dashboard/shell`, `@org/frontend-design/theme-panel`,
+  `@org/frontend-i18n/lang-switcher`).
+- The consent preferences dialog is `import()`-ed on demand from the
+  banner.
+- `<mat-form-field appearance="outline">` is set on every field rather
+  than via `MAT_FORM_FIELD_DEFAULT_OPTIONS` — the token alone pulls ~55 kB.
+
+So `provideDashboard` / `AuthService` / `provideI18n` stay eager while
+`MatSidenav` / `MatFormField` / `MatButtonToggle` / `MatSlideToggle` /
+`MatMenu` don't. What's left eager (`MatButton`, `MatDialog`,
+`MatSnackBar`, `MatIcon`) is the always-visible chrome (banners, toasts,
+confirm dialogs).
 
 ### `frontend-design` — theme & charter
 

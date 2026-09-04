@@ -34,6 +34,8 @@ describe('ConsentPreferences dialog', () => {
       'button',
     ) as HTMLButtonElement;
     customise.click();
+    // the dialog component is lazily imported — let the microtask settle
+    await new Promise((resolve) => setTimeout(resolve, 10));
     fixture.detectChanges();
     await fixture.whenStable();
 

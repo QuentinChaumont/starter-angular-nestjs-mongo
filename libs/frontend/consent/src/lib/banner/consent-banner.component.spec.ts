@@ -47,10 +47,12 @@ describe('ConsentBanner', () => {
     ).toBeNull();
   });
 
-  it('opens the preferences dialog when the service is reopened', () => {
+  it('opens the preferences dialog when the service is reopened', async () => {
     const fixture = build();
     TestBed.inject(ConsentService).reopen();
     fixture.detectChanges();
+    // the dialog component is lazily imported — let the microtask settle
+    await new Promise((r) => setTimeout(r, 10));
     expect(open).toHaveBeenCalled();
   });
 

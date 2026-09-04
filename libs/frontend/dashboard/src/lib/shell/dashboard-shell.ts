@@ -23,7 +23,7 @@ import {
   RouterOutlet,
 } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
-import { LangSwitcher } from '@org/frontend-i18n';
+import { LangSwitcher } from '@org/frontend-i18n/lang-switcher';
 import { filter, map, of, skip, switchMap, timer } from 'rxjs';
 import { SidenavNav } from './sidenav-nav';
 import { UserMenu } from './user-menu';

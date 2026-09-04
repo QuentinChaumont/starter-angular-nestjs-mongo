@@ -13,6 +13,5 @@ export type {
 } from './lib/consent.types';
 export { runWhenConsented, ConsentIf } from './lib/consent-gate';
 export { ConsentBanner } from './lib/banner/consent-banner.component';
-export { ConsentPreferences } from './lib/preferences/consent-preferences.component';
 export { LEGAL_ROUTES } from './lib/legal/legal.routes';
 export { LegalLinks } from './lib/legal/legal-links.component';

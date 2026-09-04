@@ -2,7 +2,9 @@ export { materialProviders } from './lib/material/material.providers';
 export { designConfig } from './lib/theme/design.config';
 export { provideTheme } from './lib/theme/provide-theme';
 export { ThemeService } from './lib/theme/theme.service';
-export { ThemeSettingsPanel } from './lib/theme/theme-settings-panel/theme-settings-panel';
+// `ThemeSettingsPanel` (a dialog with MatButtonToggle) is reached only via
+// its own lazy entry point `@org/frontend-design/theme-panel` — not this
+// barrel, which is imported eagerly for `materialProviders` / `provideTheme`.
 export {
   THEME_MODES,
   THEME_TOKENS,

@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ApplicationRef,
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,7 +12,6 @@ import { Router } from '@angular/router';
 import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService, AuthStore } from '@org/frontend-auth';
 import { CONSENT_MANAGER } from '@org/frontend-core';
-import { ThemeSettingsPanel } from '@org/frontend-design';
 
 /**
  * Toolbar account button: shows the current roles, opens the theme panel in
@@ -64,6 +68,7 @@ export class UserMenu {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
+  private readonly appRef = inject(ApplicationRef);
 
   /** Present only when the `frontend-consent` brick is installed. */
   protected readonly consent = inject(CONSENT_MANAGER, { optional: true });
@@ -83,8 +88,14 @@ export class UserMenu {
     void this.router.navigate(['/app/profile']);
   }
 
+  /** The theme dialog (with its `MatButtonToggle`) is lazily loaded — it's
+   * only reachable from this menu. `appRef.tick()` after opening because
+   * we're past the click handler's synchronous window (zoneless). */
   protected openTheme(): void {
-    this.dialog.open(ThemeSettingsPanel, { width: '320px' });
+    void import('@org/frontend-design/theme-panel').then((m) => {
+      this.dialog.open(m.ThemeSettingsPanel, { width: '320px' });
+      this.appRef.tick();
+    });
   }
 
   protected signOut(): void {
