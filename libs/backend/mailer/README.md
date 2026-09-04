@@ -1,7 +1,7 @@
 # backend-mailer
 
-Optional transactional-email brick. Install it with
-`nx g @org/starter-plugin:mailer`.
+Transactional-email brick. See [`BRICKS.md`](../../../BRICKS.md) at the
+repo root to remove this brick.
 
 ## What it provides
 
@@ -42,11 +42,11 @@ reset.
 
 ## Config
 
-| Variable | Required | Default | Notes |
-| --- | --- | --- | --- |
-| `SMTP_URL` | no | — | Set to switch from console to SMTP delivery |
-| `MAIL_FROM` | no | `no-reply@localhost` | `From` address |
-| `MAIL_PREVIEW_DIR` | no | `tmp/mail` | Where the console transport writes `.eml` previews |
+| Variable           | Required | Default              | Notes                                              |
+| ------------------ | -------- | -------------------- | -------------------------------------------------- |
+| `SMTP_URL`         | no       | —                    | Set to switch from console to SMTP delivery        |
+| `MAIL_FROM`        | no       | `no-reply@localhost` | `From` address                                     |
+| `MAIL_PREVIEW_DIR` | no       | `tmp/mail`           | Where the console transport writes `.eml` previews |
 
 ## Running unit tests
 

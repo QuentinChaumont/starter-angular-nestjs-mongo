@@ -12,90 +12,10 @@
       "schema": "./src/generators/entity/schema.json",
       "description": "Generate a Mongo-backed backend entity library at libs/backend/features/<name>, with an optional REST controller (--crud) and an optional shared contract + lazy frontend feature (--frontend)."
     },
-    "mongo": {
-      "factory": "./src/generators/mongo/generator",
-      "schema": "./src/generators/mongo/schema.json",
-      "description": "Install the optional Mongo brick: connects libs/backend/database/mongo to the API app."
-    },
-    "auth": {
-      "factory": "./src/generators/auth/generator",
-      "schema": "./src/generators/auth/schema.json",
-      "description": "Install the optional JWT auth brick: connects libs/backend/auth to the API app."
-    },
-    "security": {
-      "factory": "./src/generators/security/generator",
-      "schema": "./src/generators/security/schema.json",
-      "description": "Install the optional HTTP security brick (Helmet, CORS, rate limiting) into the API app."
-    },
-    "mailer": {
-      "factory": "./src/generators/mailer/generator",
-      "schema": "./src/generators/mailer/schema.json",
-      "description": "Install the optional transactional-email brick (console transport by default, SMTP via SMTP_URL) into the API app."
-    },
-    "auth-reset": {
-      "factory": "./src/generators/auth-reset/generator",
-      "schema": "./src/generators/auth-reset/schema.json",
-      "description": "Install the password-reset + email-verification brick (needs the auth and mailer bricks). Wires the /forgot-password + /reset-password + /verify-email routes and the verify-email banner."
-    },
-    "health": {
-      "factory": "./src/generators/health/generator",
-      "schema": "./src/generators/health/schema.json",
-      "description": "Install the optional liveness healthcheck (GET /health/live) into the API app."
-    },
-    "frontend-design": {
-      "factory": "./src/generators/frontend-design/generator",
-      "schema": "./src/generators/frontend-design/schema.json",
-      "description": "Install the frontend design brick: Angular Material + CDK, the M3 theme and the brand charter, wired into apps/frontend."
-    },
-    "frontend-i18n": {
-      "factory": "./src/generators/frontend-i18n/generator",
-      "schema": "./src/generators/frontend-i18n/schema.json",
-      "description": "Install the frontend i18n brick (V2.3 step 47): Transloco with en/fr bundled, provideI18n() wired into app.config.ts and the <lib-lang-switcher> in the shell toolbar. Needs the design brick."
-    },
-    "frontend-auth": {
-      "factory": "./src/generators/frontend-auth/generator",
-      "schema": "./src/generators/frontend-auth/schema.json",
-      "description": "Install the frontend auth brick: session store, HTTP interceptors, route guards and the /login + /auth/callback routes. Pass --profile to also add the /app/profile page. Needs the design + i18n bricks."
-    },
-    "frontend-dashboard": {
-      "factory": "./src/generators/frontend-dashboard/generator",
-      "schema": "./src/generators/frontend-dashboard/schema.json",
-      "description": "Install the dashboard shell brick: responsive MatSidenav layout, config-driven menu, and the /app/** route group behind authGuard."
-    },
-    "frontend-feedback": {
-      "factory": "./src/generators/frontend-feedback/generator",
-      "schema": "./src/generators/frontend-feedback/schema.json",
-      "description": "Install the feedback brick: DialogService, NotificationService and the ApiError -> toast HTTP interceptor."
-    },
-    "frontend-consent": {
-      "factory": "./src/generators/frontend-consent/generator",
-      "schema": "./src/generators/frontend-consent/schema.json",
-      "description": "Install the consent brick: first-visit cookie banner, preferences dialog, /legal routes (cookie policy, privacy notice, legal notice) with page templates, and the always-visible legal-links footer."
-    },
     "frontend-feature": {
       "factory": "./src/generators/frontend-feature/generator",
       "schema": "./src/generators/frontend-feature/schema.json",
       "description": "Generate a lazy-loaded business feature under the /app shell (signals store, typed HTTP service, list + detail pages), wired via loadChildren + a DASHBOARD_NAV entry."
-    },
-    "frontend-admin-users": {
-      "factory": "./src/generators/frontend-admin-users/generator",
-      "schema": "./src/generators/frontend-admin-users/schema.json",
-      "description": "Replace the /app/admin placeholder with the user admin console (paginated list, role toggles, enable/disable). Needs the dashboard + feedback bricks."
-    },
-    "role": {
-      "factory": "./src/generators/role/generator",
-      "schema": "./src/generators/role/schema.json",
-      "description": "Install the role-management brick (V2.2 step 44): a Role catalogue with an admin-only CRUD and the /app/admin/roles console. Needs the auth + user bricks."
-    },
-    "audit": {
-      "factory": "./src/generators/audit/generator",
-      "schema": "./src/generators/audit/schema.json",
-      "description": "Install the audit-log brick (V2.3 step 45): an append-only audit_events collection filled from auth/user events, a read-only GET /api/audit and the /app/admin/audit console. Needs the auth brick."
-    },
-    "docker": {
-      "factory": "./src/generators/docker/generator",
-      "schema": "./src/generators/docker/schema.json",
-      "description": "Add Docker packaging: multi-stage Dockerfiles for the API and the SPA (nginx), plus a docker-compose.yml wiring both to mongo:7."
     }
   }
 }

@@ -1,7 +1,0 @@
-{
-  "$schema": "http://json-schema.org/schema",
-  "$id": "FrontendAdminUsers",
-  "title": "Replace the /app/admin placeholder with the user admin console",
-  "type": "object",
-  "properties": {}
-}

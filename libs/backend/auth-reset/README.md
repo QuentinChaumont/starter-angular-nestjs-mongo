@@ -1,8 +1,8 @@
 # backend-auth-reset
 
-Optional brick: **forgot password / reset** + **email verification**.
-Install with `nx g @org/starter-plugin:auth-reset` (needs the `auth` and
-`mailer` bricks).
+Brick: **forgot password / reset** + **email verification**. Depends on
+the `auth` and `mailer` bricks; see [`BRICKS.md`](../../../BRICKS.md) at
+the repo root to remove this brick.
 
 ## Endpoints
 

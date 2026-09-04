@@ -1,7 +1,7 @@
 # Starter Nx — Angular + NestJS + Mongo
 
 An Nx monorepo starter: an Angular frontend, a NestJS backend, and a set of
-opt-in bricks you add only when a project needs them —
+self-contained bricks —
 
 - **backend:** Mongo, JWT auth + refresh tokens + OIDC, HTTP security,
   healthchecks;
@@ -9,8 +9,9 @@ opt-in bricks you add only when a project needs them —
   shell, dialogs & toasts, cookie consent.
 
 The base socle — typed config, structured logging with request IDs, uniform
-HTTP errors, global validation, shared API contracts, OpenAPI — is always
-there. Everything else is opt-in via local Nx generators.
+HTTP errors, global validation, shared API contracts, OpenAPI — plus every
+brick above ships wired into the app. Drop the ones a project doesn't need
+using [`BRICKS.md`](BRICKS.md) as the map.
 
 ## Creating a project from this starter
 
@@ -21,7 +22,7 @@ npm install
 npx nx run-many -t lint,test,build
 ```
 
-Add whichever bricks the project needs (see below), then start the app:
+Then start the app:
 
 ```bash
 npx nx serve @org/backend    # NestJS API, http://localhost:3000/api
@@ -60,7 +61,7 @@ libs/
     └── utils/         Framework-agnostic utilities
 
 tools/
-└── starter-plugin/    Local Nx generators (see below)
+└── starter-plugin/    Local Nx generators: `entity`, `feature`, `frontend-feature`
 ```
 
 Nx module boundaries (`eslint.config.mjs`) enforce: `scope:shared` code
@@ -127,48 +128,48 @@ Read and validated once at startup (`libs/backend/core/config`) — an
 invalid value stops the app immediately with a readable error instead of
 failing later at first use.
 
-| Variable                       | Required                   | Default                      | Notes                                                                                                                        |
-| ------------------------------ | -------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`                     | no                         | `development`                | `development` \| `test` \| `production`                                                                                      |
-| `PORT`                         | no                         | `3000`                       | Nx injects the root `.env` into every task; `apps/frontend/.env` pins the SPA dev-server to 4200 so it doesn't inherit this. |
-| `CORS_ORIGINS`                 | no                         | `http://localhost:4200`      | Comma-separated list                                                                                                         |
-| `LOG_LEVEL`                    | no                         | `debug` (dev) / `log` (prod) | Minimum severity emitted: `verbose` \| `debug` \| `log` \| `warn` \| `error` \| `fatal`                                       |
+| Variable                       | Required                   | Default                      | Notes                                                                                                                                  |
+| ------------------------------ | -------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                     | no                         | `development`                | `development` \| `test` \| `production`                                                                                                |
+| `PORT`                         | no                         | `3000`                       | Nx injects the root `.env` into every task; `apps/frontend/.env` pins the SPA dev-server to 4200 so it doesn't inherit this.           |
+| `CORS_ORIGINS`                 | no                         | `http://localhost:4200`      | Comma-separated list                                                                                                                   |
+| `LOG_LEVEL`                    | no                         | `debug` (dev) / `log` (prod) | Minimum severity emitted: `verbose` \| `debug` \| `log` \| `warn` \| `error` \| `fatal`                                                |
 | `TRUST_PROXY`                  | behind a proxy             | — (`false`)                  | Express `trust proxy`: `true`, a hop count (`1`), or `loopback`. Needed so `req.ip` is the real client behind nginx / a load balancer. |
-| `RATE_LIMIT_TTL_SECONDS`       | no                         | `60`                         | Rate-limit window (security brick)                                                                                           |
-| `RATE_LIMIT_LIMIT`             | no                         | `100`                        | Max requests per window (security brick)                                                                                     |
-| `MONGO_URI`                    | only if Mongo is installed | —                            | `mongodb://...` or `mongodb+srv://...`                                                                                       |
-| `JWT_SECRET`                   | only if auth is installed  | —                            | Access token signing key                                                                                                     |
-| `JWT_EXPIRES_IN`               | no                         | `15m`                        | Access-token lifetime                                                                                                        |
-| `REFRESH_EXPIRES_IN`           | no                         | `30d`                        | Refresh-token lifetime (auth brick)                                                                                          |
-| `AUTH_COOKIE_SECURE`           | no                         | `true` in prod, else `false` | Allows http cookies in dev                                                                                                   |
-| `AUTH_REGISTRATION_ENABLED`    | no                         | `true`                       | Self-service `POST /api/auth/register` + the `/register` page                                                                |
-| `AUTH_RATE_LIMIT_LIMIT`        | no                         | `10`                         | Attempts per window for `/auth/login` + `/auth/register`                                                                     |
-| `AUTH_RATE_LIMIT_TTL_SECONDS`  | no                         | `60`                         | That window, in seconds                                                                                                      |
-| `SEED_ADMIN_EMAIL`             | only for `seed:admin`      | —                            | Bootstrap admin account                                                                                                      |
-| `SEED_ADMIN_PASSWORD`          | only for `seed:admin`      | —                            |                                                                                                                              |
-| `AUTH_REQUIRE_VERIFIED_EMAIL`  | no                         | `false`                      | `true` → `POST /auth/login` returns `403` until the email is verified (`auth-reset` brick)                                   |
-| `RESET_TOKEN_TTL_MINUTES`      | no                         | `60`                         | Password-reset link lifetime                                                                                                 |
-| `VERIFICATION_TOKEN_TTL_HOURS` | no                         | `24`                         | Email-verification link lifetime                                                                                             |
-| `AUDIT_RETENTION_DAYS`         | no                         | `90`                         | Audit brick — days an event is kept (TTL index); `0` keeps forever                                                            |
-| `SMTP_URL`                     | no                         | —                            | Set to deliver mail over SMTP (needs `nodemailer`); otherwise console + `.eml` previews                                      |
-| `MAIL_FROM`                    | no                         | `no-reply@localhost`         | `From` address for the mailer brick                                                                                          |
-| `MAIL_PREVIEW_DIR`             | no                         | `tmp/mail`                   | Where the console transport writes `.eml` previews                                                                           |
-| `OIDC_ISSUER`                  | only to enable OIDC        | —                            | Discovery URL                                                                                                                |
-| `OIDC_CLIENT_ID`               | only to enable OIDC        | —                            |                                                                                                                              |
-| `OIDC_REDIRECT_URI`            | only to enable OIDC        | —                            | `.../api/auth/oidc/generic/callback`                                                                                         |
-| `OIDC_CLIENT_SECRET`           | no                         | —                            | Omit for a public client (PKCE only)                                                                                         |
-| `OIDC_SCOPES`                  | no                         | `openid profile email`       |                                                                                                                              |
-| `OIDC_FRONTEND_URL`            | no                         | `http://localhost:4200`      | Base of the post-login redirect                                                                                              |
-| `OIDC_POST_LOGIN_REDIRECT`     | no                         | `/app`                       | Default relative landing path                                                                                                |
-| `OIDC_REQUIRE_VERIFIED_EMAIL`  | no                         | `true`                       | Reject unverified provider emails                                                                                            |
-| `OIDC_ROLES_CLAIM`             | no                         | —                            | Dot-path to a `string[]` claim → user roles                                                                                  |
-| `OIDC_GOOGLE_CLIENT_ID`        | only to enable Google      | —                            | OAuth client id (Google Cloud Console). Needs `OIDC_REDIRECT_URI` set for the callback origin                                 |
-| `OIDC_GOOGLE_CLIENT_SECRET`    | only to enable Google      | —                            | OAuth client secret; both id + secret required for the Google button to appear                                               |
-| `OIDC_KEYCLOAK_ISSUER`         | only to enable Keycloak    | —                            | Realm URL, e.g. `https://kc.example/realms/app`. Needs `OIDC_REDIRECT_URI` set for the callback origin                        |
-| `OIDC_KEYCLOAK_CLIENT_ID`      | only to enable Keycloak    | —                            | issuer + client id both required for the Keycloak button                                                                     |
-| `OIDC_KEYCLOAK_CLIENT_SECRET`  | no                         | —                            | Omit for a public client (PKCE only)                                                                                         |
-| `OIDC_KEYCLOAK_ROLES_CLAIM`    | no                         | `realm_access.roles`         | Dot-path to the realm-roles claim (mapped at account creation only)                                                          |
-| `OIDC_KEYCLOAK_LABEL`          | no                         | `Keycloak`                   | Login-button label override                                                                                                  |
+| `RATE_LIMIT_TTL_SECONDS`       | no                         | `60`                         | Rate-limit window (security brick)                                                                                                     |
+| `RATE_LIMIT_LIMIT`             | no                         | `100`                        | Max requests per window (security brick)                                                                                               |
+| `MONGO_URI`                    | only if Mongo is installed | —                            | `mongodb://...` or `mongodb+srv://...`                                                                                                 |
+| `JWT_SECRET`                   | only if auth is installed  | —                            | Access token signing key                                                                                                               |
+| `JWT_EXPIRES_IN`               | no                         | `15m`                        | Access-token lifetime                                                                                                                  |
+| `REFRESH_EXPIRES_IN`           | no                         | `30d`                        | Refresh-token lifetime (auth brick)                                                                                                    |
+| `AUTH_COOKIE_SECURE`           | no                         | `true` in prod, else `false` | Allows http cookies in dev                                                                                                             |
+| `AUTH_REGISTRATION_ENABLED`    | no                         | `true`                       | Self-service `POST /api/auth/register` + the `/register` page                                                                          |
+| `AUTH_RATE_LIMIT_LIMIT`        | no                         | `10`                         | Attempts per window for `/auth/login` + `/auth/register`                                                                               |
+| `AUTH_RATE_LIMIT_TTL_SECONDS`  | no                         | `60`                         | That window, in seconds                                                                                                                |
+| `SEED_ADMIN_EMAIL`             | only for `seed:admin`      | —                            | Bootstrap admin account                                                                                                                |
+| `SEED_ADMIN_PASSWORD`          | only for `seed:admin`      | —                            |                                                                                                                                        |
+| `AUTH_REQUIRE_VERIFIED_EMAIL`  | no                         | `false`                      | `true` → `POST /auth/login` returns `403` until the email is verified (`auth-reset` brick)                                             |
+| `RESET_TOKEN_TTL_MINUTES`      | no                         | `60`                         | Password-reset link lifetime                                                                                                           |
+| `VERIFICATION_TOKEN_TTL_HOURS` | no                         | `24`                         | Email-verification link lifetime                                                                                                       |
+| `AUDIT_RETENTION_DAYS`         | no                         | `90`                         | Audit brick — days an event is kept (TTL index); `0` keeps forever                                                                     |
+| `SMTP_URL`                     | no                         | —                            | Set to deliver mail over SMTP (needs `nodemailer`); otherwise console + `.eml` previews                                                |
+| `MAIL_FROM`                    | no                         | `no-reply@localhost`         | `From` address for the mailer brick                                                                                                    |
+| `MAIL_PREVIEW_DIR`             | no                         | `tmp/mail`                   | Where the console transport writes `.eml` previews                                                                                     |
+| `OIDC_ISSUER`                  | only to enable OIDC        | —                            | Discovery URL                                                                                                                          |
+| `OIDC_CLIENT_ID`               | only to enable OIDC        | —                            |                                                                                                                                        |
+| `OIDC_REDIRECT_URI`            | only to enable OIDC        | —                            | `.../api/auth/oidc/generic/callback`                                                                                                   |
+| `OIDC_CLIENT_SECRET`           | no                         | —                            | Omit for a public client (PKCE only)                                                                                                   |
+| `OIDC_SCOPES`                  | no                         | `openid profile email`       |                                                                                                                                        |
+| `OIDC_FRONTEND_URL`            | no                         | `http://localhost:4200`      | Base of the post-login redirect                                                                                                        |
+| `OIDC_POST_LOGIN_REDIRECT`     | no                         | `/app`                       | Default relative landing path                                                                                                          |
+| `OIDC_REQUIRE_VERIFIED_EMAIL`  | no                         | `true`                       | Reject unverified provider emails                                                                                                      |
+| `OIDC_ROLES_CLAIM`             | no                         | —                            | Dot-path to a `string[]` claim → user roles                                                                                            |
+| `OIDC_GOOGLE_CLIENT_ID`        | only to enable Google      | —                            | OAuth client id (Google Cloud Console). Needs `OIDC_REDIRECT_URI` set for the callback origin                                          |
+| `OIDC_GOOGLE_CLIENT_SECRET`    | only to enable Google      | —                            | OAuth client secret; both id + secret required for the Google button to appear                                                         |
+| `OIDC_KEYCLOAK_ISSUER`         | only to enable Keycloak    | —                            | Realm URL, e.g. `https://kc.example/realms/app`. Needs `OIDC_REDIRECT_URI` set for the callback origin                                 |
+| `OIDC_KEYCLOAK_CLIENT_ID`      | only to enable Keycloak    | —                            | issuer + client id both required for the Keycloak button                                                                               |
+| `OIDC_KEYCLOAK_CLIENT_SECRET`  | no                         | —                            | Omit for a public client (PKCE only)                                                                                                   |
+| `OIDC_KEYCLOAK_ROLES_CLAIM`    | no                         | `realm_access.roles`         | Dot-path to the realm-roles claim (mapped at account creation only)                                                                    |
+| `OIDC_KEYCLOAK_LABEL`          | no                         | `Keycloak`                   | Login-button label override                                                                                                            |
 
 Access config only through `AppConfigService` (e.g. `config.app.port`,
 `config.mongo.uri`, `config.session.*`, `config.auth.*`, `config.mailer.*`,
@@ -186,16 +187,15 @@ never read `process.env` directly outside `libs/backend/core/config`.
   `type:{core,feature,data-access,util,app,tool}` — used by the module
   boundary lint rule above.
 
-## Adding the optional bricks
+## The bricks
 
-Each generator is idempotent (safe to run again) and brings its own npm
-dependencies along.
+Every brick below is **already installed and wired** into the app. The
+generators that used to install them have been removed — see
+[`BRICKS.md`](BRICKS.md) for what each brick wires and how to remove one
+you don't need. The only live generators now scaffold _new_ code:
+`@org/starter-plugin:entity`, `:feature`, `:frontend-feature`.
 
 ### Mongo
-
-```bash
-npx nx g @org/starter-plugin:mongo
-```
 
 Connects `libs/backend/database/mongo` (Mongoose connection,
 `BaseRepository<T>`, and a `GET /health/ready` route) to the app.
@@ -213,10 +213,6 @@ Mongo to already be installed. Add `--frontend` to also drop a shared
 [`frontend-feature`](#frontend-feature--lazy-business-modules) below).
 
 ### Auth
-
-```bash
-npx nx g @org/starter-plugin:auth
-```
 
 Connects `libs/backend/auth` to the app. Requires Mongo **and** a `user`
 entity with `--crud` — `AuthModule` logs users in against it. Provides:
@@ -272,10 +268,6 @@ See `libs/backend/auth/README.md` for the full contract.
 
 ### Security
 
-```bash
-npx nx g @org/starter-plugin:security
-```
-
 Adds **rate limiting** (`@nestjs/throttler`) into the app. Helmet, gzip
 **compression**, `trust proxy` (from `TRUST_PROXY`), a `Cache-Control:
 no-store` policy for `/api`, and CORS are always on — they live in
@@ -288,10 +280,6 @@ selection timeout and `autoIndex` off in production.
 
 ### Mailer
 
-```bash
-npx nx g @org/starter-plugin:mailer
-```
-
 Adds `MailerService` and a pluggable `MailTransport`. By default the
 **console** transport logs each message and writes an `.eml` preview under
 `MAIL_PREVIEW_DIR` — zero network, zero external dependency. Set `SMTP_URL`
@@ -301,10 +289,6 @@ templates (`renderPasswordReset`, `renderEmailVerification`,
 `libs/backend/mailer/README.md`.
 
 ### Password reset & email verification
-
-```bash
-npx nx g @org/starter-plugin:auth-reset
-```
 
 Needs the `auth` and `mailer` bricks. Adds `POST /api/auth/forgot-password`
 (always `202`, no account enumeration), `POST /api/auth/reset-password`
@@ -320,10 +304,6 @@ verification links share one hashed, TTL'd `single_use_tokens` collection
 
 ### Audit log (V2.3 step 45)
 
-```bash
-npx nx g @org/starter-plugin:audit
-```
-
 Needs the `auth` brick. Adds an append-only `audit_events` collection
 filled **best-effort** (a failed write never breaks the traced action)
 from the `auth` / `user` bricks' lifecycle events — login (success +
@@ -337,10 +317,6 @@ console. Retention: a TTL index sized from
 bootstrap. `meta` never stores secret-ish keys.
 
 ### Roles (V2.2 step 44)
-
-```bash
-npx nx g @org/starter-plugin:role
-```
 
 Needs the `auth` + `user` bricks. Adds a `Role` catalogue
 (`{ name, description, system }`) with an admin-only CRUD
@@ -356,35 +332,23 @@ retro-validated). Wires the `/app/admin/roles` console when
 
 ### Healthchecks
 
-```bash
-npx nx g @org/starter-plugin:health
-```
-
 Adds `GET /health/live` (always up — no external checks, so a Mongo outage
 never fails it). `GET /health/ready` comes from the Mongo brick instead,
 independently.
 
-## Adding the frontend layer
+## The frontend layer
 
-The Angular app starts as a bare shell. Each frontend brick is opt-in via
-a generator, in this order (each checks its prerequisites):
-
-```bash
-npx nx g @org/starter-plugin:frontend-design      # Material + M3 theme + charter
-npx nx g @org/starter-plugin:frontend-i18n        # Transloco (en/fr) + language switcher
-npx nx g @org/starter-plugin:frontend-auth        # login + OIDC, session, interceptors, guards
-npx nx g @org/starter-plugin:frontend-dashboard   # responsive sidenav shell for /app/**
-npx nx g @org/starter-plugin:frontend-feedback    # dialogs + toasts + ApiError bridge
-npx nx g @org/starter-plugin:frontend-consent     # cookie banner + /legal pages
-```
-
-Each generator copies its lib, wires `apps/frontend/src/app/app.config.ts`
-(and `app.routes.ts` / `app.ts` / `styles.scss` where needed), registers
-the `@org/frontend-*` path, and is idempotent. Prerequisites:
-`frontend-i18n` → `frontend-design`; `frontend-auth` → `frontend-design` +
-`frontend-i18n` + the backend `auth` brick; `frontend-dashboard` →
-`frontend-auth`; `frontend-feedback` / `frontend-consent` →
-`frontend-design`.
+The frontend bricks — `frontend-design`, `frontend-i18n`, `frontend-auth`,
+`frontend-dashboard`, `frontend-feedback`, `frontend-consent` — are all
+installed and wired. Each contributes providers to
+`apps/frontend/src/app/app.config.ts` (and `app.routes.ts` / `app.ts` /
+`styles.scss` where noted) and a `@org/frontend-*` path in
+`tsconfig.base.json`. Their load order / prerequisites (`frontend-i18n` →
+`frontend-design`; `frontend-auth` → `frontend-design` + `frontend-i18n` +
+the backend `auth` brick; `frontend-dashboard` → `frontend-auth`;
+`frontend-feedback` / `frontend-consent` → `frontend-design`) and the
+exact wiring each one owns are documented in [`BRICKS.md`](BRICKS.md) —
+consult it before removing one.
 
 The app shell itself carries a `TitleStrategy` (each route's `title` →
 `document.title`, with the app name appended — rename `APP_NAME` in
@@ -471,8 +435,8 @@ keyed off `user.locale`.
 The app owns `provideHttpClient(withInterceptors([...]))` so the auth and
 feedback bricks each contribute an interceptor (auth before feedback).
 
-**`--profile`** (`nx g @org/starter-plugin:frontend-auth --profile`, needs
-the dashboard + feedback bricks) adds the **`/app/profile`** page — a lazy
+**The profile page** (`libs/frontend/features/profile`, needs the
+dashboard + feedback bricks) is the **`/app/profile`** page — a lazy
 feature that manages the connected account:
 
 - `GET`/`PATCH /api/users/me` — edit first/last name, **email** and
@@ -544,10 +508,6 @@ generator right after the backend entity and drops a matching
 
 ### `frontend-admin-users` — user admin console
 
-```bash
-npx nx g @org/starter-plugin:frontend-admin-users
-```
-
 Turns the dashboard's placeholder `/app/admin` route into the tabbed admin
 console (needs the dashboard + feedback bricks): `AdminTabsShell` over a
 routed outlet, the user console as the index tab, still behind the route's
@@ -570,17 +530,6 @@ contains filters + sort in the header, server-side pagination.
   No hard delete — disable instead.
 
 Sensitive actions go through a `DialogService.confirm()`.
-
-> **Migrating from the flat admin routes (pre-V2.3-step-49).** Earlier
-> versions of these generators added `/app/admin/roles` and
-> `/app/admin/audit` as top-level children of `/app` plus a sidenav entry
-> each. If you generated that layout, the new generators won't rewrite it
-> automatically — either keep it (it still works) or, to adopt the tabs:
-> in `app.routes.ts` give the `/app/admin` route
-> `component: AdminTabsShell` + a `children: []` and move the `roles` /
-> `audit` routes into it (dropping their `admin/` path prefix and
-> `canActivate`); in `app.config.ts` add a `provideAdminTab({...})` per
-> console; in `dashboard-nav.ts` delete the "Roles" / "Audit" entries.
 
 ### `frontend-ui` — shared UI primitives
 
@@ -659,11 +608,10 @@ Majors are ignored — bump those by hand with their codemods.
 ## Docker
 
 ```bash
-npx nx g @org/starter-plugin:docker
 docker compose up --build      # SPA on http://localhost:8080
 ```
 
-Opt-in. Adds:
+The Docker packaging ships with the repo (delete these files to drop it):
 
 - **`apps/backend/Dockerfile`** — multi-stage: full install + `nx build` +
   `nx prune` in the builder, then `node:22-alpine` with **prod deps only**

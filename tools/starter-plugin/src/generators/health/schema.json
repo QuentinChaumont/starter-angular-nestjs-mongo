@@ -1,7 +1,0 @@
-{
-  "$schema": "http://json-schema.org/schema",
-  "$id": "Health",
-  "title": "Install the optional liveness healthcheck",
-  "type": "object",
-  "properties": {}
-}

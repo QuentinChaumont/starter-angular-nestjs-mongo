@@ -3,18 +3,18 @@
 Internationalisation for the Angular app (V2.3 step 47):
 [Transloco](https://jsverse.github.io/transloco/) with **English and French
 bundled** — no HTTP loader, since the starter has few strings and it keeps
-things working offline / under SSR. Install with
-`nx g @org/starter-plugin:frontend-i18n` (needs `frontend-design`).
+things working offline / under SSR. Depends on `frontend-design`; see
+[`BRICKS.md`](../../../BRICKS.md) at the repo root to remove this brick.
 
 ## Exposes (`@org/frontend-i18n`)
 
-| Export | Use |
-| --- | --- |
-| `provideI18n()` | Spread into `app.config.ts` — configures Transloco and sets the active language before the first render. |
-| `LangSwitcher` (`<lib-lang-switcher>`) | Toolbar menu that changes the language; the dashboard shell already renders it. |
-| `provideTranslocoTesting()` | Drop into a component spec's `providers` so `| transloco` resolves against the real bundled strings. |
-| `AVAILABLE_LANGS`, `DEFAULT_LANG`, `LANG_STORAGE_KEY`, `isAppLang()`, `AppLang` | The language set and helpers. |
-| `en`, `fr`, `TranslationShape` | The translation objects and their shared type. |
+| Export                                                                          | Use                                                                                                      |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `provideI18n()`                                                                 | Spread into `app.config.ts` — configures Transloco and sets the active language before the first render. |
+| `LangSwitcher` (`<lib-lang-switcher>`)                                          | Toolbar menu that changes the language; the dashboard shell already renders it.                          |
+| `provideTranslocoTesting()`                                                     | Drop into a component spec's `providers` so `                                                            | transloco` resolves against the real bundled strings. |
+| `AVAILABLE_LANGS`, `DEFAULT_LANG`, `LANG_STORAGE_KEY`, `isAppLang()`, `AppLang` | The language set and helpers.                                                                            |
+| `en`, `fr`, `TranslationShape`                                                  | The translation objects and their shared type.                                                           |
 
 ## Language resolution
 

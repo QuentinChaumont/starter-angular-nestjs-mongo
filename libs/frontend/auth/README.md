@@ -1,20 +1,20 @@
 # frontend-auth
 
 Client side of authentication: local login + OIDC, an in-memory session
-store, HTTP interceptors and route guards. Install with
-`nx g @org/starter-plugin:frontend-auth` (needs `frontend-design`,
-`frontend-i18n` and the backend `auth` brick).
+store, HTTP interceptors and route guards. Depends on `frontend-design`,
+`frontend-i18n` and the backend `auth` brick; see
+[`BRICKS.md`](../../../BRICKS.md) at the repo root to remove this brick.
 
 ## Exposes (`@org/frontend-auth`)
 
-| Export | Use |
-| --- | --- |
-| `provideAuth()` | Spread into `app.config.ts` — `HttpClient` + interceptors + bootstrap silent refresh. |
-| `AuthStore` | Signals `user()`, `status()`, `token()`, `isAuthenticated()`. |
-| `AuthService` | `login()`, `logout()`, `refresh()`, `loadMe()`, `silentRefresh()`, `oidcProviders()`, `oidcLoginUrl()`. |
-| `authGuard`, `roleGuard(...roles)` | `CanActivateFn` route guards. |
-| `LoginPage`, `OidcCallback` | Standalone route components (`/login`, `/auth/callback`). |
-| `authInterceptor`, `csrfInterceptor` | Exported for apps that own `provideHttpClient` themselves. |
+| Export                               | Use                                                                                                     |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| `provideAuth()`                      | Spread into `app.config.ts` — `HttpClient` + interceptors + bootstrap silent refresh.                   |
+| `AuthStore`                          | Signals `user()`, `status()`, `token()`, `isAuthenticated()`.                                           |
+| `AuthService`                        | `login()`, `logout()`, `refresh()`, `loadMe()`, `silentRefresh()`, `oidcProviders()`, `oidcLoginUrl()`. |
+| `authGuard`, `roleGuard(...roles)`   | `CanActivateFn` route guards.                                                                           |
+| `LoginPage`, `OidcCallback`          | Standalone route components (`/login`, `/auth/callback`).                                               |
+| `authInterceptor`, `csrfInterceptor` | Exported for apps that own `provideHttpClient` themselves.                                              |
 
 `AuthService.loadMe()` applies the user's stored `locale` to Transloco
 (`frontend-i18n` brick) when it's one of the configured languages, so a
@@ -64,7 +64,7 @@ Requests target `API_BASE_URL` (from `@org/frontend-core`, default `/api`).
 In local dev point it at the running API:
 
 ```ts
-providers: [provideApiBaseUrl('http://localhost:3000/api'), provideAuth()]
+providers: [provideApiBaseUrl('http://localhost:3000/api'), provideAuth()];
 ```
 
 ## Not the dashboard's business

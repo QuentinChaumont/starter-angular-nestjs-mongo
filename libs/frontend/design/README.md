@@ -1,19 +1,20 @@
 # frontend-design
 
 The visual foundation: Angular Material + CDK, the M3 theme, and the brand
-charter. Install with `nx g @org/starter-plugin:frontend-design`.
+charter. Every other frontend brick depends on this one; see
+[`BRICKS.md`](../../../BRICKS.md) at the repo root to remove this brick.
 
 ## What it exposes (`@org/frontend-design`)
 
-| Export | Use |
-| --- | --- |
-| `materialProviders` | Spread into `app.config.ts` — animations (lazy), `MatFormField` `outline` default, `MatSnackBar` 4s default. |
-| `provideTheme()` | Also spread into `app.config.ts` — applies the persisted runtime theme before first paint. |
-| `ThemeService` | Signals `mode()` / `overrides()`; `setMode()`, `setColor()`, `resetColor()`, `resetAll()`. |
-| `ThemeSettingsPanel` | `<lib-theme-settings-panel>` — standalone panel (mode toggle + colour pickers + reset). |
-| `designConfig` | The brand charter as a typed object — the build-time source of truth. |
-| `THEME_MODES`, `THEME_TOKENS`, `THEME_TOKEN_LABEL`, `isValidHexColor` | Runtime-theming helpers. |
-| `ThemeMode`, `ThemeToken`, `DesignConfig`, `DesignColors`, `BrandColorToken` | Types. |
+| Export                                                                       | Use                                                                                                          |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `materialProviders`                                                          | Spread into `app.config.ts` — animations (lazy), `MatFormField` `outline` default, `MatSnackBar` 4s default. |
+| `provideTheme()`                                                             | Also spread into `app.config.ts` — applies the persisted runtime theme before first paint.                   |
+| `ThemeService`                                                               | Signals `mode()` / `overrides()`; `setMode()`, `setColor()`, `resetColor()`, `resetAll()`.                   |
+| `ThemeSettingsPanel`                                                         | `<lib-theme-settings-panel>` — standalone panel (mode toggle + colour pickers + reset).                      |
+| `designConfig`                                                               | The brand charter as a typed object — the build-time source of truth.                                        |
+| `THEME_MODES`, `THEME_TOKENS`, `THEME_TOKEN_LABEL`, `isValidHexColor`        | Runtime-theming helpers.                                                                                     |
+| `ThemeMode`, `ThemeToken`, `DesignConfig`, `DesignColors`, `BrandColorToken` | Types.                                                                                                       |
 
 SCSS entry point (imported once from `apps/frontend/src/styles.scss`):
 
@@ -57,8 +58,10 @@ starter does not bundle the font — add it per project (self-hosted, or a
 `<link>` to Google Fonts in `apps/frontend/src/index.html`):
 
 ```html
-<link rel="stylesheet"
-  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+/>
 ```
 
 ## `libs/frontend/core` must not depend on Material

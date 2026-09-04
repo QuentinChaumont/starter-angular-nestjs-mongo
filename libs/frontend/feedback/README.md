@@ -1,18 +1,19 @@
 # frontend-feedback
 
-Centralised popups and toasts, plus the `ApiError` → toast bridge. Install
-with `nx g @org/starter-plugin:frontend-feedback` (needs `frontend-design`).
+Centralised popups and toasts, plus the `ApiError` → toast bridge.
+Depends on `frontend-design`; see [`BRICKS.md`](../../../BRICKS.md) at
+the repo root to remove this brick.
 
 ## Exposes (`@org/frontend-feedback`)
 
-| Export | Use |
-| --- | --- |
-| `DialogService` | `confirm(opts)` / `alert(opts)` → `Observable<boolean>` / `<void>`; `open(component, config)` typed passthrough with shared defaults. |
-| `NotificationService` | `success` / `info` / `warn` / `error(message, opts?)` over `MatSnackBar`. |
-| `httpErrorInterceptor`, `SKIP_ERROR_TOAST` | The `ApiError` → toast interceptor + its per-request opt-out. |
-| `unsavedChangesGuard`, `HasUnsavedChanges` | `canDeactivate` guard: confirms before leaving a component that reports unsaved edits. |
-| `provideFeedback()` | Shared `MatDialog` defaults. |
-| `provideNotificationConfig(partial)`, `NOTIFICATION_CONFIG` | Toast durations. |
+| Export                                                      | Use                                                                                                                                   |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `DialogService`                                             | `confirm(opts)` / `alert(opts)` → `Observable<boolean>` / `<void>`; `open(component, config)` typed passthrough with shared defaults. |
+| `NotificationService`                                       | `success` / `info` / `warn` / `error(message, opts?)` over `MatSnackBar`.                                                             |
+| `httpErrorInterceptor`, `SKIP_ERROR_TOAST`                  | The `ApiError` → toast interceptor + its per-request opt-out.                                                                         |
+| `unsavedChangesGuard`, `HasUnsavedChanges`                  | `canDeactivate` guard: confirms before leaving a component that reports unsaved edits.                                                |
+| `provideFeedback()`                                         | Shared `MatDialog` defaults.                                                                                                          |
+| `provideNotificationConfig(partial)`, `NOTIFICATION_CONFIG` | Toast durations.                                                                                                                      |
 
 ## Dialogs
 

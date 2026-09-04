@@ -2,20 +2,20 @@
 
 Cookie / tracker consent: a non-blocking banner on first visit, a
 preferences dialog, a persisted decision, and a gate for third-party tags.
-Install with `nx g @org/starter-plugin:frontend-consent` (needs
-`frontend-design`).
+Depends on `frontend-design`; see [`BRICKS.md`](../../../BRICKS.md) at
+the repo root to remove this brick.
 
 ## Exposes (`@org/frontend-consent`)
 
-| Export                          | Use                                                                                                                        |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `provideConsent(config?)`       | Spread into `app.config.ts`. Override `policyVersion`, `categories`, `expiresInDays`, legal routes.                        |
-| `ConsentBanner`                 | `<lib-consent-banner>` — mount once in `app.ts`, outside the router outlet.                                                |
-| `ConsentService`                | `hasDecided()`, `bannerVisible()`, `isGranted(id)` (signal), `acceptAll()` / `rejectAll()` / `save(decision)`, `reopen()`. |
-| `runWhenConsented(id, fn)`      | Run a side effect once the category is consented (immediately if it already is).                                           |
-| `ConsentIf`                     | `<div *consentIf="'marketing'">` — render a block only while consented.                                                    |
-| `CookiePolicy`, `PrivacyPolicy`, `LegalNotice` | Route components (`/legal/cookies`, `/legal/privacy`, `/legal/notice`) — **templates**, fill the `[PLACEHOLDERS]`.        |
-| `LegalLinks`                    | `<lib-legal-links>` — the always-visible footer (legal notice · privacy · cookies). Mount once in `app.ts`, after the outlet. |
+| Export                                         | Use                                                                                                                           |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `provideConsent(config?)`                      | Spread into `app.config.ts`. Override `policyVersion`, `categories`, `expiresInDays`, legal routes.                           |
+| `ConsentBanner`                                | `<lib-consent-banner>` — mount once in `app.ts`, outside the router outlet.                                                   |
+| `ConsentService`                               | `hasDecided()`, `bannerVisible()`, `isGranted(id)` (signal), `acceptAll()` / `rejectAll()` / `save(decision)`, `reopen()`.    |
+| `runWhenConsented(id, fn)`                     | Run a side effect once the category is consented (immediately if it already is).                                              |
+| `ConsentIf`                                    | `<div *consentIf="'marketing'">` — render a block only while consented.                                                       |
+| `CookiePolicy`, `PrivacyPolicy`, `LegalNotice` | Route components (`/legal/cookies`, `/legal/privacy`, `/legal/notice`) — **templates**, fill the `[PLACEHOLDERS]`.            |
+| `LegalLinks`                                   | `<lib-legal-links>` — the always-visible footer (legal notice · privacy · cookies). Mount once in `app.ts`, after the outlet. |
 
 ## How it works
 

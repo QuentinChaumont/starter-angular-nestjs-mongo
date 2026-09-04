@@ -1,7 +1,7 @@
 # backend-auth
 
-Optional JWT auth brick. Install it with `nx g @org/starter-plugin:auth`
-(requires the Mongo brick and a `user --crud` entity).
+JWT auth brick. Requires the Mongo brick and a `user --crud` entity; see
+[`BRICKS.md`](../../../BRICKS.md) at the repo root to remove this brick.
 
 ## What it provides
 
@@ -90,7 +90,7 @@ Endpoints (all bearer-authenticated, no CSRF guard — like
 `change-password`):
 
 - `GET /auth/identities` → `{ hasPassword, identities: { provider, label,
-  email, linkedAt }[] }` for the current account.
+email, linkedAt }[] }` for the current account.
 - `POST /auth/identities/:providerId/link` → `{ authorizationUrl }`. The
   SPA navigates there; the callback (recognising the `oidc_tx` cookie's
   `linkUserId`) links the identity to the signed-in account and bounces to
@@ -136,17 +136,17 @@ except `/auth/2fa/verify`.
 | `OIDC_FRONTEND_URL`           | no        | `http://localhost:4200` | Base of the post-login redirect             |
 | `OIDC_POST_LOGIN_REDIRECT`    | no        | `/app`                  | Default relative landing path               |
 | `OIDC_REQUIRE_VERIFIED_EMAIL` | no        | `true`                  | Reject unverified provider emails           |
-| `OIDC_ROLES_CLAIM`           | no        | —                       | Dot-path to a `string[]` claim → user roles |
+| `OIDC_ROLES_CLAIM`            | no        | —                       | Dot-path to a `string[]` claim → user roles |
 
 ### Google preset
 
 Google is a **preset**: issuer (`https://accounts.google.com`) and scopes
 (`openid profile email`) are fixed, you only bring an OAuth client.
 
-| Variable                    | Required     | Notes                                                        |
-| --------------------------- | ------------ | ----------------------------------------------------------- |
-| `OIDC_GOOGLE_CLIENT_ID`     | to enable    | Both id + secret needed, else no Google button              |
-| `OIDC_GOOGLE_CLIENT_SECRET` | to enable    |                                                            |
+| Variable                    | Required  | Notes                                          |
+| --------------------------- | --------- | ---------------------------------------------- |
+| `OIDC_GOOGLE_CLIENT_ID`     | to enable | Both id + secret needed, else no Google button |
+| `OIDC_GOOGLE_CLIENT_SECRET` | to enable |                                                |
 
 The callback URI is derived from `OIDC_REDIRECT_URI` (id segment swapped to
 `google`), so `OIDC_REDIRECT_URI` must be set even for a Google-only setup.
@@ -171,13 +171,13 @@ flow needs a real Google account (test manually once).
 Points at an **existing** realm — the starter bundles no Keycloak
 container (add your own in `docker-compose.override.yml` to test locally).
 
-| Variable                     | Required  | Default              | Notes                                             |
-| ---------------------------- | --------- | -------------------- | ------------------------------------------------ |
-| `OIDC_KEYCLOAK_ISSUER`       | to enable | —                    | `https://<host>/realms/<realm>`                   |
-| `OIDC_KEYCLOAK_CLIENT_ID`    | to enable | —                    |                                                  |
-| `OIDC_KEYCLOAK_CLIENT_SECRET`| no        | —                    | Omit for a public client (PKCE only)             |
-| `OIDC_KEYCLOAK_ROLES_CLAIM`  | no        | `realm_access.roles` | Realm roles → local roles, **at account creation only** |
-| `OIDC_KEYCLOAK_LABEL`        | no        | `Keycloak`           | Login-button label                               |
+| Variable                      | Required  | Default              | Notes                                                   |
+| ----------------------------- | --------- | -------------------- | ------------------------------------------------------- |
+| `OIDC_KEYCLOAK_ISSUER`        | to enable | —                    | `https://<host>/realms/<realm>`                         |
+| `OIDC_KEYCLOAK_CLIENT_ID`     | to enable | —                    |                                                         |
+| `OIDC_KEYCLOAK_CLIENT_SECRET` | no        | —                    | Omit for a public client (PKCE only)                    |
+| `OIDC_KEYCLOAK_ROLES_CLAIM`   | no        | `realm_access.roles` | Realm roles → local roles, **at account creation only** |
+| `OIDC_KEYCLOAK_LABEL`         | no        | `Keycloak`           | Login-button label                                      |
 
 Callback URI is derived from `OIDC_REDIRECT_URI` (id segment → `keycloak`),
 so set `OIDC_REDIRECT_URI` even for a Keycloak-only setup.
@@ -206,13 +206,13 @@ times its token has rotated. `sessionStartedAt` is carried forward across
 rotations so the age shown is the login's, not the last refresh's.
 
 Bearer-authenticated (no CSRF — like `change-password`); the refresh
-cookie is only *read*, to flag the caller's own session.
+cookie is only _read_, to flag the caller's own session.
 
 - `GET /auth/sessions` → `SessionInfo[]` (`{ id, ip, userAgent, createdAt,
-  lastUsedAt, current }`), newest activity first.
+lastUsedAt, current }`), newest activity first.
 - `DELETE /auth/sessions/:familyId` → ends that session. `409
-  SESSION_IS_CURRENT` for the caller's own (use `/logout`); `404
-  SESSION_NOT_FOUND` when it isn't the caller's.
+SESSION_IS_CURRENT` for the caller's own (use `/logout`); `404
+SESSION_NOT_FOUND` when it isn't the caller's.
 - `DELETE /auth/sessions` → "sign out everywhere else"
   (`revokeAllForUserExcept`).
 - `POST /auth/sessions/revoke/:userId` → admin-only, ends every session of

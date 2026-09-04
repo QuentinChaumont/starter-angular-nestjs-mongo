@@ -1,20 +1,20 @@
 # frontend-dashboard
 
 The default layout for the authenticated area: a top toolbar + a responsive
-sidenav wrapping the routed content. Install with
-`nx g @org/starter-plugin:frontend-dashboard` (needs `frontend-auth`).
+sidenav wrapping the routed content. Depends on `frontend-auth`; see
+[`BRICKS.md`](../../../BRICKS.md) at the repo root to remove this brick.
 
 ## Exposes (`@org/frontend-dashboard`)
 
-| Export | Use |
-| --- | --- |
-| `provideDashboard(nav)` | Spread into `app.config.ts` — provides `DASHBOARD_NAV`. |
-| `DASHBOARD_NAV`, `NavItem` | The sidenav menu token + item type. |
-| `DashboardShell` | Route component wrapping `/app/**` (`canActivate: [authGuard]`). Shows a slim top progress bar during router navigations (150 ms anti-flicker delay). |
-| `DashboardHome` | Placeholder landing page — replace with the real one. |
-| `SidenavNav`, `UserMenu` | Building blocks, if you build your own shell. |
-| `AdminTabsShell` | `/app/admin` frame — a tab strip over a routed outlet (V2.3 step 49). |
-| `ADMIN_TABS`, `provideAdminTab(tab)`, `AdminTab` | Multi-provider for the admin sub-tabs — each admin brick registers its own. |
+| Export                                           | Use                                                                                                                                                   |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provideDashboard(nav)`                          | Spread into `app.config.ts` — provides `DASHBOARD_NAV`.                                                                                               |
+| `DASHBOARD_NAV`, `NavItem`                       | The sidenav menu token + item type.                                                                                                                   |
+| `DashboardShell`                                 | Route component wrapping `/app/**` (`canActivate: [authGuard]`). Shows a slim top progress bar during router navigations (150 ms anti-flicker delay). |
+| `DashboardHome`                                  | Placeholder landing page — replace with the real one.                                                                                                 |
+| `SidenavNav`, `UserMenu`                         | Building blocks, if you build your own shell.                                                                                                         |
+| `AdminTabsShell`                                 | `/app/admin` frame — a tab strip over a routed outlet (V2.3 step 49).                                                                                 |
+| `ADMIN_TABS`, `provideAdminTab(tab)`, `AdminTab` | Multi-provider for the admin sub-tabs — each admin brick registers its own.                                                                           |
 
 ## What the generator wires
 
@@ -67,7 +67,12 @@ child route:
 
 ```ts
 // app.config.ts — added by the frontend-admin-users / role / audit generators
-provideAdminTab({ label: 'Users', labelKey: 'dashboard.adminTabs.users', path: '', order: 0 })
+provideAdminTab({
+  label: 'Users',
+  labelKey: 'dashboard.adminTabs.users',
+  path: '',
+  order: 0,
+});
 ```
 
 ```ts
