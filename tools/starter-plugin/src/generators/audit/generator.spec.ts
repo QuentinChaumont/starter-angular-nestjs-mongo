@@ -32,17 +32,16 @@ function seedFrontend(tree: Tree): void {
     APP_ROUTES_PATH,
     `import { Route } from '@angular/router';
 import { roleGuard } from '@org/frontend-auth';
-import { AdminTabsShell } from '@org/frontend-dashboard';
 
 export const appRoutes: Route[] = [
   {
     path: 'app',
     children: [
-      { path: '', component: Home },
+      { path: '', loadComponent: () => import('@org/frontend-dashboard/home').then((m) => m.DashboardHome) },
       {
         path: 'admin',
         canActivate: [roleGuard('admin')],
-        component: AdminTabsShell,
+        loadComponent: () => import('@org/frontend-dashboard/admin-tabs').then((m) => m.AdminTabsShell),
         children: [
           { path: '', loadChildren: () => import('@org/frontend-features-admin-users').then((m) => m.ADMIN_USERS_ROUTES) },
         ],
@@ -112,7 +111,7 @@ describe('audit generator', () => {
     const routes = tree.read(APP_ROUTES_PATH, 'utf-8') as string;
     expect(routes).toContain('@org/frontend-features-admin-audit');
     expect(routes).toMatch(
-      /AdminTabsShell,\s*children: \[[\s\S]*path: 'audit'[\s\S]*ADMIN_AUDIT_ROUTES/,
+      /m\.AdminTabsShell\)[^[]*children: \[[\s\S]*path: 'audit'[\s\S]*ADMIN_AUDIT_ROUTES/,
     );
 
     const config = tree.read(APP_CONFIG_PATH, 'utf-8') as string;

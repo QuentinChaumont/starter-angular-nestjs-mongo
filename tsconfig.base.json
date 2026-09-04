@@ -26,6 +26,15 @@
       "@org/frontend-consent": ["./libs/frontend/consent/src/index.ts"],
       "@org/frontend-core": ["./libs/frontend/core/src/index.ts"],
       "@org/frontend-dashboard": ["./libs/frontend/dashboard/src/index.ts"],
+      "@org/frontend-dashboard/shell": [
+        "./libs/frontend/dashboard/src/lib/shell/dashboard-shell.ts"
+      ],
+      "@org/frontend-dashboard/home": [
+        "./libs/frontend/dashboard/src/lib/dashboard-home.ts"
+      ],
+      "@org/frontend-dashboard/admin-tabs": [
+        "./libs/frontend/dashboard/src/lib/admin/admin-tabs-shell.ts"
+      ],
       "@org/frontend-design": ["./libs/frontend/design/src/index.ts"],
       "@org/frontend-feedback": ["./libs/frontend/feedback/src/index.ts"],
       "@org/frontend-i18n": ["./libs/frontend/i18n/src/index.ts"],

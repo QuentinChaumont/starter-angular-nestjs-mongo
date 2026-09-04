@@ -390,19 +390,19 @@ The app shell itself carries a `TitleStrategy` (each route's `title` →
 `document.title`, with the app name appended — rename `APP_NAME` in
 `title-strategy.ts`) and a `**` catch-all route rendering a 404 page.
 
-**Bundle.** Initial JS is ~850 kB raw / ~180 kB gzipped (Angular + Material
+**Bundle.** Initial JS is ~765 kB raw / ~168 kB gzipped (Angular + Material
 + Router + Forms + Transloco). The production `initial` budget is 1 mb
 warning / 1.3 mb error — the raw figure; what ships is the transfer size.
 
-Each feature lib keeps its app-facing API (services, guards, providers)
-and its route components apart: the barrel exports a `*_ROUTES` array whose
-entries use `loadComponent`, never the components themselves. So importing
-`AuthService` / `ConsentService` eagerly doesn't drag `LoginPage` or the
-`/legal` pages (and their `MatFormField` / `MatCard`) into the initial
-chunk. The **dashboard shell** (`DashboardShell` / `AdminTabsShell`) is
-still eager — splitting it the same way (it shares the `/app/admin`
-children with three generators) would move another ~150 kB off, tracked
-for a later step.
+Every feature lib keeps its app-facing API (services, guards, providers)
+apart from its route components. `frontend-auth` / `frontend-consent`
+export a `*_ROUTES` array whose entries use `loadComponent`; the dashboard
+shell (`DashboardShell` / `DashboardHome` / `AdminTabsShell`) is routed
+through per-component lazy entry points (`@org/frontend-dashboard/shell`
+etc.). So importing `AuthService` / `provideDashboard` eagerly doesn't drag
+`LoginPage` or `MatSidenav` / `MatList` into the initial chunk. Remaining
+eager offenders are `ThemeSettingsPanel`, `ConsentPreferences`, and the
+`MAT_FORM_FIELD_DEFAULT_OPTIONS` provider (~100 kB combined).
 
 ### `frontend-design` — theme & charter
 

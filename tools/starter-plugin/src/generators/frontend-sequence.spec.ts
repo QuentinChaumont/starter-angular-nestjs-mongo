@@ -96,14 +96,17 @@ describe('frontend brick sequence', () => {
     }
 
     const paths = readJson(tree, 'tsconfig.base.json').compilerOptions.paths;
-    expect(Object.keys(paths).sort()).toEqual([
+    for (const key of [
       '@org/frontend-auth',
       '@org/frontend-consent',
       '@org/frontend-dashboard',
+      '@org/frontend-dashboard/shell',
       '@org/frontend-design',
       '@org/frontend-feedback',
       '@org/frontend-i18n',
-    ]);
+    ]) {
+      expect(paths).toHaveProperty(key);
+    }
 
     const config = tree.read(APP_CONFIG, 'utf-8') as string;
     for (const provider of [
@@ -124,7 +127,7 @@ describe('frontend brick sequence', () => {
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
     for (const marker of [
       '...AUTH_ROUTES',
-      'component: DashboardShell',
+      "import('@org/frontend-dashboard/shell').then((m) => m.DashboardShell)",
       "redirectTo: 'app'",
       'children: LEGAL_ROUTES',
     ]) {
@@ -138,7 +141,7 @@ describe('frontend brick sequence', () => {
     );
     // public routes stay first (install order)
     expect(routes.indexOf('...AUTH_ROUTES')).toBeLessThan(
-      routes.indexOf('component: DashboardShell'),
+      routes.indexOf('m.DashboardShell'),
     );
 
     const component = tree.read(APP_COMPONENT, 'utf-8') as string;

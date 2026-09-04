@@ -1,11 +1,6 @@
 import { Route } from '@angular/router';
 import { AUTH_ROUTES, RESET_ROUTES, authGuard, roleGuard } from '@org/frontend-auth';
 import { LEGAL_ROUTES } from '@org/frontend-consent';
-import {
-  AdminTabsShell,
-  DashboardHome,
-  DashboardShell,
-} from '@org/frontend-dashboard';
 import { NotFoundPage } from './not-found.component';
 
 export const appRoutes: Route[] = [
@@ -15,13 +10,22 @@ export const appRoutes: Route[] = [
   {
     path: 'app',
     canActivate: [authGuard],
-    component: DashboardShell,
+    loadComponent: () =>
+      import('@org/frontend-dashboard/shell').then((m) => m.DashboardShell),
     children: [
-      { path: '', component: DashboardHome, title: 'Home' },
+      {
+        path: '',
+        loadComponent: () =>
+          import('@org/frontend-dashboard/home').then((m) => m.DashboardHome),
+        title: 'Home',
+      },
       {
         path: 'admin',
         canActivate: [roleGuard('admin')],
-        component: AdminTabsShell,
+        loadComponent: () =>
+          import('@org/frontend-dashboard/admin-tabs').then(
+            (m) => m.AdminTabsShell,
+          ),
         title: 'Admin',
         children: [
           {

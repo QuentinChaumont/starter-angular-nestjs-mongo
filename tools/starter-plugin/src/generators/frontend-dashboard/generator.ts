@@ -15,10 +15,16 @@ const APP_ROUTES_PATH = 'apps/frontend/src/app/app.routes.ts';
 const NAV_PATH = 'apps/frontend/src/app/dashboard-nav.ts';
 const SOURCE_NAV_FILE = join(WORKSPACE_ROOT, NAV_PATH);
 
+// The shell / home / admin-tabs components are lazily routed through their
+// own entry points so `provideDashboard` (eager) doesn't pull MatSidenav /
+// MatList / MatMenu into the initial chunk. The admin bricks swap the
+// `DashboardHome` placeholder on `/app/admin` for `AdminTabsShell`.
+const DASH = '@org/frontend-dashboard';
+const HOME_LOAD = `loadComponent: () => import('${DASH}/home').then((m) => m.DashboardHome)`;
 const SHELL_ROUTE =
-  "{ path: 'app', canActivate: [authGuard], component: DashboardShell, children: [" +
-  "{ path: '', component: DashboardHome }, " +
-  "{ path: 'admin', canActivate: [roleGuard('admin')], component: DashboardHome }] }";
+  `{ path: 'app', canActivate: [authGuard], loadComponent: () => import('${DASH}/shell').then((m) => m.DashboardShell), children: [` +
+  `{ path: '', ${HOME_LOAD}, title: 'Home' }, ` +
+  `{ path: 'admin', canActivate: [roleGuard('admin')], ${HOME_LOAD} }] }`;
 const REDIRECT_ROUTE = "{ path: '', pathMatch: 'full', redirectTo: 'app' }";
 
 /**
@@ -44,8 +50,19 @@ export default async function frontendDashboardGenerator(
   updateJson(tree, tsconfigPath, (json) => {
     json.compilerOptions ??= {};
     json.compilerOptions.paths ??= {};
-    json.compilerOptions.paths['@org/frontend-dashboard'] ??= [
+    const p = json.compilerOptions.paths;
+    p['@org/frontend-dashboard'] ??= [
       './libs/frontend/dashboard/src/index.ts',
+    ];
+    // Lazy entry points for the routed shell components.
+    p['@org/frontend-dashboard/shell'] ??= [
+      './libs/frontend/dashboard/src/lib/shell/dashboard-shell.ts',
+    ];
+    p['@org/frontend-dashboard/home'] ??= [
+      './libs/frontend/dashboard/src/lib/dashboard-home.ts',
+    ];
+    p['@org/frontend-dashboard/admin-tabs'] ??= [
+      './libs/frontend/dashboard/src/lib/admin/admin-tabs-shell.ts',
     ];
     return json;
   });
@@ -70,18 +87,6 @@ export default async function frontendDashboardGenerator(
 
   ensureNamedImport(tree, APP_ROUTES_PATH, 'authGuard', '@org/frontend-auth');
   ensureNamedImport(tree, APP_ROUTES_PATH, 'roleGuard', '@org/frontend-auth');
-  ensureNamedImport(
-    tree,
-    APP_ROUTES_PATH,
-    'DashboardShell',
-    '@org/frontend-dashboard',
-  );
-  ensureNamedImport(
-    tree,
-    APP_ROUTES_PATH,
-    'DashboardHome',
-    '@org/frontend-dashboard',
-  );
   ensureRoute(tree, APP_ROUTES_PATH, SHELL_ROUTE, "path: 'app'");
   ensureRoute(tree, APP_ROUTES_PATH, REDIRECT_ROUTE, "redirectTo: 'app'");
 

@@ -126,7 +126,7 @@ function wireFrontend(tree: Tree): void {
   ensureArrayEntry(
     tree,
     APP_ROUTES_PATH,
-    /AdminTabsShell,\s*children:\s*\[/,
+    /AdminTabsShell\)[^[]*children:\s*\[/,
     `{ path: 'roles', loadChildren: () => import('${FRONTEND_IMPORT}').then((m) => m.ADMIN_ROLES_ROUTES) }`,
     FRONTEND_IMPORT,
   );

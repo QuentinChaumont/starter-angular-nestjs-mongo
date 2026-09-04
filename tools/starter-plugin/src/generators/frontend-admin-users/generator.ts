@@ -53,18 +53,18 @@ export default async function frontendAdminUsersGenerator(
     return json;
   });
 
-  // Swap the `component: DashboardHome` placeholder on the `/app/admin`
-  // route for `AdminTabsShell` + a child outlet, with this console as the
-  // index tab. The route's `roleGuard('admin')` stays and now covers every
-  // tab. Sibling admin bricks (role, audit) add their own child + tab.
+  // Swap the `DashboardHome` placeholder on the `/app/admin` route for the
+  // lazily-loaded `AdminTabsShell` + a child outlet, with this console as
+  // the index tab. The route's `roleGuard('admin')` stays and now covers
+  // every tab. Sibling admin bricks (role, audit) add their own child + tab.
   const routes = tree.read(APP_ROUTES_PATH, 'utf-8');
   if (routes === null) {
     throw new Error(`Missing "${APP_ROUTES_PATH}".`);
   }
   if (!routes.includes(IMPORT_PATH)) {
     const swapped = routes.replace(
-      /(path: 'admin'[^}]*?)component:\s*DashboardHome,?/,
-      `$1component: AdminTabsShell, children: [{ path: '', loadChildren: () => import('${IMPORT_PATH}').then((m) => m.ADMIN_USERS_ROUTES) }]`,
+      /(path: 'admin'[^}]*?)loadComponent: \(\) => import\('@org\/frontend-dashboard\/home'\)\.then\(\(m\) => m\.DashboardHome\)/,
+      `$1loadComponent: () => import('@org/frontend-dashboard/admin-tabs').then((m) => m.AdminTabsShell), children: [{ path: '', loadChildren: () => import('${IMPORT_PATH}').then((m) => m.ADMIN_USERS_ROUTES) }]`,
     );
     if (swapped === routes) {
       throw new Error(
@@ -73,12 +73,6 @@ export default async function frontendAdminUsersGenerator(
     }
     tree.write(APP_ROUTES_PATH, swapped);
   }
-  ensureNamedImport(
-    tree,
-    APP_ROUTES_PATH,
-    'AdminTabsShell',
-    '@org/frontend-dashboard',
-  );
 
   // Register the "Users" tab (V2.3 step 49) — each admin brick provides its
   // own via `provideAdminTab`, so no brick patches a shared list.

@@ -67,17 +67,22 @@ describe('frontend-dashboard generator', () => {
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
     expect(routes).toContain("import { authGuard, roleGuard } from '@org/frontend-auth';");
-    expect(routes).toContain('component: DashboardShell');
+    expect(routes).toContain(
+      "import('@org/frontend-dashboard/shell').then((m) => m.DashboardShell)",
+    );
     expect(routes).toContain('canActivate: [authGuard]');
     expect(routes).toContain("redirectTo: 'app'");
     // the pre-existing login route is untouched
     expect(routes).toContain("path: 'login'");
 
-    expect(
-      readJson(tree, 'tsconfig.base.json').compilerOptions.paths[
-        '@org/frontend-dashboard'
-      ],
-    ).toEqual(['./libs/frontend/dashboard/src/index.ts']);
+    const paths = readJson(tree, 'tsconfig.base.json').compilerOptions.paths;
+    expect(paths['@org/frontend-dashboard']).toEqual([
+      './libs/frontend/dashboard/src/index.ts',
+    ]);
+    expect(paths['@org/frontend-dashboard/shell']).toEqual([
+      './libs/frontend/dashboard/src/lib/shell/dashboard-shell.ts',
+    ]);
+    expect(paths['@org/frontend-dashboard/admin-tabs']).toBeDefined();
   });
 
   it('is idempotent', async () => {
@@ -85,7 +90,7 @@ describe('frontend-dashboard generator', () => {
     await frontendDashboardGenerator(tree);
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
-    expect((routes.match(/component: DashboardShell/g) ?? []).length).toBe(1);
+    expect((routes.match(/m\.DashboardShell/g) ?? []).length).toBe(1);
     expect((routes.match(/redirectTo: 'app'/g) ?? []).length).toBe(1);
 
     const config = tree.read(APP_CONFIG, 'utf-8') as string;

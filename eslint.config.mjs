@@ -22,6 +22,14 @@ export default [
         {
           enforceBuildableLibDependency: true,
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
+          // `frontend-dashboard` is deliberately both: `provideDashboard`
+          // (a small DI provider) is eager, the shell UI is lazily routed
+          // via `@org/frontend-dashboard/shell` etc. Don't treat the deep
+          // dynamic imports as making the whole project lazy.
+          checkDynamicDependenciesExceptions: [
+            '@org/frontend-dashboard',
+            '@org/frontend-dashboard/*',
+          ],
           depConstraints: [
             {
               sourceTag: 'scope:shared',

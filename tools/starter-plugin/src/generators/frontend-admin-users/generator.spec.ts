@@ -17,15 +17,14 @@ function seed(tree: Tree): void {
     APP_ROUTES,
     `import { Route } from '@angular/router';
 import { roleGuard } from '@org/frontend-auth';
-import { DashboardHome, DashboardShell } from '@org/frontend-dashboard';
 
 export const appRoutes: Route[] = [
   {
     path: 'app',
-    component: DashboardShell,
+    loadComponent: () => import('@org/frontend-dashboard/shell').then((m) => m.DashboardShell),
     children: [
-      { path: '', component: DashboardHome },
-      { path: 'admin', canActivate: [roleGuard('admin')], component: DashboardHome },
+      { path: '', loadComponent: () => import('@org/frontend-dashboard/home').then((m) => m.DashboardHome), title: 'Home' },
+      { path: 'admin', canActivate: [roleGuard('admin')], loadComponent: () => import('@org/frontend-dashboard/home').then((m) => m.DashboardHome) },
     ],
   },
 ];
@@ -82,15 +81,13 @@ describe('frontend-admin-users generator', () => {
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
     expect(routes).toContain("import('@org/frontend-features-admin-users')");
     expect(routes).toContain('m.ADMIN_USERS_ROUTES');
-    // the guard is kept, the placeholder is replaced by the tabs shell, and
-    // the console is now the index child of /app/admin
+    // the guard is kept, the placeholder is replaced by the lazy tabs
+    // shell, and the console is now the index child of /app/admin
     expect(routes).toMatch(
-      /path: 'admin'[\s\S]*?canActivate: \[roleGuard\('admin'\)\][\s\S]*?component: AdminTabsShell,\s*children: \[\{ path: '',[\s\S]*?ADMIN_USERS_ROUTES/,
+      /path: 'admin'[\s\S]*?canActivate: \[roleGuard\('admin'\)\][\s\S]*?import\('@org\/frontend-dashboard\/admin-tabs'\)[\s\S]*?m\.AdminTabsShell\),\s*children: \[\{ path: '',[\s\S]*?ADMIN_USERS_ROUTES/,
     );
-    expect(routes).toMatch(
-      /import \{[^}]*\bAdminTabsShell\b[^}]*\} from '@org\/frontend-dashboard'/,
-    );
-    expect(routes).not.toContain('component: DashboardHome, children');
+    // no /app/admin still pointing at the DashboardHome placeholder
+    expect(routes).not.toMatch(/path: 'admin'[\s\S]*?m\.DashboardHome/);
     expect(routes).not.toMatch(/^import .*frontend-features-admin-users/m);
 
     // registers the "Users" tab
