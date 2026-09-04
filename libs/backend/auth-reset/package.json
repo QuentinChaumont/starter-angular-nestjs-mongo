@@ -37,7 +37,7 @@
     "@org/backend-mailer": "0.0.1",
     "@org/shared-contracts": "0.0.1",
     "class-validator": "^0.15.1",
-    "mongoose": "^9.9.3"
+    "mongoose": "^9.9.4"
   },
   "devDependencies": {
     "@nestjs/config": "^4.0.4",
