@@ -202,7 +202,7 @@ export class LoginPage {
           this.pendingToken.set(outcome.pendingToken);
           return;
         }
-        this.router.navigateByUrl(this.redirectTo);
+        void this.router.navigateByUrl(this.redirectTo);
       },
       error: (err: unknown) => {
         this.submitting.set(false);

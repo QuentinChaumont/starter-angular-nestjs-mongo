@@ -80,7 +80,7 @@ export class UserMenu {
   /** Present as a route only when the profile brick (V2.1 step 34) is
    * installed; the menu entry is harmless without it. */
   protected goProfile(): void {
-    this.router.navigate(['/app/profile']);
+    void this.router.navigate(['/app/profile']);
   }
 
   protected openTheme(): void {
