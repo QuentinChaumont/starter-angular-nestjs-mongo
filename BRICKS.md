@@ -186,6 +186,24 @@ their npm deps sit in the root `package.json`. Each brick registers a
 - **Wiring:** `provideDashboard(DASHBOARD_NAV)` in `app.config.ts`; `apps/frontend/src/app/dashboard-nav.ts` (template); the `{ path: 'app', canActivate: [authGuard], … children: [home, admin] }` route group + `{ path: '', redirectTo: 'app' }` in `app.routes.ts`; paths `@org/frontend-dashboard` + `/shell` + `/home` + `/admin-tabs` in `tsconfig.base.json`.
 - **Depended on by:** `frontend-admin-users`, `frontend-auth --profile`.
 
+#### Nested / collapsible sidenav
+
+`NavItem` (from `@org/frontend-dashboard`) accepts a `children: NavItem[]`
+array — an item with children renders as a collapsible group (Lens-style:
+the header row only toggles, it never navigates — its `route`, if any, is
+ignored; put a landing page among its `children` instead), nestable to
+any depth. `filterNavByRole` (also exported) walks the tree and drops
+role-gated branches, dropping a group left with no visible children along
+with them. Expand state persists per item in `localStorage` (keyed on
+`route` — fall back to `label` for a header with no route of its own, so
+give those distinct labels) and the branch holding the active route
+auto-expands the first time it's seen; a later manual collapse always
+wins over that. Left as a plain link, `apps/frontend/src/app/dashboard-nav.ts`'s
+"Admin" entry carries a commented example of the shape (`/app/admin`
+already has its own sub-navigation — the `AdminTabsShell` tab strip —
+so mirroring it in the sidenav too would just duplicate it); the
+rendering lives in `libs/frontend/dashboard/src/lib/shell/nav-tree-item.ts`.
+
 ### `frontend-feedback`
 
 - **Requires:** `frontend-design`.

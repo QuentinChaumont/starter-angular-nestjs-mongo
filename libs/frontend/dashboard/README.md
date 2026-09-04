@@ -9,10 +9,11 @@ sidenav wrapping the routed content. Depends on `frontend-auth`; see
 | Export                                           | Use                                                                                                                                                   |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `provideDashboard(nav)`                          | Spread into `app.config.ts` — provides `DASHBOARD_NAV`.                                                                                               |
-| `DASHBOARD_NAV`, `NavItem`                       | The sidenav menu token + item type.                                                                                                                   |
+| `DASHBOARD_NAV`, `NavItem`                       | The sidenav menu token + item type (`children` for a collapsible group — see below).                                                                 |
+| `filterNavByRole(items, roles)`                  | Pure — the recursive role filter `SidenavNav` runs; reuse it anywhere else the same tree needs the same rule (e.g. a breadcrumb trail).               |
 | `DashboardShell`                                 | Route component wrapping `/app/**` (`canActivate: [authGuard]`). Shows a slim top progress bar during router navigations (150 ms anti-flicker delay). |
 | `DashboardHome`                                  | Placeholder landing page — replace with the real one.                                                                                                 |
-| `SidenavNav`, `UserMenu`                         | Building blocks, if you build your own shell.                                                                                                         |
+| `SidenavNav`, `NavTreeItem`, `UserMenu`          | Building blocks, if you build your own shell.                                                                                                         |
 | `AdminTabsShell`                                 | `/app/admin` frame — a tab strip over a routed outlet (V2.3 step 49).                                                                                 |
 | `ADMIN_TABS`, `provideAdminTab(tab)`, `AdminTab` | Multi-provider for the admin sub-tabs — each admin brick registers its own.                                                                           |
 
@@ -47,8 +48,10 @@ providers: [..., provideDashboard(DASHBOARD_NAV)]
 - `MatSidenav`: `side` + open on ≥ `md` (persisted in `localStorage`),
   `over` + closed below (`BreakpointObserver`, `(max-width: 959.98px)`).
   On mobile it closes after navigating.
-- `SidenavNav` renders `DASHBOARD_NAV`, hiding entries whose `roles` the
-  current user lacks, and highlights the active route.
+- `SidenavNav` renders `DASHBOARD_NAV` through `filterNavByRole` + a tree of
+  `NavTreeItem` rows — hiding entries whose `roles` the current user lacks,
+  highlighting the active route, and rendering a `children` entry as a
+  collapsible group (see below).
 - `UserMenu` (toolbar): current roles, "Appearance" (opens
   `ThemeSettingsPanel` in a dialog), "Sign out" (→ `/login`).
 - No business feature is imported — the shell only knows `DASHBOARD_NAV`.
@@ -56,6 +59,38 @@ providers: [..., provideDashboard(DASHBOARD_NAV)]
 - A 2px `<mat-progress-bar>` pinned to the top edge shows while a router
   navigation is in flight — but only once it's run longer than 150 ms, so
   instant in-app moves don't flash it.
+
+## Nested / collapsible groups
+
+`NavItem.children` renders a sidenav entry as a collapsible group — a
+Lens-style tree, nestable to any depth:
+
+```ts
+{
+  label: 'Reports',
+  icon: 'bar_chart',
+  children: [
+    { label: 'Sales', icon: 'point_of_sale', route: 'reports/sales' },
+    { label: 'Usage', icon: 'query_stats', route: 'reports/usage' },
+  ],
+}
+```
+
+- A **group** (`children` set) renders as a header row that only
+  toggles — its own `route`, if set, is ignored; give the group a landing
+  page by putting it among its `children` instead. A **leaf** (`children`
+  unset) is always a plain routed link.
+- `filterNavByRole` walks the whole tree: a role-gated branch is dropped,
+  and so is a group left with no visible children (its header can't
+  navigate anywhere on its own).
+- Expand state persists per item in `localStorage`
+  (`app.dashboard.nav-expanded.<route-or-label>` — a group falls back to
+  its `label` since it has no `route`, so keep those distinct), and the
+  branch holding the active route auto-expands the first time it's seen; any
+  later manual toggle (this session or a past one) wins over that from
+  then on.
+- Rendering is `NavTreeItem` (`libs/frontend/dashboard/src/lib/shell/nav-tree-item.ts`)
+  — a small recursive component, one per row, indenting 16px per depth.
 
 ## Admin sub-tabs (V2.3 step 49)
 

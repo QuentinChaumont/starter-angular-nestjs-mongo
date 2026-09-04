@@ -5,44 +5,27 @@ import {
   inject,
   output,
 } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthStore } from '@org/frontend-auth';
-import { DASHBOARD_NAV } from '../nav.tokens';
+import { DASHBOARD_NAV, filterNavByRole } from '../nav.tokens';
+import { NavTreeItem } from './nav-tree-item';
 
-/** Renders `DASHBOARD_NAV`, filtered by the current user's roles. */
+/**
+ * Renders `DASHBOARD_NAV`, filtered by the current user's roles — a tree
+ * of {@link NavTreeItem} rows, one per root entry. An entry with
+ * `children` renders as a collapsible group (Lens-style); everything else
+ * is a plain routed link. See `NavItem` for the shape.
+ */
 @Component({
   selector: 'lib-sidenav-nav',
-  imports: [
-    MatListModule,
-    MatIconModule,
-    RouterLink,
-    RouterLinkActive,
-    TranslocoPipe,
-  ],
+  imports: [MatListModule, NavTreeItem],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <nav class="nav">
       <p class="nav__eyebrow">Navigation</p>
       <mat-nav-list class="nav__list">
-        @for (item of items(); track item.route) {
-          <a
-            mat-list-item
-            class="nav__item"
-            [routerLink]="
-              item.route ? ['/app', ...item.route.split('/')] : ['/app']
-            "
-            routerLinkActive="active-link"
-            [routerLinkActiveOptions]="{ exact: item.route === '' }"
-            (click)="navigated.emit()"
-          >
-            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
-            <span matListItemTitle>
-              {{ item.labelKey ? (item.labelKey | transloco) : item.label }}
-            </span>
-          </a>
+        @for (item of items(); track item.route ?? item.label) {
+          <lib-nav-tree-item [item]="item" (navigated)="navigated.emit()" />
         }
       </mat-nav-list>
     </nav>
@@ -78,24 +61,6 @@ import { DASHBOARD_NAV } from '../nav.tokens';
       );
       padding: 0;
     }
-    .nav__item {
-      margin-block: 1px;
-      border-radius: var(--app-radius-md);
-    }
-    .nav__item:hover {
-      background: color-mix(
-        in srgb,
-        var(--app-color-on-surface) 6%,
-        transparent
-      );
-    }
-    .active-link.nav__item {
-      background: var(--app-color-surface-variant);
-      box-shadow: inset 2px 0 0 var(--app-color-primary);
-      --mat-list-list-item-label-text-color: var(--app-color-primary);
-      --mat-list-list-item-label-text-weight: 600;
-      --mat-list-list-item-leading-icon-color: var(--app-color-primary);
-    }
   `,
 })
 export class SidenavNav {
@@ -105,10 +70,7 @@ export class SidenavNav {
   /** Emitted when a link is clicked — the shell closes the drawer on mobile. */
   readonly navigated = output<void>();
 
-  protected readonly items = computed(() => {
-    const roles = this.store.user()?.roles ?? [];
-    return this.nav.filter(
-      (item) => !item.roles || item.roles.some((role) => roles.includes(role)),
-    );
-  });
+  protected readonly items = computed(() =>
+    filterNavByRole(this.nav, this.store.user()?.roles ?? []),
+  );
 }

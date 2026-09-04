@@ -1,5 +1,5 @@
 export { provideDashboard } from './lib/provide-dashboard';
-export { DASHBOARD_NAV } from './lib/nav.tokens';
+export { DASHBOARD_NAV, filterNavByRole } from './lib/nav.tokens';
 export type { NavItem } from './lib/nav.tokens';
 export { ADMIN_TABS, provideAdminTab } from './lib/admin/admin-tabs.tokens';
 export type { AdminTab } from './lib/admin/admin-tabs.tokens';
