@@ -385,6 +385,18 @@ The app shell itself carries a `TitleStrategy` (each route's `title` →
 `document.title`, with the app name appended — rename `APP_NAME` in
 `title-strategy.ts`) and a `**` catch-all route rendering a 404 page.
 
+**Bundle.** Initial JS is ~990 kB raw / ~200 kB gzipped (Angular + Material
++ Router + Forms + Transloco). The production `initial` budget is 1 mb
+warning / 1.3 mb error — the raw figure; what ships is the transfer size.
+The feature libs' route components (`LoginPage`, the `/legal` pages, the
+dashboard shell) currently land in the initial chunk because the
+`@org/frontend-*` barrels re-export both the app-facing API (services,
+guards, providers) **and** the page components, and tsconfig-path-mapped
+libs aren't tree-shaken through the barrel. Splitting each barrel into an
+API surface + a `*_ROUTES` array (as `frontend-features-profile` /
+`admin-*` already do) would move ~250 kB off the initial load — a
+generator-suite change, tracked for a later step.
+
 ### `frontend-design` — theme & charter
 
 `design.config.ts` (TypeScript) and `_tokens.scss` (CSS custom
