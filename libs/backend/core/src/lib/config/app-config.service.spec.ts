@@ -70,6 +70,25 @@ describe('AppConfigService', () => {
     ).toBe('loopback');
   });
 
+  it('defaults logging.level by environment and honours LOG_LEVEL', () => {
+    const base = {
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
+    };
+    expect(
+      createService({ ...base, NODE_ENV: 'development' }).logging.level,
+    ).toBe('debug');
+    expect(
+      createService({ ...base, NODE_ENV: 'production' }).logging.level,
+    ).toBe('log');
+    expect(
+      createService({ ...base, NODE_ENV: 'production', LOG_LEVEL: 'warn' })
+        .logging.level,
+    ).toBe('warn');
+  });
+
   it('exposes security.rateLimit', () => {
     const service = createService({
       NODE_ENV: 'development',

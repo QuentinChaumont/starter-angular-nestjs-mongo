@@ -84,4 +84,38 @@ describe('AppLogger', () => {
       context: 'Bootstrap',
     });
   });
+
+  describe('LOG_LEVEL threshold', () => {
+    function loggerAt(level: string) {
+      const config = { logging: { level } } as unknown as ConstructorParameters<
+        typeof AppLogger
+      >[1];
+      const logger = new AppLogger(new RequestContextService(), config);
+      const writeSpy = jest
+        .spyOn(process.stdout, 'write')
+        .mockImplementation(() => true);
+      return { logger, writeSpy };
+    }
+
+    it('drops messages below the configured level', () => {
+      const { logger, writeSpy } = loggerAt('warn');
+
+      logger.debug('noisy');
+      logger.log('routine');
+      logger.warn('heads up');
+      logger.error('broken');
+
+      const levels = writeSpy.mock.calls.map(
+        ([p]) => JSON.parse((p as string).trim()).level,
+      );
+      expect(levels).toEqual(['warn', 'error']);
+    });
+
+    it('emits everything when no config is wired (unchanged default)', () => {
+      const { logger, writeSpy } = createLogger();
+      logger.verbose('v');
+      logger.debug('d');
+      expect(writeSpy).toHaveBeenCalledTimes(2);
+    });
+  });
 });

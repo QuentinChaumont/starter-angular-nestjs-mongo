@@ -96,6 +96,10 @@ once auth has resolved the caller. Silent under `NODE_ENV=test`. On boot a
 `StartupSummaryService` logs a one-shot summary of the effective config
 (env, CORS, proxy, Mongo/mailer/OIDC wiring, rate limits, audit retention).
 
+`AppLogger` drops anything below `LOG_LEVEL` (default `debug` in dev, `log`
+in prod); output is coloured for a TTY in development, one-line JSON
+everywhere else.
+
 ### Error format
 
 Every error response — from the app's own domain errors, from framework
@@ -128,6 +132,7 @@ failing later at first use.
 | `NODE_ENV`                     | no                         | `development`                | `development` \| `test` \| `production`                                                                                      |
 | `PORT`                         | no                         | `3000`                       | Nx injects the root `.env` into every task; `apps/frontend/.env` pins the SPA dev-server to 4200 so it doesn't inherit this. |
 | `CORS_ORIGINS`                 | no                         | `http://localhost:4200`      | Comma-separated list                                                                                                         |
+| `LOG_LEVEL`                    | no                         | `debug` (dev) / `log` (prod) | Minimum severity emitted: `verbose` \| `debug` \| `log` \| `warn` \| `error` \| `fatal`                                       |
 | `TRUST_PROXY`                  | behind a proxy             | — (`false`)                  | Express `trust proxy`: `true`, a hop count (`1`), or `loopback`. Needed so `req.ip` is the real client behind nginx / a load balancer. |
 | `RATE_LIMIT_TTL_SECONDS`       | no                         | `60`                         | Rate-limit window (security brick)                                                                                           |
 | `RATE_LIMIT_LIMIT`             | no                         | `100`                        | Max requests per window (security brick)                                                                                     |

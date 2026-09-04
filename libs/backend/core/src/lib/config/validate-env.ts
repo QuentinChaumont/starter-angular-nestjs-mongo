@@ -1,5 +1,7 @@
 import {
   EnvironmentVariables,
+  LOG_LEVELS,
+  LogLevelName,
   NODE_ENVIRONMENTS,
   NodeEnvironment,
 } from './environment-variables';
@@ -26,6 +28,22 @@ function parseNodeEnv(raw: unknown, errors: string[]): NodeEnvironment {
     `NODE_ENV must be one of ${NODE_ENVIRONMENTS.join(', ')}, received "${String(raw)}"`,
   );
   return DEFAULT_NODE_ENV;
+}
+
+function parseLogLevel(
+  raw: unknown,
+  errors: string[],
+): LogLevelName | undefined {
+  if (raw === undefined || raw === '') {
+    return undefined;
+  }
+  if (LOG_LEVELS.includes(raw as LogLevelName)) {
+    return raw as LogLevelName;
+  }
+  errors.push(
+    `LOG_LEVEL must be one of ${LOG_LEVELS.join(', ')}, received "${String(raw)}"`,
+  );
+  return undefined;
 }
 
 function parsePort(raw: unknown, errors: string[]): number {
@@ -167,6 +185,7 @@ export function validateEnv(
   const NODE_ENV = parseNodeEnv(rawEnv['NODE_ENV'], errors);
   const PORT = parsePort(rawEnv['PORT'], errors);
   const CORS_ORIGINS = parseCorsOrigins(rawEnv['CORS_ORIGINS']);
+  const LOG_LEVEL = parseLogLevel(rawEnv['LOG_LEVEL'], errors);
   const TRUST_PROXY = parseOptionalString(
     'TRUST_PROXY',
     rawEnv['TRUST_PROXY'],
@@ -364,6 +383,7 @@ export function validateEnv(
     NODE_ENV,
     PORT,
     CORS_ORIGINS,
+    ...(LOG_LEVEL !== undefined ? { LOG_LEVEL } : {}),
     ...(TRUST_PROXY !== undefined ? { TRUST_PROXY } : {}),
     RATE_LIMIT_TTL_SECONDS,
     RATE_LIMIT_LIMIT,

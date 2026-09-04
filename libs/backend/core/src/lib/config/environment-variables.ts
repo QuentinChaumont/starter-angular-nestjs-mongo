@@ -2,10 +2,25 @@ export const NODE_ENVIRONMENTS = ['development', 'test', 'production'] as const;
 
 export type NodeEnvironment = (typeof NODE_ENVIRONMENTS)[number];
 
+/** Log severities, least → most severe. `LOG_LEVEL` sets the minimum emitted. */
+export const LOG_LEVELS = [
+  'verbose',
+  'debug',
+  'log',
+  'warn',
+  'error',
+  'fatal',
+] as const;
+
+export type LogLevelName = (typeof LOG_LEVELS)[number];
+
 export interface EnvironmentVariables {
   NODE_ENV: NodeEnvironment;
   PORT: number;
   CORS_ORIGINS: string[];
+  /** Minimum log severity to emit. Unset → `debug` outside production,
+   * `log` in production. */
+  LOG_LEVEL?: LogLevelName;
   /** Express `trust proxy` setting — needed behind a reverse proxy (nginx,
    * a load balancer, the `docker` brick) so `req.ip` and `req.protocol`
    * reflect the real client, not the proxy. `true`, `false`, a hop count
@@ -88,6 +103,7 @@ export const ENVIRONMENT_VARIABLE_NAMES: readonly (keyof EnvironmentVariables)[]
     'NODE_ENV',
     'PORT',
     'CORS_ORIGINS',
+    'LOG_LEVEL',
     'TRUST_PROXY',
     'RATE_LIMIT_TTL_SECONDS',
     'RATE_LIMIT_LIMIT',

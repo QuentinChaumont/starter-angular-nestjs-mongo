@@ -31,6 +31,16 @@ describe('validateEnv', () => {
     });
   });
 
+  it('accepts a valid LOG_LEVEL and rejects an invalid one', () => {
+    expect(validateEnv({ LOG_LEVEL: 'warn' })).toMatchObject({
+      LOG_LEVEL: 'warn',
+    });
+    expect(validateEnv({})).not.toHaveProperty('LOG_LEVEL');
+    expect(() => validateEnv({ LOG_LEVEL: 'chatty' })).toThrow(
+      /LOG_LEVEL must be one of/,
+    );
+  });
+
   it('keeps TRUST_PROXY as a raw string for setup-security to interpret', () => {
     expect(validateEnv({ TRUST_PROXY: '1' })).toMatchObject({
       TRUST_PROXY: '1',

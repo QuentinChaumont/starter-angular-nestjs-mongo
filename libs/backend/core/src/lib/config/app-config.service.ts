@@ -28,6 +28,19 @@ export class AppConfigService {
     };
   }
 
+  get logging() {
+    const level = this.configService.get('LOG_LEVEL', { infer: true });
+    return {
+      /** Minimum severity emitted. Default: `log` in production, `debug`
+       * elsewhere. */
+      level:
+        level ??
+        (this.configService.get('NODE_ENV', { infer: true }) === 'production'
+          ? ('log' as const)
+          : ('debug' as const)),
+    };
+  }
+
   get http() {
     return {
       corsOrigins: this.configService.get('CORS_ORIGINS', { infer: true }),

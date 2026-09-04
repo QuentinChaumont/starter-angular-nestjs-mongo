@@ -1,5 +1,17 @@
-import { ConsoleLogger, Injectable, LogLevel } from '@nestjs/common';
+import { ConsoleLogger, Injectable, LogLevel, Optional } from '@nestjs/common';
+import { AppConfigService } from '../config/app-config.service';
 import { RequestContextService } from './request-context.service';
+
+/** Severity order — a message is emitted only if its level is at or above
+ * the configured threshold. */
+const SEVERITY: Record<LogLevel, number> = {
+  verbose: 0,
+  debug: 1,
+  log: 2,
+  warn: 3,
+  error: 4,
+  fatal: 5,
+};
 
 interface StructuredLogEntry {
   level: LogLevel;
@@ -27,8 +39,16 @@ const REQUEST_ID_COLOR = '\x1b[36m'; // cyan
 
 @Injectable()
 export class AppLogger extends ConsoleLogger {
-  constructor(private readonly requestContext: RequestContextService) {
+  /** Messages below this severity are dropped. Without config wired (unit
+   * tests, minimal modules) nothing is filtered — behaviour is unchanged. */
+  private readonly threshold: number;
+
+  constructor(
+    private readonly requestContext: RequestContextService,
+    @Optional() config: AppConfigService | null = null,
+  ) {
     super();
+    this.threshold = config ? SEVERITY[config.logging.level] : SEVERITY.verbose;
   }
 
   override log(message: string, context?: string): void {
@@ -57,6 +77,10 @@ export class AppLogger extends ConsoleLogger {
     context?: string,
     trace?: string,
   ): void {
+    if (SEVERITY[level] < this.threshold) {
+      return;
+    }
+
     const entry: StructuredLogEntry = {
       level,
       message,
