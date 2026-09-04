@@ -35,7 +35,7 @@
     "@org/backend-database-mongo": "0.0.1",
     "@org/backend-features-user": "0.0.1",
     "@org/shared-contracts": "0.0.1",
-    "mongoose": "^9.9.3"
+    "mongoose": "^9.9.4"
   },
   "devDependencies": {
     "@nestjs/core": "^11.0.0",
