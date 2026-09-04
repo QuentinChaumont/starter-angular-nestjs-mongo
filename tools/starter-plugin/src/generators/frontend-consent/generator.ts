@@ -18,11 +18,9 @@ const APP_ROUTES_PATH = 'apps/frontend/src/app/app.routes.ts';
 
 const BANNER_TAG = '<lib-consent-banner></lib-consent-banner>';
 const LEGAL_LINKS_TAG = '<lib-legal-links></lib-legal-links>';
-const COOKIE_ROUTE =
-  "{ path: 'legal/cookies', component: CookiePolicy }";
-const PRIVACY_ROUTE =
-  "{ path: 'legal/privacy', component: PrivacyPolicy }";
-const NOTICE_ROUTE = "{ path: 'legal/notice', component: LegalNotice }";
+// The pages are lazy (`LEGAL_ROUTES` uses `loadComponent`); only the array
+// is imported eagerly.
+const LEGAL_ROUTE = '{ path: \'legal\', children: LEGAL_ROUTES }';
 
 /**
  * Adds the consent brick: the first-visit cookie banner, preferences
@@ -99,24 +97,10 @@ export default async function frontendConsentGenerator(
   ensureNamedImport(
     tree,
     APP_ROUTES_PATH,
-    'CookiePolicy',
+    'LEGAL_ROUTES',
     '@org/frontend-consent',
   );
-  ensureNamedImport(
-    tree,
-    APP_ROUTES_PATH,
-    'PrivacyPolicy',
-    '@org/frontend-consent',
-  );
-  ensureNamedImport(
-    tree,
-    APP_ROUTES_PATH,
-    'LegalNotice',
-    '@org/frontend-consent',
-  );
-  ensureRoute(tree, APP_ROUTES_PATH, COOKIE_ROUTE, "path: 'legal/cookies'");
-  ensureRoute(tree, APP_ROUTES_PATH, PRIVACY_ROUTE, "path: 'legal/privacy'");
-  ensureRoute(tree, APP_ROUTES_PATH, NOTICE_ROUTE, "path: 'legal/notice'");
+  ensureRoute(tree, APP_ROUTES_PATH, LEGAL_ROUTE, 'children: LEGAL_ROUTES');
 
   await formatFiles(tree);
 }

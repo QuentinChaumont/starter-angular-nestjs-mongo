@@ -36,9 +36,7 @@ const LOGIN_PAGE_PATH = 'libs/frontend/auth/src/lib/login/login-page.ts';
 
 const RESET_EXPORTS = [
   './lib/reset/reset.service',
-  './lib/reset/forgot-password-page',
-  './lib/reset/reset-password-page',
-  './lib/reset/verify-email-page',
+  './lib/reset/reset.routes',
   './lib/reset/verify-email-banner',
 ];
 
@@ -107,39 +105,10 @@ function wireFrontend(tree: Tree): void {
   ensureNamedImport(
     tree,
     APP_ROUTES_PATH,
-    'ForgotPasswordPage',
+    'RESET_ROUTES',
     '@org/frontend-auth',
   );
-  ensureNamedImport(
-    tree,
-    APP_ROUTES_PATH,
-    'ResetPasswordPage',
-    '@org/frontend-auth',
-  );
-  ensureNamedImport(
-    tree,
-    APP_ROUTES_PATH,
-    'VerifyEmailPage',
-    '@org/frontend-auth',
-  );
-  ensureRoute(
-    tree,
-    APP_ROUTES_PATH,
-    "{ path: 'forgot-password', component: ForgotPasswordPage }",
-    "path: 'forgot-password'",
-  );
-  ensureRoute(
-    tree,
-    APP_ROUTES_PATH,
-    "{ path: 'reset-password', component: ResetPasswordPage }",
-    "path: 'reset-password'",
-  );
-  ensureRoute(
-    tree,
-    APP_ROUTES_PATH,
-    "{ path: 'verify-email', component: VerifyEmailPage }",
-    "path: 'verify-email'",
-  );
+  ensureRoute(tree, APP_ROUTES_PATH, '...RESET_ROUTES', '...RESET_ROUTES');
 
   // The "verify your email" bar, mounted outside the router outlet.
   ensureNamedImport(

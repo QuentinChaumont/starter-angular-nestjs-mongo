@@ -86,11 +86,10 @@ describe('frontend-consent generator', () => {
     );
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
-    expect(routes).toContain('component: CookiePolicy');
-    expect(routes).toContain('component: PrivacyPolicy');
-    expect(routes).toContain('component: LegalNotice');
-    expect(routes).toContain("path: 'legal/cookies'");
-    expect(routes).toContain("path: 'legal/notice'");
+    expect(routes).toContain(
+      "import { LEGAL_ROUTES } from '@org/frontend-consent'",
+    );
+    expect(routes).toContain("path: 'legal', children: LEGAL_ROUTES");
 
     expect(
       readJson(tree, 'tsconfig.base.json').compilerOptions.paths[
@@ -112,7 +111,9 @@ describe('frontend-consent generator', () => {
     expect((template.match(/lib-legal-links/g) ?? []).length).toBe(2);
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
-    expect((routes.match(/path: 'legal\/cookies'/g) ?? []).length).toBe(1);
-    expect((routes.match(/path: 'legal\/notice'/g) ?? []).length).toBe(1);
+    expect((routes.match(/children: LEGAL_ROUTES/g) ?? []).length).toBe(1);
+    expect(
+      (routes.match(/from '@org\/frontend-consent'/g) ?? []).length,
+    ).toBe(1);
   });
 });

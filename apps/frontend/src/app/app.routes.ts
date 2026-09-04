@@ -1,19 +1,6 @@
 import { Route } from '@angular/router';
-import {
-  ForgotPasswordPage,
-  LoginPage,
-  OidcCallback,
-  RegisterPage,
-  ResetPasswordPage,
-  VerifyEmailPage,
-  authGuard,
-  roleGuard,
-} from '@org/frontend-auth';
-import {
-  CookiePolicy,
-  LegalNotice,
-  PrivacyPolicy,
-} from '@org/frontend-consent';
+import { AUTH_ROUTES, RESET_ROUTES, authGuard, roleGuard } from '@org/frontend-auth';
+import { LEGAL_ROUTES } from '@org/frontend-consent';
 import {
   AdminTabsShell,
   DashboardHome,
@@ -22,23 +9,9 @@ import {
 import { NotFoundPage } from './not-found.component';
 
 export const appRoutes: Route[] = [
-  { path: 'login', component: LoginPage, title: 'Sign in' },
-  { path: 'register', component: RegisterPage, title: 'Create your account' },
-  { path: 'auth/callback', component: OidcCallback, title: 'Signing in' },
-  {
-    path: 'forgot-password',
-    component: ForgotPasswordPage,
-    title: 'Reset your password',
-  },
-  {
-    path: 'reset-password',
-    component: ResetPasswordPage,
-    title: 'Choose a new password',
-  },
-  { path: 'verify-email', component: VerifyEmailPage, title: 'Verify your email' },
-  { path: 'legal/cookies', component: CookiePolicy, title: 'Cookie policy' },
-  { path: 'legal/privacy', component: PrivacyPolicy, title: 'Privacy notice' },
-  { path: 'legal/notice', component: LegalNotice, title: 'Legal notice' },
+  ...AUTH_ROUTES,
+  ...RESET_ROUTES,
+  { path: 'legal', children: LEGAL_ROUTES },
   {
     path: 'app',
     canActivate: [authGuard],

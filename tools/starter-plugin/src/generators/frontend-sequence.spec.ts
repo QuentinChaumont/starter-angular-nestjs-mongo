@@ -123,19 +123,21 @@ describe('frontend brick sequence', () => {
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
     for (const marker of [
-      "path: 'login'",
-      "path: 'register'",
-      "path: 'auth/callback'",
-      "component: DashboardShell",
+      '...AUTH_ROUTES',
+      'component: DashboardShell',
       "redirectTo: 'app'",
-      "path: 'legal/cookies'",
-      "path: 'legal/privacy'",
-      "path: 'legal/notice'",
+      'children: LEGAL_ROUTES',
     ]) {
       expect(routes).toContain(marker);
     }
+    expect(routes).toMatch(
+      /import \{[^}]*\bAUTH_ROUTES\b[^}]*\} from '@org\/frontend-auth'/,
+    );
+    expect(routes).toMatch(
+      /import \{[^}]*\bLEGAL_ROUTES\b[^}]*\} from '@org\/frontend-consent'/,
+    );
     // public routes stay first (install order)
-    expect(routes.indexOf("path: 'login'")).toBeLessThan(
+    expect(routes.indexOf('...AUTH_ROUTES')).toBeLessThan(
       routes.indexOf('component: DashboardShell'),
     );
 

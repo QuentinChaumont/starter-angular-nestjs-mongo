@@ -25,13 +25,13 @@ export class AppModule {}
 
 function seedFrontend(tree: Tree): void {
   tree.write('libs/frontend/auth/project.json', '{}');
-  tree.write(FRONTEND_AUTH_INDEX, `export { LoginPage } from './lib/login/login-page';\n`);
+  tree.write(FRONTEND_AUTH_INDEX, `export { AUTH_ROUTES } from './lib/auth.routes';\n`);
   tree.write(
     APP_ROUTES_PATH,
     `import { Route } from '@angular/router';
-import { LoginPage } from '@org/frontend-auth';
+import { AUTH_ROUTES } from '@org/frontend-auth';
 
-export const appRoutes: Route[] = [{ path: 'login', component: LoginPage }];
+export const appRoutes: Route[] = [...AUTH_ROUTES];
 `,
   );
   tree.write(
@@ -87,13 +87,10 @@ describe('auth-reset generator', () => {
     await authResetGenerator(tree);
 
     const routes = tree.read(APP_ROUTES_PATH, 'utf-8') as string;
-    for (const marker of [
-      "path: 'forgot-password'",
-      "path: 'reset-password'",
-      "path: 'verify-email'",
-    ]) {
-      expect(routes).toContain(marker);
-    }
+    expect(routes).toMatch(
+      /import \{[^}]*\bRESET_ROUTES\b[^}]*\} from '@org\/frontend-auth'/,
+    );
+    expect(routes).toContain('...RESET_ROUTES');
 
     const component = tree.read(APP_COMPONENT_PATH, 'utf-8') as string;
     expect(component).toContain('VerifyEmailBanner');

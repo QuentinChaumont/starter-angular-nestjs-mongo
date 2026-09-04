@@ -82,12 +82,10 @@ describe('frontend-auth generator', () => {
     expect(appConfig).toContain("from '@angular/common/http'");
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
-    expect(routes).toContain('component: LoginPage');
-    expect(routes).toContain('component: RegisterPage');
-    expect(routes).toContain('component: OidcCallback');
-    expect(routes).toContain("path: 'login'");
-    expect(routes).toContain("path: 'register'");
-    expect(routes).toContain("path: 'auth/callback'");
+    expect(routes).toContain(
+      "import { AUTH_ROUTES } from '@org/frontend-auth'",
+    );
+    expect(routes).toContain('...AUTH_ROUTES');
 
     expect(
       readJson(tree, 'tsconfig.base.json').compilerOptions.paths[
@@ -200,8 +198,7 @@ export class UserMenu {
     expect((appConfig.match(/provideHttpClient/g) ?? []).length).toBe(2); // import + call
 
     const routes = tree.read(APP_ROUTES, 'utf-8') as string;
-    expect((routes.match(/path: 'login'/g) ?? []).length).toBe(1);
-    expect((routes.match(/path: 'register'/g) ?? []).length).toBe(1);
-    expect((routes.match(/path: 'auth\/callback'/g) ?? []).length).toBe(1);
+    expect((routes.match(/\.\.\.AUTH_ROUTES/g) ?? []).length).toBe(1);
+    expect((routes.match(/from '@org\/frontend-auth'/g) ?? []).length).toBe(1);
   });
 });
