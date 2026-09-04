@@ -90,6 +90,12 @@ in the request's call stack (controller, service, repository) without
 threading it through function arguments, is included automatically in
 every log line, and is echoed back in the `X-Request-Id` response header.
 
+An `HttpLoggerInterceptor` (bound app-wide by `LoggerModule`) writes one
+access line per request — `METHOD /path status Xms`, plus `actor=<id>`
+once auth has resolved the caller. Silent under `NODE_ENV=test`. On boot a
+`StartupSummaryService` logs a one-shot summary of the effective config
+(env, CORS, proxy, Mongo/mailer/OIDC wiring, rate limits, audit retention).
+
 ### Error format
 
 Every error response — from the app's own domain errors, from framework
@@ -610,6 +616,15 @@ self-contained (no Nx Cloud token, so it stays green on a fork):
 - a separate **`e2e`** job (PRs only) installs chromium and runs
   `nx affected -t e2e` (the Playwright suite, see above); the HTML report
   and traces are uploaded as an artifact on failure.
+
+**Local pre-push hook.** `npm install` points `core.hooksPath` at
+`.githooks/` (via the `prepare` script); `.githooks/pre-push` runs
+`nx affected -t lint typecheck` so a broken push is caught before the PR.
+Bypass with `git push --no-verify`.
+
+**Dependabot.** `.github/dependabot.yml` opens weekly grouped PRs (one per
+stack: Angular, Nx, NestJS, other dev deps) for npm and GitHub Actions.
+Majors are ignored — bump those by hand with their codemods.
 
 ## Docker
 

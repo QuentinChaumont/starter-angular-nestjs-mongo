@@ -1,0 +1,11 @@
+#!/bin/sh
+# Wired by the `prepare` npm script (core.hooksPath = .githooks).
+# Runs the same lint + typecheck CI does, but only on affected projects,
+# so a broken push is caught locally instead of on the PR.
+#
+# Skip with `git push --no-verify`.
+
+command -v npx >/dev/null 2>&1 || exit 0
+
+echo "pre-push → nx affected -t lint typecheck"
+exec npx nx affected -t lint typecheck

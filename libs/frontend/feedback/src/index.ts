@@ -20,3 +20,4 @@ export {
 } from './lib/http-error.interceptor';
 export { unsavedChangesGuard } from './lib/unsaved-changes.guard';
 export type { HasUnsavedChanges } from './lib/unsaved-changes.guard';
+export { GlobalErrorHandler } from './lib/global-error-handler';

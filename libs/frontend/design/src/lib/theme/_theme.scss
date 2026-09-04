@@ -77,6 +77,21 @@ body {
   border-radius: var(--app-radius-sm);
 }
 
+// Honour the OS "reduce motion" setting everywhere at once — Material's
+// ripples and overlay animations, the nav progress bar, the skip link,
+// the data-table transitions. Near-instant instead of fully off so state
+// changes still register.
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 // Slim, neutral scrollbars — chrome should recede.
 * {
   scrollbar-width: thin;

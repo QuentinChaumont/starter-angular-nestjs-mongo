@@ -1,0 +1,36 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    # One PR per stack instead of dozens of individual bumps.
+    groups:
+      angular:
+        patterns:
+          - '@angular*'
+          - '@angular-devkit/*'
+          - '@schematics/*'
+      nx:
+        patterns:
+          - '@nx/*'
+          - 'nx'
+      nestjs:
+        patterns:
+          - '@nestjs/*'
+      dev-minor:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+    # Majors are opt-in — review and run the codemods by hand.
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -1,5 +1,10 @@
 import { MAT_DIALOG_DEFAULT_OPTIONS } from '@angular/material/dialog';
-import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
+import {
+  EnvironmentProviders,
+  ErrorHandler,
+  makeEnvironmentProviders,
+} from '@angular/core';
+import { GlobalErrorHandler } from './global-error-handler';
 
 /**
  * Feedback brick defaults (shared dialog sizing / focus behaviour). The
@@ -11,6 +16,9 @@ import { EnvironmentProviders, makeEnvironmentProviders } from '@angular/core';
  *     provideHttpClient(withInterceptors([csrfInterceptor, authInterceptor, httpErrorInterceptor])),
  *     provideFeedback(),
  *   ]
+ *
+ * Also installs {@link GlobalErrorHandler} — a toast + Reload action for
+ * runtime errors Angular would otherwise only log.
  */
 export function provideFeedback(): EnvironmentProviders {
   return makeEnvironmentProviders([
@@ -23,5 +31,6 @@ export function provideFeedback(): EnvironmentProviders {
         restoreFocus: true,
       },
     },
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
   ]);
 }
