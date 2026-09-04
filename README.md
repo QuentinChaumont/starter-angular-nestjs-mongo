@@ -122,6 +122,7 @@ failing later at first use.
 | `NODE_ENV`                     | no                         | `development`                | `development` \| `test` \| `production`                                                                                      |
 | `PORT`                         | no                         | `3000`                       | Nx injects the root `.env` into every task; `apps/frontend/.env` pins the SPA dev-server to 4200 so it doesn't inherit this. |
 | `CORS_ORIGINS`                 | no                         | `http://localhost:4200`      | Comma-separated list                                                                                                         |
+| `TRUST_PROXY`                  | behind a proxy             | — (`false`)                  | Express `trust proxy`: `true`, a hop count (`1`), or `loopback`. Needed so `req.ip` is the real client behind nginx / a load balancer. |
 | `RATE_LIMIT_TTL_SECONDS`       | no                         | `60`                         | Rate-limit window (security brick)                                                                                           |
 | `RATE_LIMIT_LIMIT`             | no                         | `100`                        | Max requests per window (security brick)                                                                                     |
 | `MONGO_URI`                    | only if Mongo is installed | —                            | `mongodb://...` or `mongodb+srv://...`                                                                                       |
@@ -265,12 +266,14 @@ npx nx g @org/starter-plugin:security
 ```
 
 Adds **rate limiting** (`@nestjs/throttler`) into the app. Helmet, gzip
-**compression** and CORS are always on — they live in `setupSecurity()`
-(`backend-core`), called from `main.ts`. A `429` always carries a
-`Retry-After` header (from the throttler, or `details.retryAfterSeconds`
-on the app's own limiters). `main.ts` also calls
-`app.enableShutdownHooks()` so a SIGTERM drains in-flight requests and
-closes the Mongo connection cleanly.
+**compression**, `trust proxy` (from `TRUST_PROXY`), a `Cache-Control:
+no-store` policy for `/api`, and CORS are always on — they live in
+`setupSecurity()` (`backend-core`), called from `main.ts`. A `429` always
+carries a `Retry-After` header (from the throttler, or
+`details.retryAfterSeconds` on the app's own limiters). `main.ts` also
+calls `app.enableShutdownHooks()` so a SIGTERM drains in-flight requests
+and closes the Mongo connection cleanly. Mongo connects with a 5 s server
+selection timeout and `autoIndex` off in production.
 
 ### Mailer
 

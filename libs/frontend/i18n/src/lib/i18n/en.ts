@@ -80,6 +80,7 @@ export const en = {
     manageCookies: 'Manage cookies',
     signedIn: 'Signed in',
     toggleNav: 'Toggle navigation',
+    skipToContent: 'Skip to content',
     nav: {
       home: 'Home',
       admin: 'Admin',

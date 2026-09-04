@@ -27,6 +27,18 @@ test.describe('dashboard shell', () => {
     await page.getByRole('link', { name: 'Home' }).click();
     await expect(page).toHaveURL(/\/app$/);
     await expect(page.getByTestId('dashboard-home')).toBeVisible();
+
+    // after an in-app navigation, focus lands on the content region
+    await expect(page.locator('#shell-main')).toBeFocused();
+  });
+
+  test('the shell exposes a skip link to the main content', async ({ page }) => {
+    await login(page, SEEDED_USER);
+    await acceptConsent(page);
+
+    const skip = page.getByRole('link', { name: 'Skip to content' });
+    await expect(skip).toHaveAttribute('href', '#shell-main');
+    await expect(page.locator('#shell-main')).toHaveAttribute('tabindex', '-1');
   });
 
   test('"Manage cookies" in the account menu reopens the preferences dialog', async ({

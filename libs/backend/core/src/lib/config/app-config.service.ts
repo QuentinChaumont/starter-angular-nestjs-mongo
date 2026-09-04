@@ -2,6 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EnvironmentVariables } from './environment-variables';
 
+/** `TRUST_PROXY` string → the shape Express's `trust proxy` expects. */
+function normaliseTrustProxy(
+  raw: string | undefined,
+): boolean | number | string | undefined {
+  if (raw === undefined || raw === '') {
+    return undefined;
+  }
+  if (raw === 'true') return true;
+  if (raw === 'false') return false;
+  const asNumber = Number(raw);
+  return Number.isInteger(asNumber) && asNumber >= 0 ? asNumber : raw;
+}
+
 @Injectable()
 export class AppConfigService {
   constructor(
@@ -18,6 +31,12 @@ export class AppConfigService {
   get http() {
     return {
       corsOrigins: this.configService.get('CORS_ORIGINS', { infer: true }),
+      /** Express `trust proxy` value, normalised: `true`/`false`, a hop
+       * count, or a trust-list string. `undefined` → leave Express's
+       * default (`false`). */
+      trustProxy: normaliseTrustProxy(
+        this.configService.get('TRUST_PROXY', { infer: true }),
+      ),
     };
   }
 

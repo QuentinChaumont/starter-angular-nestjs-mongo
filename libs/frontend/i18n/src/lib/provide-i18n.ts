@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import {
   EnvironmentProviders,
   inject,
@@ -71,7 +72,16 @@ export function provideI18n(): EnvironmentProviders {
       loader: InlineTranslocoLoader,
     }),
     provideAppInitializer(() => {
-      inject(TranslocoService).setActiveLang(detectLang());
+      const transloco = inject(TranslocoService);
+      const root = inject(DOCUMENT).documentElement;
+
+      transloco.setActiveLang(detectLang());
+      // Keep `<html lang>` in sync — screen readers, hyphenation, spell
+      // check and `:lang()` selectors all read it.
+      root.lang = transloco.getActiveLang();
+      transloco.langChanges$.subscribe((lang) => {
+        root.lang = lang;
+      });
     }),
   ]);
 }

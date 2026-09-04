@@ -24,6 +24,8 @@ test.describe('i18n', () => {
 
     await expect(page.getByRole('link', { name: 'Accueil' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Home' })).toHaveCount(0);
+    // <html lang> follows the active language
+    await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
 
     // Remembered in localStorage and persisted to the account (PATCH /users/me).
     await page.reload();

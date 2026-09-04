@@ -167,6 +167,11 @@ export function validateEnv(
   const NODE_ENV = parseNodeEnv(rawEnv['NODE_ENV'], errors);
   const PORT = parsePort(rawEnv['PORT'], errors);
   const CORS_ORIGINS = parseCorsOrigins(rawEnv['CORS_ORIGINS']);
+  const TRUST_PROXY = parseOptionalString(
+    'TRUST_PROXY',
+    rawEnv['TRUST_PROXY'],
+    errors,
+  );
   const RATE_LIMIT_TTL_SECONDS = parsePositiveInt(
     'RATE_LIMIT_TTL_SECONDS',
     rawEnv['RATE_LIMIT_TTL_SECONDS'],
@@ -359,6 +364,7 @@ export function validateEnv(
     NODE_ENV,
     PORT,
     CORS_ORIGINS,
+    ...(TRUST_PROXY !== undefined ? { TRUST_PROXY } : {}),
     RATE_LIMIT_TTL_SECONDS,
     RATE_LIMIT_LIMIT,
     ...(AUTH_RATE_LIMIT_TTL_SECONDS !== undefined

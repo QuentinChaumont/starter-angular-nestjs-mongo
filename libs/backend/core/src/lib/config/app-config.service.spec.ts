@@ -49,7 +49,25 @@ describe('AppConfigService', () => {
       RATE_LIMIT_LIMIT: 100,
     });
 
-    expect(service.http).toEqual({ corsOrigins: ['http://localhost:4200'] });
+    expect(service.http.corsOrigins).toEqual(['http://localhost:4200']);
+    expect(service.http.trustProxy).toBeUndefined();
+  });
+
+  it('normalises TRUST_PROXY for Express', () => {
+    const base = {
+      NODE_ENV: 'development' as const,
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
+    };
+    expect(createService({ ...base, TRUST_PROXY: '1' }).http.trustProxy).toBe(1);
+    expect(createService({ ...base, TRUST_PROXY: 'true' }).http.trustProxy).toBe(
+      true,
+    );
+    expect(
+      createService({ ...base, TRUST_PROXY: 'loopback' }).http.trustProxy,
+    ).toBe('loopback');
   });
 
   it('exposes security.rateLimit', () => {

@@ -78,6 +78,7 @@ export const fr: TranslationShape = {
     manageCookies: 'Gérer les cookies',
     signedIn: 'Connecté',
     toggleNav: 'Basculer la navigation',
+    skipToContent: 'Aller au contenu',
     nav: {
       home: 'Accueil',
       admin: 'Administration',

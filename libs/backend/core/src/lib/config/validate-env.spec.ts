@@ -31,6 +31,13 @@ describe('validateEnv', () => {
     });
   });
 
+  it('keeps TRUST_PROXY as a raw string for setup-security to interpret', () => {
+    expect(validateEnv({ TRUST_PROXY: '1' })).toMatchObject({
+      TRUST_PROXY: '1',
+    });
+    expect(validateEnv({})).not.toHaveProperty('TRUST_PROXY');
+  });
+
   it('throws a readable error for a non-numeric RATE_LIMIT_TTL_SECONDS', () => {
     expect(() => validateEnv({ RATE_LIMIT_TTL_SECONDS: 'abc' })).toThrow(
       /RATE_LIMIT_TTL_SECONDS must be a positive integer/,

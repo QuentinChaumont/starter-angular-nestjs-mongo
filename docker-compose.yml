@@ -27,6 +27,9 @@ services:
       MONGO_URI: mongodb://mongo:27017/starter
       CORS_ORIGINS: http://localhost:8080
       AUTH_COOKIE_SECURE: 'false'
+      # The SPA's nginx forwards /api and sets X-Forwarded-* — trust it so
+      # req.ip is the real client (rate limiting, audit, session IPs).
+      TRUST_PROXY: '1'
       # Override in .env / the shell for anything real.
       JWT_SECRET: ${JWT_SECRET:-dev-only-not-for-production}
     env_file:

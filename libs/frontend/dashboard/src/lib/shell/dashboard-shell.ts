@@ -2,11 +2,13 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   computed,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -22,7 +24,7 @@ import {
 } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { LangSwitcher } from '@org/frontend-i18n';
-import { filter, map, of, switchMap, timer } from 'rxjs';
+import { filter, map, of, skip, switchMap, timer } from 'rxjs';
 import { SidenavNav } from './sidenav-nav';
 import { UserMenu } from './user-menu';
 
@@ -69,6 +71,9 @@ function writeOpenPref(open: boolean): void {
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
+    <a class="shell__skip" href="#shell-main">
+      {{ 'dashboard.skipToContent' | transloco }}
+    </a>
     @if (navigating()) {
       <mat-progress-bar
         class="shell__progress"
@@ -105,7 +110,9 @@ function writeOpenPref(open: boolean): void {
       </mat-sidenav>
 
       <mat-sidenav-content class="shell__content">
-        <router-outlet></router-outlet>
+        <main id="shell-main" tabindex="-1" #main>
+          <router-outlet></router-outlet>
+        </main>
       </mat-sidenav-content>
     </mat-sidenav-container>
   `,
@@ -114,6 +121,30 @@ function writeOpenPref(open: boolean): void {
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+    }
+    .shell__skip {
+      position: fixed;
+      inset-block-start: 6px;
+      inset-inline-start: 6px;
+      z-index: 1100;
+      padding: 8px 14px;
+      background: var(--app-color-surface);
+      color: var(--app-color-on-surface);
+      border: 1px solid var(--app-color-primary);
+      border-radius: var(--app-radius-sm);
+      font-size: 0.8125rem;
+      text-decoration: none;
+      transform: translateY(-150%);
+      transition: transform 0.15s ease;
+    }
+    .shell__skip:focus-visible {
+      transform: translateY(0);
+    }
+    #shell-main {
+      display: block;
+    }
+    #shell-main:focus {
+      outline: none;
     }
     .shell__progress {
       position: fixed;
@@ -176,7 +207,22 @@ export class DashboardShell {
   private readonly breakpoints = inject(BreakpointObserver);
   private readonly router = inject(Router);
 
+  private readonly main = viewChild('main', { read: ElementRef });
+
   protected readonly title = 'Dashboard';
+
+  constructor() {
+    // After an in-app navigation, move focus to the content region so
+    // keyboard / screen-reader users don't have to tab back through the
+    // whole nav. Skip the initial load (nothing to move focus away from).
+    this.router.events
+      .pipe(
+        filter((e) => e instanceof NavigationEnd),
+        skip(1),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => this.main()?.nativeElement.focus({ preventScroll: false }));
+  }
 
   /**
    * `true` while a router navigation is in flight — but only once it has

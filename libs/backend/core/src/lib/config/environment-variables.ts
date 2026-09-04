@@ -6,6 +6,12 @@ export interface EnvironmentVariables {
   NODE_ENV: NodeEnvironment;
   PORT: number;
   CORS_ORIGINS: string[];
+  /** Express `trust proxy` setting — needed behind a reverse proxy (nginx,
+   * a load balancer, the `docker` brick) so `req.ip` and `req.protocol`
+   * reflect the real client, not the proxy. `true`, `false`, a hop count
+   * (`1`), or an Express trust list (`loopback`, a subnet). Unset → `false`
+   * (direct exposure). */
+  TRUST_PROXY?: string;
   RATE_LIMIT_TTL_SECONDS: number;
   RATE_LIMIT_LIMIT: number;
   /** Stricter rate limit for `POST /auth/login` + `POST /auth/register`
@@ -82,6 +88,7 @@ export const ENVIRONMENT_VARIABLE_NAMES: readonly (keyof EnvironmentVariables)[]
     'NODE_ENV',
     'PORT',
     'CORS_ORIGINS',
+    'TRUST_PROXY',
     'RATE_LIMIT_TTL_SECONDS',
     'RATE_LIMIT_LIMIT',
     'AUTH_RATE_LIMIT_TTL_SECONDS',

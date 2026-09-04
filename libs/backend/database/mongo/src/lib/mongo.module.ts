@@ -21,6 +21,12 @@ import { resolveMongoUri } from './resolve-mongo-uri';
       inject: [AppConfigService],
       useFactory: (config: AppConfigService) => ({
         uri: resolveMongoUri(config),
+        // Fail fast on an unreachable Mongo instead of hanging ~30 s.
+        serverSelectionTimeoutMS: 5_000,
+        // In production the app must not (re)build indexes on boot — do it
+        // explicitly in a migration / `syncIndexes()` step. Dev keeps the
+        // convenience.
+        autoIndex: config.app.environment !== 'production',
       }),
     }),
   ],

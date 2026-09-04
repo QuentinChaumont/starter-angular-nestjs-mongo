@@ -13,11 +13,19 @@ class ProbeController {
   }
 }
 
+@Controller('api/probe')
+class ApiProbeController {
+  @Get()
+  probe(): { ok: true } {
+    return { ok: true };
+  }
+}
+
 async function createProbeApp(
   corsOrigins: string[],
 ): Promise<{ app: INestApplication; baseUrl: string }> {
   @Module({
-    controllers: [ProbeController],
+    controllers: [ProbeController, ApiProbeController],
     providers: [
       {
         provide: AppConfigService,
@@ -52,6 +60,14 @@ describe('setupSecurity (integration)', () => {
     expect(response.headers.get('x-content-type-options')).toBe('nosniff');
     expect(response.headers.get('x-dns-prefetch-control')).toBe('off');
     expect(response.headers.get('x-powered-by')).toBeNull();
+  });
+
+  it('marks API responses no-store, but not other routes', async () => {
+    const api = await fetch(`${baseUrl}/api/probe`);
+    expect(api.headers.get('cache-control')).toBe('no-store');
+
+    const other = await fetch(`${baseUrl}/probe`);
+    expect(other.headers.get('cache-control')).not.toBe('no-store');
   });
 
   it('reflects an allowed CORS origin', async () => {
