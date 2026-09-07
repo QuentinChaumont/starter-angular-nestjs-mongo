@@ -253,7 +253,7 @@ entity with `--crud` — `AuthModule` logs users in against it. Provides:
   `POST /auth/identities/:id/link` + `DELETE /auth/identities/:id`, managed
   from `/app/profile`. An OIDC-only account is passwordless until it uses
   "forgot password".
-- **Sessions & devices** (V2.3 step 46): `GET/DELETE /auth/sessions` — one
+- **Sessions & devices**: `GET/DELETE /auth/sessions` — one
   entry per refresh-token family; end one, or "sign out everywhere else".
   `POST /auth/sessions/revoke/:id` is admin-only. Surfaced as a "Devices"
   section in the profile and a "Sessions" action in the admin console.
@@ -302,7 +302,7 @@ verification links share one hashed, TTL'd `single_use_tokens` collection
 `/reset-password` and `/verify-email` frontend routes plus the banner when
 `frontend-auth` is installed. See `libs/backend/auth-reset/README.md`.
 
-### Audit log (V2.3 step 45)
+### Audit log
 
 Needs the `auth` brick. Adds an append-only `audit_events` collection
 filled **best-effort** (a failed write never breaks the traced action)
@@ -316,7 +316,7 @@ console. Retention: a TTL index sized from
 `AUDIT_RETENTION_DAYS` (default 90, `0` = keep forever), re-synced at
 bootstrap. `meta` never stores secret-ish keys.
 
-### Roles (V2.2 step 44)
+### Roles
 
 Needs the `auth` + `user` bricks. Adds a `Role` catalogue
 (`{ name, description, system }`) with an admin-only CRUD
@@ -544,12 +544,26 @@ Always present (not a brick). No business logic, no HTTP.
 - **`<lib-password-reveal-button>`** — a show/hide toggle dropped in as a
   `matSuffix` next to any password `<input>` (used on login, register,
   reset-password and the profile page).
-- **The UI kit** (V2.3 step 48) — `<lib-page-header>`, `libAsyncButton`
+- **The UI kit** — `<lib-page-header>`, `libAsyncButton`
   (loading state + spinner on a Material button), `<lib-form-errors>`,
   `<lib-relative-time>` (one shared timer), `<lib-status-badge>`,
   `<lib-empty-state>`, `<lib-copy-button>`. Extracted from patterns
   duplicated across the admin consoles and the profile page, then wired
   back into them. See `libs/frontend/ui/README.md`.
+
+**Keeping Material at arm's length.** Angular Material is treated as an
+implementation detail of the UI layer, not a public dependency of feature
+code. An ESLint rule (`no-restricted-imports` on `@angular/material/*`,
+root `eslint.config.mjs`) enforces the boundary: **off** in the three
+wrappers that own Material directly — `frontend-ui`, `frontend-feedback`
+(dialogs / toasts), `frontend-design` (theme + providers) — plus the
+`frontend-dashboard` shell (sidenav / toolbar / menu); a non-blocking
+**warning** everywhere else in the frontend libs, marking each remaining
+direct import as something to route through a wrapper; a hard **error** in
+`apps/frontend`, which carries no direct Material import. The point is
+that swapping or restyling any one widget — or dropping Material for a
+home-grown kit later — stays a change inside `frontend-ui`, not a sweep
+across every feature.
 
 ## Testing
 
@@ -575,9 +589,16 @@ Playwright (chromium only, 1 worker). Run it with `nx e2e frontend-e2e`
 - waits for `/api/health/ready` and seeds a user via the API;
 - tears both down after the suite.
 
-The specs (`auth`, `consent`, `dashboard`) cover register/reload/logout,
-the login error path, the consent banner + cookie-policy tab, the
-protected-route redirect and the role guard. Failures keep a Playwright
+One spec per area: `auth` (register / reload / logout, the login error
+path, the 404 + document title, the protected-route redirect, the
+non-admin lockout), `dashboard` (signed-in home, account menu, sidenav,
+skip link), `consent` (banner, cookie-policy tab, legal footer), `admin`
+and `roles` (user list + per-column filter, role assign / create /
+delete), `audit` (an admin action surfaced in the console), `sessions`
+(see devices, sign another out), `two-factor` (enable 2FA, then log in
+with a code), `connected-accounts` (linked providers), `profile` (the
+unsaved-changes guard) and `i18n` (switch to French, survive a reload).
+Failures keep a Playwright
 trace (`trace: 'retain-on-failure'`); in CI the HTML report and
 `test-results/` are uploaded as an artifact. Chromium needs a one-off
 `npx playwright install chromium` locally (the executor runs with
@@ -626,3 +647,13 @@ The Docker packaging ships with the repo (delete these files to drop it):
   `.env`), `frontend` on `:8080`. No secret is baked into an image;
   `JWT_SECRET` comes from the environment (a throwaway default lets
   `compose up` boot for a smoke test).
+
+The compose stack is a **local smoke test, not a production deployment**:
+Mongo runs without authentication and `JWT_SECRET` falls back to a
+throwaway value. Before shipping, set a real `JWT_SECRET`, enable Mongo
+auth (`MONGO_INITDB_ROOT_*` + a scoped app user in `MONGO_URI`), and put
+the frontend behind a TLS-terminating proxy.
+
+## License
+
+MIT — see [`LICENSE`](LICENSE).

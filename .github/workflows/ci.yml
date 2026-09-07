@@ -45,7 +45,7 @@ jobs:
       - run: npx nx affected -t lint test build typecheck
 
   e2e:
-    # Browser E2E (Playwright, V2.1 step 38) — heavier, PRs only.
+    # Browser E2E (Playwright) — heavier, PRs only.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:

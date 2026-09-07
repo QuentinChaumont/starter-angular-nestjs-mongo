@@ -12,7 +12,11 @@ import {
   useRequestIdMiddleware,
 } from '@org/backend-core';
 import { UserModule, UserService } from '@org/backend-features-user';
-import { InMemoryMailTransport, MAIL_TRANSPORT } from '@org/backend-mailer';
+import {
+  InMemoryMailTransport,
+  MAIL_TRANSPORT,
+  OutgoingMail,
+} from '@org/backend-mailer';
 import {
   listenOnRandomPort,
   startTestMongo,
@@ -77,6 +81,24 @@ describe('auth-reset (e2e, real Mongo instance)', () => {
     new URL(/https?:\/\/\S+/.exec(body)?.[0] ?? '').searchParams.get(
       'token',
     ) as string;
+
+  // Some emails are sent by an event listener that runs *after* the HTTP
+  // response (registration, email change). Poll the in-memory transport
+  // instead of sleeping a fixed amount — that was flaky under load.
+  const waitForMail = async (
+    match: (mail: OutgoingMail) => boolean,
+    timeoutMs = 2_000,
+  ): Promise<OutgoingMail> => {
+    const deadline = Date.now() + timeoutMs;
+    for (;;) {
+      const found = mail.sent.find(match);
+      if (found) return found;
+      if (Date.now() >= deadline) {
+        throw new Error('timed out waiting for a matching email');
+      }
+      await new Promise((r) => setTimeout(r, 10));
+    }
+  };
 
   beforeAll(async () => {
     testMongo = await startTestMongo({
@@ -198,9 +220,8 @@ describe('auth-reset (e2e, real Mongo instance)', () => {
         accessToken: string;
       };
 
-      const verifyMail = mail.sent.find((m) => m.to === email);
-      expect(verifyMail).toBeDefined();
-      const token = linkToken(verifyMail?.text ?? '');
+      const verifyMail = await waitForMail((m) => m.to === email);
+      const token = linkToken(verifyMail.text ?? '');
 
       const before = await fetch(`${baseUrl}/auth/me`, {
         headers: { authorization: `Bearer ${accessToken}` },
@@ -243,11 +264,9 @@ describe('auth-reset (e2e, real Mongo instance)', () => {
       });
       expect(patch.status).toBe(200);
 
-      // the event listener runs after the response; give it a tick
-      await new Promise((r) => setTimeout(r, 50));
-      const verifyMail = mail.sent.find((m) => m.to === newEmail);
-      expect(verifyMail).toBeDefined();
-      const token = linkToken(verifyMail?.text ?? '');
+      // the event listener runs after the response
+      const verifyMail = await waitForMail((m) => m.to === newEmail);
+      const token = linkToken(verifyMail.text ?? '');
       expect((await post('/auth/verify-email', { token })).status).toBe(204);
     });
 

@@ -5,7 +5,7 @@ dist
 tmp
 out-tsc
 
-# Playwright (V2.1 step 38)
+# Playwright
 playwright-report
 test-results
 /playwright/.cache
