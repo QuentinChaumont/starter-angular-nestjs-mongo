@@ -15,19 +15,17 @@ using [`BRICKS.md`](BRICKS.md) as the map.
 
 ## Creating a project from this starter
 
-Clone (or use as a template), then:
-
 ```bash
 npm install
-npx nx run-many -t lint,test,build
+npx nx run-many -t lint test build      # verify the baseline is green
+
+npx nx serve @org/backend               # NestJS API, http://localhost:3000/api
+npx nx serve frontend                   # Angular app, http://localhost:4200
 ```
 
-Then start the app:
-
-```bash
-npx nx serve @org/backend    # NestJS API, http://localhost:3000/api
-npx nx serve frontend        # Angular app
-```
+[`GETTING_STARTED.md`](GETTING_STARTED.md) is the full walkthrough — get
+the code, rebrand, wire real config & secrets, fill the legal templates,
+drop the bricks you don't need, scaffold your domain.
 
 ## Architecture
 
