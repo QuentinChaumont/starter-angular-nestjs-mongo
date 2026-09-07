@@ -120,7 +120,10 @@ function writeOpenPref(open: boolean): void {
     :host {
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      flex: 1 0 auto;
+      /* Fill the space the root layout gives us, not a hard 100vh — a banner
+         above the router outlet must not push a scrollbar onto an empty page. */
+      min-height: 0;
     }
     .shell__skip {
       position: fixed;

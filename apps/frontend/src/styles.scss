@@ -1,3 +1,19 @@
 /* Global styles. The design brick owns the theme; add app-specific
    overrides below its @use. */
 @use '../../../libs/frontend/design/src/lib/theme/theme';
+
+/* Root layout: a viewport-tall column so the banners sit at the top, the
+   routed page takes the space between, and the legal footer stays pinned
+   to the bottom. A flex container here also stops a routed page's margins
+   (e.g. the login form's `8vh`) from collapsing out to <body> and adding
+   a scrollbar. The routed component is a sibling the router injects after
+   <router-outlet>, so it can't be reached from the component's own
+   encapsulated styles — it's matched here instead. */
+app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+app-root > router-outlet + * {
+  flex: 1 0 auto;
+}
