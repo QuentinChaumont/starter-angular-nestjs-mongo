@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { acceptConsent } from './support/actions';
+
 test.describe('cookie consent', () => {
   test('the banner shows on the first visit, "Accept all" dismisses it for good', async ({
     page,
@@ -46,6 +48,8 @@ test.describe('cookie consent', () => {
     page,
   }) => {
     await page.goto('/login');
+    // the consent banner overlays the footer until it is dismissed
+    await acceptConsent(page);
 
     const footer = page.locator('footer.legal-links');
     await expect(footer).toBeVisible();
