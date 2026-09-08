@@ -39,9 +39,15 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'npx nx run frontend:serve',
+    // Bind explicitly to 127.0.0.1: the dev server defaults to `localhost`,
+    // which on the CI runner resolves to ::1 (IPv6) while Playwright polls the
+    // IPv4 `BASE_URL` — the server comes up but the readiness probe never
+    // connects, so the job just sits there until the timeout.
+    command: 'npx nx run frontend:serve --host=127.0.0.1',
     url: BASE_URL,
-    timeout: 180_000,
+    // CI runs the dev server with every cache disabled, so the first cold
+    // Vite prebundle + compile can take a few minutes on a shared runner.
+    timeout: isCI ? 300_000 : 180_000,
     reuseExistingServer: !isCI,
     stdout: 'ignore',
     stderr: 'pipe',
