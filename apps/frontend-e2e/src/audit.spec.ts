@@ -32,7 +32,8 @@ test.describe('audit log', () => {
 
     const auditRow = page.locator('tbody tr').first();
     await expect(auditRow).toContainText('admin.status-changed');
-    // the actor interceptor recorded the caller's IP
-    await expect(auditRow).toContainText('127.0.0.1');
+    // the actor interceptor recorded the caller's IP — loopback resolves to
+    // 127.0.0.1 locally but ::1 on the CI runner
+    await expect(auditRow).toContainText(/127\.0\.0\.1|::1/);
   });
 });
