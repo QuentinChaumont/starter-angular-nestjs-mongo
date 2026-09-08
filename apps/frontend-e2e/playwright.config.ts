@@ -41,7 +41,9 @@ export default defineConfig({
   webServer: {
     command: 'npx nx run frontend:serve',
     url: BASE_URL,
-    timeout: 180_000,
+    // CI runs the dev server with every cache disabled, so the first cold
+    // Vite prebundle + compile can take well over 3 min on a shared runner.
+    timeout: isCI ? 420_000 : 180_000,
     reuseExistingServer: !isCI,
     stdout: 'ignore',
     stderr: 'pipe',
