@@ -3,7 +3,10 @@
   "version": "0.0.1",
   "private": true,
   "nx": {
-    "tags": ["scope:backend", "type:app"],
+    "tags": [
+      "scope:backend",
+      "type:app"
+    ],
     "targets": {
       "build": {
         "executor": "nx:run-commands",
@@ -83,7 +86,9 @@
       },
       "seed-admin": {
         "executor": "nx:run-commands",
-        "dependsOn": ["build"],
+        "dependsOn": [
+          "build"
+        ],
         "options": {
           "command": "node apps/backend/dist/seed-admin.js"
         }
