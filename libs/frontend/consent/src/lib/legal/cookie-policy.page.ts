@@ -20,45 +20,49 @@ import { Router } from '@angular/router';
         <mat-icon>arrow_back</mat-icon> Back
       </button>
       <h1>Cookie Policy</h1>
-      <p><em>Last updated: [DATE]</em></p>
+      <p><em>Last updated: 09/09/2026</em></p>
 
       <h2>Who we are</h2>
       <p>
-        This site is operated by <strong>[COMPANY NAME]</strong>, [LEGAL FORM],
-        registered at [ADDRESS] ([COMPANY NUMBER]). Data protection contact:
-        [DPO / PRIVACY CONTACT EMAIL].
+        This site is operated by <strong>Quentin CHAUMONT EI</strong>,
+        registered at 40 rue Monsarrat, 33800 Bordeaux, France. Data protection
+        contact: chaumont.quentin@gmail.com
       </p>
 
       <h2>What cookies we use</h2>
       <table>
         <thead>
-          <tr><th>Category</th><th>Purpose</th><th>Retention</th></tr>
+          <tr>
+            <th>Category</th>
+            <th>Purpose</th>
+            <th>Retention</th>
+          </tr>
         </thead>
         <tbody>
           <tr>
             <td>Strictly necessary</td>
             <td>Session, security (CSRF), load balancing.</td>
-            <td>Session / [N] days</td>
+            <td>Session / up to 12 months</td>
           </tr>
           <tr>
             <td>Analytics (optional)</td>
             <td>[TOOL NAME] — anonymous usage statistics.</td>
-            <td>[N] months</td>
+            <td>13 months max</td>
           </tr>
         </tbody>
       </table>
 
       <h2>Your choices</h2>
       <p>
-        Strictly necessary cookies cannot be refused. For every other
-        category you decide via the consent banner shown on your first
-        visit, and can change your mind at any time from
+        Strictly necessary cookies cannot be refused. For every other category
+        you decide via the consent banner shown on your first visit, and can
+        change your mind at any time from
         <strong>Manage cookies</strong> in the account menu. Your choice is
-        stored for [N] months, after which we ask again.
+        stored for 6 months, after which we ask again.
       </p>
 
       <h2>Contact</h2>
-      <p>Questions: [PRIVACY CONTACT EMAIL].</p>
+      <p>Questions: chaumont.quentin@gmail.com</p>
     </mat-card>
   `,
   styles: `

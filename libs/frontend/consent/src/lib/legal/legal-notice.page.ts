@@ -21,18 +21,20 @@ import { Router } from '@angular/router';
         <mat-icon>arrow_back</mat-icon> Back
       </button>
       <h1>Legal Notice</h1>
-      <p><em>Last updated: [DATE]</em></p>
+      <p><em>Last updated: 09/09/2026</em></p>
 
       <h2>Site publisher</h2>
       <p>
-        This site is published by <strong>[COMPANY / PUBLISHER NAME]</strong>,
-        [LEGAL FORM] with a capital of [AMOUNT], registered at [ADDRESS] under
-        number [COMPANY / REGISTRATION NUMBER]. VAT: [VAT NUMBER]. Contact:
-        [EMAIL] — [PHONE].
+        This site is published by <strong>Quentin CHAUMONT EI</strong>, a sole
+        trader ("entreprise individuelle"), registered at 40 rue Monsarrat,
+        33800 Bordeaux, France, under SIREN 839&nbsp;387&nbsp;883 (SIRET
+        839&nbsp;387&nbsp;883&nbsp;00037), [RCS/RM Bordeaux — confirm register].
+        Intra-EU VAT: FR11&nbsp;839&nbsp;387&nbsp;883. Contact:
+        chaumont.quentin@gmail.com.
       </p>
 
       <h2>Publication director</h2>
-      <p>[NAME], [ROLE].</p>
+      <p>Quentin CHAUMONT.</p>
 
       <h2>Hosting</h2>
       <p>
@@ -43,9 +45,9 @@ import { Router } from '@angular/router';
       <h2>Intellectual property</h2>
       <p>
         Unless stated otherwise, all content on this site (text, images, logos,
-        code) is the property of [COMPANY / PUBLISHER NAME] or its partners and
-        is protected by intellectual-property law. Any reproduction without
-        prior written permission is prohibited.
+        code) is the property of Quentin CHAUMONT EI or its partners and is
+        protected by intellectual-property law. Any reproduction without prior
+        written permission is prohibited.
       </p>
 
       <h2>Personal data</h2>

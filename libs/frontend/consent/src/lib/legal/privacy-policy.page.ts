@@ -20,12 +20,12 @@ import { Router } from '@angular/router';
         <mat-icon>arrow_back</mat-icon> Back
       </button>
       <h1>Privacy Notice</h1>
-      <p><em>Last updated: [DATE]</em></p>
+      <p><em>Last updated: 09/09/2026</em></p>
 
       <h2>Controller</h2>
       <p>
-        <strong>[COMPANY NAME]</strong>, [ADDRESS]. Data protection contact:
-        [DPO / PRIVACY CONTACT EMAIL].
+        <strong>Quentin CHAUMONT EI</strong>, 40 rue Monsarrat, 33800 Bordeaux,
+        France. Data protection contact: chaumont.quentin@gmail.com.
       </p>
 
       <h2>What we process and why</h2>
@@ -39,23 +39,47 @@ import { Router } from '@angular/router';
           security and troubleshooting. Legal basis: legitimate interest.
         </li>
         <li>
-          <strong>Optional analytics</strong> — only with your consent
-          (see the cookie policy).
+          <strong>Optional analytics</strong> — only with your consent (see the
+          cookie policy).
         </li>
       </ul>
 
       <h2>Retention</h2>
-      <p>[Describe retention periods per data category.]</p>
+      <ul>
+        <li>
+          <strong>Account data</strong> — for the life of the account, then
+          deleted or anonymised within [N months] of closure.
+        </li>
+        <li><strong>Technical logs</strong> — [12] months.</li>
+        <li>
+          <strong>Consent records</strong> (cookies) — 6 months, then we ask
+          again.
+        </li>
+      </ul>
 
       <h2>Your rights</h2>
       <p>
-        Access, rectification, erasure, restriction, portability, objection,
-        and the right to lodge a complaint with [SUPERVISORY AUTHORITY].
-        Exercise them at [PRIVACY CONTACT EMAIL].
+        Access, rectification, erasure, restriction, portability, objection, and
+        the right to lodge a complaint with the French data protection authority
+        (<a href="https://www.cnil.fr" target="_blank" rel="noopener">CNIL</a>).
+        Exercise them at chaumont.quentin@gmail.com.
       </p>
 
+      <h2>International transfers</h2>
+      <p>
+        [State whether data leaves the EU/EEA and, if so, the safeguards used —
+        or "We do not transfer personal data outside the EU/EEA."]
+      </p>
+
+      <h2>Automated decision-making</h2>
+      <p>We do not carry out automated decision-making or profiling.</p>
+
       <h2>Sub-processors</h2>
-      <p>[List hosting / email / analytics providers and their locations.]</p>
+      <p>
+        We rely on the following categories of providers: hosting ([HOST NAME —
+        location]), transactional email ([PROVIDER — location]), and, subject to
+        your consent, analytics ([PROVIDER — location]).
+      </p>
     </mat-card>
   `,
   styles: `
