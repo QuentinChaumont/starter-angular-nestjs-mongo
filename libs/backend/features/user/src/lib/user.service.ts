@@ -208,6 +208,22 @@ export class UserService {
     return this.repository.findMany();
   }
 
+  /** Retention sweep query — see {@link UserRepository.findRetentionCandidates}.
+   * Passthrough: the `account-retention` brick owns the sweep policy. */
+  findRetentionCandidates(opts: {
+    before: Date;
+    onlyUnwarned?: boolean;
+    warnedBefore?: Date;
+    limit: number;
+  }): Promise<UserDocument[]> {
+    return this.repository.findRetentionCandidates(opts);
+  }
+
+  /** Stamps `retentionWarnedAt` after the inactivity-warning email is sent. */
+  markRetentionWarned(id: string, at: Date): Promise<void> {
+    return this.repository.markRetentionWarned(id, at);
+  }
+
   /* ---- admin console (V2.1 step 35) ---- */
 
   /**

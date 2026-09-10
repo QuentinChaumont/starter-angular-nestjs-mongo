@@ -29,8 +29,11 @@
   "dependencies": {
     "@nestjs/common": "^11.0.0",
     "@nestjs/schedule": "^12.0.1",
+    "@nestjs/swagger": "^11.4.7",
     "@org/backend-auth": "0.0.1",
+    "@org/backend-core": "0.0.1",
     "@org/backend-features-app-settings": "0.0.1",
-    "@org/backend-features-user": "0.0.1"
+    "@org/backend-features-user": "0.0.1",
+    "@org/backend-mailer": "0.0.1"
   }
 }

@@ -43,6 +43,39 @@ export class UserRepository extends BaseRepository<User> {
       .exec();
   }
 
+  /** Accounts eligible for the retention sweep: reference date
+   * (`lastActiveAt`, falling back to `createdAt`) at or before `before`,
+   * never `admin`, never disabled. `onlyUnwarned` restricts to accounts
+   * with no pending warning; `warnedBefore` restricts to accounts warned
+   * at or before that instant. */
+  async findRetentionCandidates(opts: {
+    before: Date;
+    onlyUnwarned?: boolean;
+    warnedBefore?: Date;
+    limit: number;
+  }): Promise<UserDocument[]> {
+    const query: Record<string, unknown> = {
+      roles: { $ne: 'admin' },
+      disabledAt: { $in: [null, undefined] },
+      $expr: {
+        $lte: [{ $ifNull: ['$lastActiveAt', '$createdAt'] }, opts.before],
+      },
+    };
+    if (opts.onlyUnwarned) {
+      query['retentionWarnedAt'] = { $in: [null, undefined] };
+    }
+    if (opts.warnedBefore) {
+      query['retentionWarnedAt'] = { $ne: null, $lte: opts.warnedBefore };
+    }
+    return this.model.find(query).limit(opts.limit).exec();
+  }
+
+  async markRetentionWarned(id: string, at: Date): Promise<void> {
+    await this.model
+      .updateOne({ _id: id }, { $set: { retentionWarnedAt: at } })
+      .exec();
+  }
+
   /** Opts into the `select: false` two-factor fields (auth's 2FA flows). */
   async findByIdWithTwoFactor(id: string): Promise<UserDocument | null> {
     if (!isValidObjectId(id)) {

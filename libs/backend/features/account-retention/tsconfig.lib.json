@@ -24,10 +24,16 @@
   ],
   "references": [
     {
+      "path": "../../mailer/tsconfig.lib.json"
+    },
+    {
       "path": "../user/tsconfig.lib.json"
     },
     {
       "path": "../app-settings/tsconfig.lib.json"
+    },
+    {
+      "path": "../../core/tsconfig.lib.json"
     },
     {
       "path": "../../auth/tsconfig.lib.json"

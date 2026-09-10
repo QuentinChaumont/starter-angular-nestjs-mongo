@@ -6,6 +6,8 @@ function build(user: Record<string, unknown> | null) {
     findById: jest.fn().mockResolvedValue(user),
     stampActivity: jest.fn().mockResolvedValue(undefined),
     deleteById: jest.fn().mockResolvedValue(true),
+    findRetentionCandidates: jest.fn().mockResolvedValue([]),
+    markRetentionWarned: jest.fn().mockResolvedValue(undefined),
   };
   const events = new UserEvents();
   return { service: new UserService(repo as never, events), repo, events };
@@ -70,5 +72,38 @@ describe('UserService.deleteById', () => {
     events.onDeleted(onDeleted);
     await service.deleteById('u1', { reason: 'retention' });
     expect(onDeleted.mock.calls[0][0].reason).toBe('retention');
+  });
+});
+
+describe('UserService retention queries', () => {
+  it('passes findRetentionCandidates options straight through to the repo', async () => {
+    const { service, repo } = build(null);
+    const rows = [{ _id: 'u1' }];
+    repo.findRetentionCandidates.mockResolvedValueOnce(rows);
+    const before = new Date('2026-01-01T00:00:00.000Z');
+    const warnedBefore = new Date('2026-01-15T00:00:00.000Z');
+
+    await expect(
+      service.findRetentionCandidates({ before, onlyUnwarned: true, limit: 50 }),
+    ).resolves.toBe(rows);
+    expect(repo.findRetentionCandidates).toHaveBeenNthCalledWith(1, {
+      before,
+      onlyUnwarned: true,
+      limit: 50,
+    });
+
+    await service.findRetentionCandidates({ before, warnedBefore, limit: 10 });
+    expect(repo.findRetentionCandidates).toHaveBeenNthCalledWith(2, {
+      before,
+      warnedBefore,
+      limit: 10,
+    });
+  });
+
+  it('markRetentionWarned delegates to the repo verbatim', async () => {
+    const { service, repo } = build(null);
+    const at = new Date('2026-02-02T02:02:02.000Z');
+    await service.markRetentionWarned('u9', at);
+    expect(repo.markRetentionWarned).toHaveBeenCalledWith('u9', at);
   });
 });
