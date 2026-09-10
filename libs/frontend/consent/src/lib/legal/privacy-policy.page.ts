@@ -1,9 +1,11 @@
 import { Location } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { Router } from '@angular/router';
+import { PublicSettingsService, RETENTION_FALLBACK } from '@org/frontend-core';
 
 /**
  * TEMPLATE — replace the bracketed placeholders with this project's real
@@ -48,7 +50,8 @@ import { Router } from '@angular/router';
       <ul>
         <li>
           <strong>Account data</strong> — for the life of the account, then
-          deleted or anonymised within [N months] of closure.
+          deleted or anonymised on closure. Inactive accounts are
+          {{ accountRetentionText() }}.
         </li>
         <li><strong>Technical logs</strong> — [12] months.</li>
         <li>
@@ -56,6 +59,24 @@ import { Router } from '@angular/router';
           again.
         </li>
       </ul>
+
+      <h2>Account retention</h2>
+      @if (retention().accountRetention.inactiveDays; as days) {
+        <p>
+          Inactive accounts are permanently deleted after
+          <strong>{{ days }} days</strong> of inactivity.
+          @if (retention().accountRetention.warningDays; as warn) {
+            We email you <strong>{{ warn }} days</strong> beforehand so you can
+            keep the account by signing in.
+          }
+        </p>
+      } @else {
+        <p>
+          We keep your account for as long as it exists. We
+          <strong>do not automatically delete inactive accounts</strong>. You can
+          delete your account at any time from your profile.
+        </p>
+      }
 
       <h2>Your rights</h2>
       <p>
@@ -96,6 +117,20 @@ import { Router } from '@angular/router';
 export class PrivacyPolicy {
   private readonly location = inject(Location);
   private readonly router = inject(Router);
+  private readonly settings = inject(PublicSettingsService);
+
+  protected readonly retention = toSignal(this.settings.get(), {
+    initialValue: RETENTION_FALLBACK,
+  });
+
+  /** One-line retention phrase for the "Retention" list, kept in sync with
+   * the "Account retention" section above. */
+  protected accountRetentionText(): string {
+    const days = this.retention().accountRetention.inactiveDays;
+    return days
+      ? `permanently deleted after ${days} days of inactivity`
+      : 'not automatically deleted';
+  }
 
   /** Go back if we got here from within the app; otherwise (direct link /
    * new tab, where `history.length` is 1) head to the app root. */
