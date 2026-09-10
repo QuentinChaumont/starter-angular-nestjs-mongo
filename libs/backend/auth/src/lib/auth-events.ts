@@ -28,6 +28,10 @@ export interface AccountSecurityEvent {
   userId: string;
 }
 
+export interface SessionRefreshedEvent {
+  userId: string;
+}
+
 export interface TokenReusedEvent {
   userId: string;
   familyId: string;
@@ -59,6 +63,14 @@ export class AuthEvents extends EventEmitter {
   }
   onLoginSucceeded(listener: (event: LoginSucceededEvent) => void): void {
     this.on('auth.login-succeeded', listener);
+  }
+
+  /** Token rotation succeeded on `POST /auth/refresh` — the session is live. */
+  emitSessionRefreshed(payload: SessionRefreshedEvent): void {
+    this.emit('auth.session-refreshed', payload);
+  }
+  onSessionRefreshed(listener: (event: SessionRefreshedEvent) => void): void {
+    this.on('auth.session-refreshed', listener);
   }
 
   emitLoginFailed(payload: LoginFailedEvent): void {

@@ -125,4 +125,27 @@ describe('AuthService', () => {
       firstName: 'New',
     });
   });
+
+  it('emits auth.session-refreshed after a successful rotation', async () => {
+    const users = {
+      findById: jest.fn().mockResolvedValue({ roles: [] }),
+    } as unknown as UserService;
+    const refreshTokens = {
+      rotate: jest.fn().mockResolvedValue({ userId: 'u1', issued }),
+    } as unknown as RefreshTokenService;
+    const events = new AuthEvents();
+    const service = new AuthService(
+      users,
+      new JwtService({ secret: 'test-secret' }),
+      refreshTokens,
+      buildTestConfig({ JWT_SECRET: 'test-secret' }),
+      events,
+    );
+    const onRefreshed = jest.fn();
+    events.onSessionRefreshed(onRefreshed);
+
+    await service.refresh('some-refresh-token', {});
+
+    expect(onRefreshed).toHaveBeenCalledWith({ userId: 'u1' });
+  });
 });

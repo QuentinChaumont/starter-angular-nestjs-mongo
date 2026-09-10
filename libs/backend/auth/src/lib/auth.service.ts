@@ -256,6 +256,10 @@ export class AuthService {
       context,
     );
 
+    // Rotation succeeded — the session is live. Optional bricks (retention)
+    // hook this to stamp last-active; with nothing subscribed it's a no-op.
+    this.events.emitSessionRefreshed({ userId });
+
     const roles = await this.currentRoles(userId);
     const accessToken = await this.signAccessToken({ id: userId, roles });
 
