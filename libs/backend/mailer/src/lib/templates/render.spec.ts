@@ -1,4 +1,5 @@
 import {
+  renderAccountRetentionWarning,
   renderEmailVerification,
   renderPasswordReset,
   renderWelcome,
@@ -71,5 +72,34 @@ describe('email templates', () => {
 
     expect(mail.html).not.toContain('<script>');
     expect(mail.html).toContain('&lt;script&gt;');
+  });
+});
+
+describe('renderAccountRetentionWarning', () => {
+  const params = {
+    firstName: 'Ada',
+    lastActiveOn: '1 January 2026',
+    deletionOn: '1 July 2026',
+    url: 'https://app.example/app/profile',
+    locale: 'en',
+  };
+
+  it('states the deletion date in subject-free body text (en)', () => {
+    const mail = renderAccountRetentionWarning(params);
+    expect(mail.subject).toMatch(/account/i);
+    expect(mail.text).toContain('1 July 2026');
+    expect(mail.text).toContain(params.url);
+    expect(mail.html).toContain('1 July 2026');
+  });
+
+  it('is localised to French', () => {
+    const mail = renderAccountRetentionWarning({ ...params, locale: 'fr' });
+    expect(mail.subject).toMatch(/compte/i);
+    expect(mail.text).toContain('1 July 2026');
+  });
+
+  it('falls back to English for an unknown locale', () => {
+    const mail = renderAccountRetentionWarning({ ...params, locale: 'de' });
+    expect(mail.subject).toMatch(/account/i);
   });
 });

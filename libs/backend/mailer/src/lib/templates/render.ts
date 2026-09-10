@@ -48,6 +48,12 @@ type EmailLocale = 'en' | 'fr';
 const EMAIL_STRINGS: Record<EmailLocale, {
   reset: { subject: string; intro: string; action: (m: number) => string; ignore: string };
   verify: { subject: string; textIntro: string; htmlIntro: string };
+  retentionWarning: {
+    subject: string;
+    intro: (firstName: string, lastActiveOn: string) => string;
+    warn: (deletionOn: string) => string;
+    keep: string;
+  };
 }> = {
   en: {
     reset: {
@@ -62,6 +68,14 @@ const EMAIL_STRINGS: Record<EmailLocale, {
       textIntro: 'Please confirm your email address by opening this link:',
       htmlIntro:
         'Please confirm your email address by clicking the link below.',
+    },
+    retentionWarning: {
+      subject: 'Your account is scheduled for deletion',
+      intro: (firstName, lastActiveOn) =>
+        `Hi ${firstName}, your account has been inactive since ${lastActiveOn}.`,
+      warn: (deletionOn) =>
+        `To comply with our data-retention policy it will be permanently deleted on ${deletionOn}.`,
+      keep: 'To keep your account, just sign in before then:',
     },
   },
   fr: {
@@ -80,6 +94,14 @@ const EMAIL_STRINGS: Record<EmailLocale, {
         'Veuillez confirmer votre adresse e-mail en ouvrant ce lien :',
       htmlIntro:
         'Veuillez confirmer votre adresse e-mail en cliquant sur le lien ci-dessous.',
+    },
+    retentionWarning: {
+      subject: 'Votre compte va être supprimé',
+      intro: (firstName, lastActiveOn) =>
+        `Bonjour ${firstName}, votre compte est inactif depuis ${lastActiveOn}.`,
+      warn: (deletionOn) =>
+        `Conformément à notre politique de conservation des données, il sera définitivement supprimé le ${deletionOn}.`,
+      keep: 'Pour conserver votre compte, connectez-vous avant cette date :',
     },
   },
 };
@@ -114,6 +136,29 @@ export function renderEmailVerification(params: {
     subject: t.subject,
     text: [t.textIntro, url].join('\n'),
     html: layout(t.subject, [t.htmlIntro, link(url)]),
+  };
+}
+
+export function renderAccountRetentionWarning(params: {
+  firstName: string;
+  lastActiveOn: string;
+  deletionOn: string;
+  url: string;
+  locale?: string;
+}): RenderedEmail {
+  const { firstName, lastActiveOn, deletionOn, url, locale } = params;
+  const name = firstName.trim() || 'there';
+  const t = stringsFor(locale).retentionWarning;
+  const intro = t.intro(name, lastActiveOn);
+  return {
+    subject: t.subject,
+    text: [intro, '', t.warn(deletionOn), '', t.keep, url].join('\n'),
+    html: layout(t.subject, [
+      escapeHtml(intro),
+      escapeHtml(t.warn(deletionOn)),
+      escapeHtml(t.keep),
+      link(url),
+    ]),
   };
 }
 
