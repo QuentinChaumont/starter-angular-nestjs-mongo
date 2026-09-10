@@ -177,6 +177,32 @@ describe('validateEnv', () => {
     );
   });
 
+  it('parses the account-retention knobs (optional cron string + positive-int batch limit)', () => {
+    const bare = validateEnv({});
+    expect(bare.ACCOUNT_RETENTION_CRON).toBeUndefined();
+    expect(bare.ACCOUNT_RETENTION_BATCH_LIMIT).toBeUndefined();
+
+    const configured = validateEnv({
+      ACCOUNT_RETENTION_CRON: '0 4 * * *',
+      ACCOUNT_RETENTION_BATCH_LIMIT: '500',
+    });
+    expect(configured.ACCOUNT_RETENTION_CRON).toBe('0 4 * * *');
+    expect(configured.ACCOUNT_RETENTION_BATCH_LIMIT).toBe(500);
+
+    expect(() => validateEnv({ ACCOUNT_RETENTION_BATCH_LIMIT: '0' })).toThrow(
+      /ACCOUNT_RETENTION_BATCH_LIMIT must be a positive integer/,
+    );
+    expect(() => validateEnv({ ACCOUNT_RETENTION_BATCH_LIMIT: '-5' })).toThrow(
+      /ACCOUNT_RETENTION_BATCH_LIMIT must be a positive integer/,
+    );
+    expect(() => validateEnv({ ACCOUNT_RETENTION_BATCH_LIMIT: '1.5' })).toThrow(
+      /ACCOUNT_RETENTION_BATCH_LIMIT must be a positive integer/,
+    );
+    expect(() => validateEnv({ ACCOUNT_RETENTION_CRON: '   ' })).toThrow(
+      /ACCOUNT_RETENTION_CRON must not be empty when provided/,
+    );
+  });
+
   it('throws a readable error for a non-boolean AUTH_COOKIE_SECURE', () => {
     expect(() => validateEnv({ AUTH_COOKIE_SECURE: 'maybe' })).toThrow(
       /AUTH_COOKIE_SECURE must be a boolean/,

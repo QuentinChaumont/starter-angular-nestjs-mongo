@@ -57,6 +57,12 @@ export interface EnvironmentVariables {
   /** Days an audit event is kept before the TTL index drops it (default
    * 90). `0` disables the TTL (keep forever). `audit` brick (V2.3). */
   AUDIT_RETENTION_DAYS?: number;
+  /** Cron expression for the inactive-account retention sweep (default
+   * `0 3 * * *` — daily at 03:00). `account-retention` brick. */
+  ACCOUNT_RETENTION_CRON?: string;
+  /** Max accounts warned and max deleted per sweep run (default 1000).
+   * `account-retention` brick. */
+  ACCOUNT_RETENTION_BATCH_LIMIT?: number;
   OIDC_ISSUER?: string;
   OIDC_CLIENT_ID?: string;
   OIDC_CLIENT_SECRET?: string;
@@ -122,6 +128,8 @@ export const ENVIRONMENT_VARIABLE_NAMES: readonly (keyof EnvironmentVariables)[]
     'VERIFICATION_TOKEN_TTL_HOURS',
     'VERIFICATION_RESEND_COOLDOWN_SECONDS',
     'AUDIT_RETENTION_DAYS',
+    'ACCOUNT_RETENTION_CRON',
+    'ACCOUNT_RETENTION_BATCH_LIMIT',
     'OIDC_ISSUER',
     'OIDC_CLIENT_ID',
     'OIDC_CLIENT_SECRET',

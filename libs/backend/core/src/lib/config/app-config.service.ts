@@ -139,6 +139,22 @@ export class AppConfigService {
     };
   }
 
+  get accountRetention() {
+    return {
+      // `@Cron` needs its expression at decoration time (a decorator can't
+      // read DI), so `account-retention.job.ts` reads
+      // `process.env['ACCOUNT_RETENTION_CRON']` directly; this getter is
+      // the DI-friendly mirror with the same default.
+      cron:
+        this.configService.get('ACCOUNT_RETENTION_CRON', { infer: true }) ??
+        '0 3 * * *',
+      batchLimit:
+        this.configService.get('ACCOUNT_RETENTION_BATCH_LIMIT', {
+          infer: true,
+        }) ?? 1000,
+    };
+  }
+
   get mailer() {
     return {
       smtpUrl: this.configService.get('SMTP_URL', { infer: true }),

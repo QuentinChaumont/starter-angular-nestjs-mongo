@@ -280,6 +280,17 @@ export function validateEnv(
     errors,
   );
 
+  const ACCOUNT_RETENTION_CRON = parseOptionalString(
+    'ACCOUNT_RETENTION_CRON',
+    rawEnv['ACCOUNT_RETENTION_CRON'],
+    errors,
+  );
+  const ACCOUNT_RETENTION_BATCH_LIMIT = parseOptionalPositiveInt(
+    'ACCOUNT_RETENTION_BATCH_LIMIT',
+    rawEnv['ACCOUNT_RETENTION_BATCH_LIMIT'],
+    errors,
+  );
+
   const OIDC_ISSUER = parseOptionalString(
     'OIDC_ISSUER',
     rawEnv['OIDC_ISSUER'],
@@ -414,6 +425,10 @@ export function validateEnv(
       ? { VERIFICATION_RESEND_COOLDOWN_SECONDS }
       : {}),
     ...(AUDIT_RETENTION_DAYS !== undefined ? { AUDIT_RETENTION_DAYS } : {}),
+    ...(ACCOUNT_RETENTION_CRON !== undefined ? { ACCOUNT_RETENTION_CRON } : {}),
+    ...(ACCOUNT_RETENTION_BATCH_LIMIT !== undefined
+      ? { ACCOUNT_RETENTION_BATCH_LIMIT }
+      : {}),
     ...(OIDC_ISSUER !== undefined ? { OIDC_ISSUER } : {}),
     ...(OIDC_CLIENT_ID !== undefined ? { OIDC_CLIENT_ID } : {}),
     ...(OIDC_CLIENT_SECRET !== undefined ? { OIDC_CLIENT_SECRET } : {}),

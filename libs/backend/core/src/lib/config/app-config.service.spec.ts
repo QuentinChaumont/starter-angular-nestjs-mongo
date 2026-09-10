@@ -258,6 +258,29 @@ describe('AppConfigService', () => {
     ).toEqual({ retentionDays: 30 });
   });
 
+  it('defaults the account-retention cron + batch limit and honours overrides', () => {
+    const base = {
+      NODE_ENV: 'development' as const,
+      PORT: 3000,
+      CORS_ORIGINS: ['http://localhost:4200'],
+      RATE_LIMIT_TTL_SECONDS: 60,
+      RATE_LIMIT_LIMIT: 100,
+    };
+
+    expect(createService(base).accountRetention).toEqual({
+      cron: '0 3 * * *',
+      batchLimit: 1000,
+    });
+
+    expect(
+      createService({
+        ...base,
+        ACCOUNT_RETENTION_CRON: '30 2 * * 0',
+        ACCOUNT_RETENTION_BATCH_LIMIT: 250,
+      }).accountRetention,
+    ).toEqual({ cron: '30 2 * * 0', batchLimit: 250 });
+  });
+
   it('exposes mailer config with console-transport defaults', () => {
     const base = {
       NODE_ENV: 'development' as const,
