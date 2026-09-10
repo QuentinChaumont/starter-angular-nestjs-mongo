@@ -32,6 +32,17 @@ export class UserRepository extends BaseRepository<User> {
     return this.model.findOne({ email }).exec();
   }
 
+  /** Records activity in a single write: refresh the timestamp, drop any
+   * pending retention warning. */
+  async stampActivity(id: string, now: Date): Promise<void> {
+    await this.model
+      .updateOne(
+        { _id: id },
+        { $set: { lastActiveAt: now }, $unset: { retentionWarnedAt: 1 } },
+      )
+      .exec();
+  }
+
   /** Opts into the `select: false` two-factor fields (auth's 2FA flows). */
   async findByIdWithTwoFactor(id: string): Promise<UserDocument | null> {
     if (!isValidObjectId(id)) {

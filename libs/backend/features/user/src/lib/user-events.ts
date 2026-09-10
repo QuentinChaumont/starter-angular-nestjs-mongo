@@ -19,6 +19,14 @@ export interface UserStatusChangedEvent {
   active: boolean;
 }
 
+export interface UserDeletedEvent {
+  userId: string;
+  email: string;
+  /** `self` — the user deleted their own account; `retention` — the
+   * inactivity sweep removed it. */
+  reason: 'self' | 'retention';
+}
+
 /**
  * In-process pub/sub for user lifecycle hooks, built on Node's
  * `EventEmitter` (no extra dependency) — the same pattern as
@@ -48,5 +56,12 @@ export class UserEvents extends EventEmitter {
   }
   onStatusChanged(listener: (event: UserStatusChangedEvent) => void): void {
     this.on('user.status-changed', listener);
+  }
+
+  emitDeleted(payload: UserDeletedEvent): void {
+    this.emit('user.deleted', payload);
+  }
+  onDeleted(listener: (event: UserDeletedEvent) => void): void {
+    this.on('user.deleted', listener);
   }
 }

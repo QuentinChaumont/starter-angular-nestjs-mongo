@@ -18,6 +18,10 @@ import { User, UserDocument } from './user.schema';
 
 const ADMIN_ROLE = 'admin';
 
+/** Minimum gap between two `lastActiveAt` writes for one account — avoids
+ * a DB write on every 15-minute token refresh. */
+export const ACTIVITY_THROTTLE_MS = 24 * 60 * 60 * 1000;
+
 /** Whitelisted `?sort=` values for the admin list → the Mongo field they
  * order by. Anything else falls back to `createdAt`. */
 export const USER_SORT_FIELDS = {
@@ -180,7 +184,24 @@ export class UserService {
         'The password is incorrect',
       );
     }
-    await this.repository.deleteById(id);
+    await this.deleteById(id, { reason: 'self' });
+  }
+
+  /** Records that the account authenticated (login or refresh). Throttled,
+   * and deliberately swallowing errors — a failed stamp must never break a
+   * sign-in. */
+  async recordActivity(userId: string): Promise<void> {
+    try {
+      const user = await this.repository.findById(userId);
+      if (!user) return;
+      const fresh =
+        user.lastActiveAt != null &&
+        Date.now() - user.lastActiveAt.getTime() < ACTIVITY_THROTTLE_MS;
+      if (fresh && user.retentionWarnedAt == null) return;
+      await this.repository.stampActivity(userId, new Date());
+    } catch {
+      // best-effort; never propagate to the auth flow
+    }
   }
 
   async findAll(): Promise<UserDocument[]> {
@@ -327,11 +348,20 @@ export class UserService {
     return user;
   }
 
-  async deleteById(id: string): Promise<void> {
+  async deleteById(
+    id: string,
+    opts: { reason?: 'self' | 'retention' } = {},
+  ): Promise<void> {
+    const user = await this.repository.findById(id);
     const deleted = await this.repository.deleteById(id);
     if (!deleted) {
       throw new NotFoundError('USER_NOT_FOUND', 'User not found');
     }
+    this.events.emitDeleted({
+      userId: id,
+      email: user?.email ?? '',
+      reason: opts.reason ?? 'self',
+    });
   }
 
   /** How many accounts currently carry `role` — the `role` brick's

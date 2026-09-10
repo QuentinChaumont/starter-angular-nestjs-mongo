@@ -54,6 +54,19 @@ export class User {
   @Prop()
   disabledAt?: Date;
 
+  /** Last successful login or refresh-token rotation. Maintained by the
+   * `account-retention` brick's activity listener via
+   * `UserService.recordActivity`. Absent ⇒ the account has never
+   * authenticated; `createdAt` is used as the fallback reference date. */
+  @Prop({ index: true })
+  lastActiveAt?: Date;
+
+  /** Set when the inactivity-warning email is sent; cleared on any
+   * activity. Used by the retention sweep to guarantee the full warning
+   * window elapsed before deletion. */
+  @Prop()
+  retentionWarnedAt?: Date;
+
   /* ---- two-factor authentication (V2.2 step 43) ---- */
 
   /** Encrypted (AES-256-GCM) TOTP secret, once 2FA is confirmed. */
