@@ -83,6 +83,9 @@
     },
     {
       "path": "./libs/frontend/i18n"
+    },
+    {
+      "path": "./libs/backend/features/app-settings"
     }
   ],
   "compilerOptions": {}
