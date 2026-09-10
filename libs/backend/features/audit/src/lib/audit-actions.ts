@@ -16,6 +16,9 @@ export const AUDIT_ACTION = {
   ROLES_CHANGED: 'admin.roles-changed',
   STATUS_CHANGED: 'admin.status-changed',
   SESSIONS_REVOKED: 'admin.sessions-revoked',
+  SETTINGS_CHANGED: 'settings.changed',
+  ACCOUNT_DELETED: 'account.deleted',
+  ACCOUNT_PURGED: 'account.purged',
 } as const;
 
 export type AuditAction =

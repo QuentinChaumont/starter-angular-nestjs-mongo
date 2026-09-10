@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { AuthEvents } from '@org/backend-auth';
+import { AppSettingsEvents } from '@org/backend-features-app-settings';
 import { UserEvents } from '@org/backend-features-user';
 import { AUDIT_ACTION } from './audit-actions';
 import { AuditService } from './audit.service';
@@ -15,6 +16,7 @@ export class AuditListeners implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly authEvents: AuthEvents,
     private readonly userEvents: UserEvents,
+    private readonly appSettingsEvents: AppSettingsEvents,
   ) {}
 
   onModuleInit(): void {
@@ -113,6 +115,27 @@ export class AuditListeners implements OnModuleInit {
         action: AUDIT_ACTION.SESSIONS_REVOKED,
         target: e.userId,
         targetType: 'user',
+      }),
+    );
+
+    this.appSettingsEvents.onUpdated((e) =>
+      this.audit.record({
+        action: AUDIT_ACTION.SETTINGS_CHANGED,
+        actorId: e.changedBy,
+        targetType: 'settings',
+      }),
+    );
+
+    this.userEvents.onDeleted((e) =>
+      this.audit.record({
+        action:
+          e.reason === 'retention'
+            ? AUDIT_ACTION.ACCOUNT_PURGED
+            : AUDIT_ACTION.ACCOUNT_DELETED,
+        actorId: e.reason === 'retention' ? undefined : e.userId,
+        target: e.userId,
+        targetType: 'user',
+        meta: { email: e.email, reason: e.reason },
       }),
     );
   }

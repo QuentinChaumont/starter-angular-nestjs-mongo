@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '@org/backend-auth';
+import { AppSettingsModule } from '@org/backend-features-app-settings';
 import { UserModule } from '@org/backend-features-user';
 import { AuditController } from './audit.controller';
 import { AuditListeners } from './audit.listeners';
@@ -17,6 +18,7 @@ import { AuditService } from './audit.service';
   imports: [
     AuthModule,
     UserModule,
+    AppSettingsModule,
     MongooseModule.forFeature([
       { name: AuditEvent.name, schema: AuditEventSchema },
     ]),

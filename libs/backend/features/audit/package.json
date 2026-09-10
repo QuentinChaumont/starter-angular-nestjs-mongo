@@ -33,6 +33,7 @@
     "@org/backend-auth": "0.0.1",
     "@org/backend-core": "0.0.1",
     "@org/backend-database-mongo": "0.0.1",
+    "@org/backend-features-app-settings": "0.0.1",
     "@org/backend-features-user": "0.0.1",
     "@org/shared-contracts": "0.0.1",
     "mongoose": "^9.9.3"
