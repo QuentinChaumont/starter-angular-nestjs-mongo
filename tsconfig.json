@@ -86,6 +86,9 @@
     },
     {
       "path": "./libs/backend/features/app-settings"
+    },
+    {
+      "path": "./libs/backend/features/account-retention"
     }
   ],
   "compilerOptions": {}

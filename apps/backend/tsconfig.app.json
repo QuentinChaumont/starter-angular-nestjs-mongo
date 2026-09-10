@@ -41,6 +41,9 @@
       "path": "../../libs/backend/features/app-settings/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/backend/features/account-retention/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/backend/database/mongo/tsconfig.lib.json"
     },
     {
