@@ -47,6 +47,9 @@
     },
     {
       "path": "../../libs/frontend/auth/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/frontend/features/admin-settings/tsconfig.lib.json"
     }
   ]
 }

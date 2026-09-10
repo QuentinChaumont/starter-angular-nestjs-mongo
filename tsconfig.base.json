@@ -56,6 +56,9 @@
       ],
       "@org/frontend-features-profile": [
         "./libs/frontend/features/profile/src/index.ts"
+      ],
+      "@org/frontend-features-admin-settings": [
+        "./libs/frontend/features/admin-settings/src/index.ts"
       ]
     }
   }

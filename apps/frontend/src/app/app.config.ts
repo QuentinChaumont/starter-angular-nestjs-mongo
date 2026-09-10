@@ -51,6 +51,7 @@ export const appConfig: ApplicationConfig = {
     provideAdminTab({ label: 'Users', labelKey: 'dashboard.adminTabs.users', path: '', order: 0 }),
     provideAdminTab({ label: 'Roles', labelKey: 'dashboard.adminTabs.roles', path: 'roles', order: 10 }),
     provideAdminTab({ label: 'Audit', labelKey: 'dashboard.adminTabs.audit', path: 'audit', order: 20 }),
+    provideAdminTab({ label: 'Settings', labelKey: 'dashboard.adminTabs.settings', path: 'settings', order: 30 }),
     // Profile brick (V2.1 step 34): point loadMe() at the full /users/me.
     { provide: ME_ENDPOINT, useValue: '/users/me' },
     // Lets the cookie-preferences dialog offer "turn off the session

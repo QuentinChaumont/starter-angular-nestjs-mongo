@@ -90,6 +90,7 @@ export const en = {
       users: 'Users',
       roles: 'Roles',
       audit: 'Audit',
+      settings: 'Settings',
     },
   },
 };

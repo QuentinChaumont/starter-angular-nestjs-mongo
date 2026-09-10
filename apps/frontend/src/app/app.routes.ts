@@ -1,5 +1,10 @@
 import { Route } from '@angular/router';
-import { AUTH_ROUTES, RESET_ROUTES, authGuard, roleGuard } from '@org/frontend-auth';
+import {
+  AUTH_ROUTES,
+  RESET_ROUTES,
+  authGuard,
+  roleGuard,
+} from '@org/frontend-auth';
 import { LEGAL_ROUTES } from '@org/frontend-consent';
 import { NotFoundPage } from './not-found.component';
 
@@ -49,12 +54,21 @@ export const appRoutes: Route[] = [
                 (m) => m.ADMIN_AUDIT_ROUTES,
               ),
           },
+          {
+            path: 'settings',
+            loadChildren: () =>
+              import('@org/frontend-features-admin-settings').then(
+                (m) => m.ADMIN_SETTINGS_ROUTES,
+              ),
+          },
         ],
       },
       {
         path: 'profile',
         loadChildren: () =>
-          import('@org/frontend-features-profile').then((m) => m.PROFILE_ROUTES),
+          import('@org/frontend-features-profile').then(
+            (m) => m.PROFILE_ROUTES,
+          ),
       },
     ],
   },

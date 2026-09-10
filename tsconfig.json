@@ -89,6 +89,9 @@
     },
     {
       "path": "./libs/backend/features/account-retention"
+    },
+    {
+      "path": "./libs/frontend/features/admin-settings"
     }
   ],
   "compilerOptions": {}

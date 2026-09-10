@@ -88,6 +88,7 @@ export const fr: TranslationShape = {
       users: 'Utilisateurs',
       roles: 'Rôles',
       audit: 'Journal',
+      settings: 'Paramètres',
     },
   },
 };
