@@ -38,18 +38,25 @@ backend-core ─┬─ security         (always on; setupSecurity in main.ts)
               ├─ health
               └─ mongo ─┬─ user (entity) ─┬─ auth ─┬─ auth-reset ── mailer
                         │                 │        ├─ audit
-                        │                 │        └─ role
+                        │                 │        ├─ role
+                        │                 │        └─ account-retention
                         │                 └─ (users CRUD becomes admin-only)
-                        └─ mailer (standalone; only auth-reset needs it)
+                        ├─ mailer (standalone; auth-reset + account-retention need it)
+                        └─ app-settings (standalone; only account-retention needs it)
 
 frontend-design ─┬─ frontend-i18n ── frontend-auth ─┬─ frontend-dashboard ─┬─ frontend-admin-users ─┬─ admin-roles (role)
-                 ├─ frontend-feedback                │                      │                        └─ admin-audit (audit)
-                 └─ frontend-consent                 └─ profile (frontend-auth --profile)
+                 ├─ frontend-feedback                │                      │                        ├─ admin-audit (audit)
+                 └─ frontend-consent                 └─ profile (frontend-auth --profile)             └─ admin-settings (account-retention)
 ```
 
 Cross-cutting: `frontend-auth` also needs the backend `auth` brick;
-`admin-roles` / `admin-audit` frontend features need their backend
-counterpart (`role` / `audit`).
+`admin-roles` / `admin-audit` / `admin-settings` frontend features need
+their backend counterpart (`role` / `audit` / `account-retention`);
+`account-retention` also needs `app-settings` and the global
+`MailerService`; `frontend-consent`'s privacy-notice page reads
+`app-settings`'s public settings endpoint directly (not just through
+`account-retention`) and degrades to "not auto-deleted" wording when
+retention isn't installed or configured.
 
 ---
 
@@ -140,6 +147,29 @@ counterpart (`role` / `audit`).
 - **Env:** none.
 - **Note:** without this brick the admin-users role dialog falls back to a free-text role list.
 
+### `app-settings`
+
+- **Lib:** `libs/backend/features/app-settings` (`@org/backend-features-app-settings`) — generic runtime-configurable key-value settings store (one singleton Mongo document); admin `GET`/`PATCH /api/admin/settings`; unauthenticated `GET /api/public/settings` exposing a hand-picked, never-whole-document subset.
+- **Wiring (backend):** `AppSettingsModule` in `app.module.ts`; `@org/backend-features-app-settings` in `apps/backend/package.json` deps; `libs/backend/features/*` in root `package.json` `workspaces`.
+- **Env:** none — every field lives in the Mongo document and is changed at runtime via the admin endpoint, not `.env`.
+- **Depended on by:** `account-retention` (owns the brick's one current section, `accountRetention`); `frontend-consent`'s privacy-notice page also reads the public endpoint directly (see the dependency graph's cross-cutting note).
+- **Note:** generic and inert on its own — ships with no sections of its own until a brick like `account-retention` registers one. Remove `account-retention` first; removing `app-settings` afterward is then just deleting an unused, empty store.
+
+### `account-retention`
+
+- **Requires:** `auth` + `user` + `app-settings` + the global `MailerService` (`mailer` brick).
+- **Lib:** `libs/backend/features/account-retention` (`@org/backend-features-account-retention`) — stamps `User.lastActiveAt` on login/token-refresh; daily `@Cron` sweep (+ manual admin `POST /api/admin/account-retention/run`) that emails a warning then permanently deletes accounts inactive past an admin-configured period. Ships inert: with no period configured, nothing is ever warned or deleted.
+- **npm:** `@nestjs/schedule`.
+- **Wiring (backend):** `AccountRetentionModule` in `app.module.ts`; `@org/backend-features-account-retention` in `apps/backend/package.json` deps; `libs/backend/features/*` in root `package.json` `workspaces`; `@nestjs/schedule`'s `ScheduleModule.forRoot()` registered once in `apps/backend`.
+- **Wiring (frontend, only if `frontend-admin-users` present):**
+  - `libs/frontend/features/admin-settings` (`@org/frontend-features-admin-settings`).
+  - path in `tsconfig.base.json`.
+  - `{ path: 'settings', loadChildren: … ADMIN_SETTINGS_ROUTES }` child of the `/app/admin` route in `app.routes.ts`.
+  - `provideAdminTab({ … path: 'settings', order: 30 })` in `app.config.ts`.
+  - project references in `apps/frontend/tsconfig.spec.json` / `tsconfig.app.json`.
+- **Env:** `ACCOUNT_RETENTION_CRON` (cron expression, default `0 3 * * *`), `ACCOUNT_RETENTION_BATCH_LIMIT` (default `1000`). The retention *policy* itself (`inactiveDays` / `warningDays`) lives in `app-settings`, not `.env`.
+- **Caution:** on a database that predates this brick, `lastActiveAt` is backfilled from `createdAt` for every existing account — see "First enable on an existing database" in `libs/backend/features/account-retention/README.md` before turning retention on.
+
 ### `docker`
 
 - **Files (verbatim, opt-in):** `apps/backend/Dockerfile`, `apps/frontend/Dockerfile`, `apps/frontend/nginx.conf`, `docker-compose.yml`, `.dockerignore`.
@@ -222,4 +252,11 @@ rendering lives in `libs/frontend/dashboard/src/lib/shell/nav-tree-item.ts`.
 - **Requires:** `frontend-dashboard` + `frontend-feedback`.
 - **Lib:** `libs/frontend/features/admin-users` (`@org/frontend-features-admin-users`) — the `/app/admin` tabbed console; user list on `<lib-data-table>` (server-side paging, per-column filters), role + status dialogs.
 - **Wiring:** swaps the `DashboardHome` placeholder on the `/app/admin` route for `AdminTabsShell` + a `{ path: '', loadChildren: … ADMIN_USERS_ROUTES }` child in `app.routes.ts`; `provideAdminTab({ … path: '', order: 0 })` in `app.config.ts`; `{ label: 'Admin', route: 'admin', roles: ['admin'] }` nav entry in `apps/frontend/src/app/dashboard-nav.ts`; path in `tsconfig.base.json`; project references in `apps/frontend/tsconfig.{spec,app}.json`.
-- **Hosts the tabs** contributed by the `role` and `audit` bricks — remove those first.
+- **Hosts the tabs** contributed by the `role`, `audit` and `account-retention` bricks — remove those first.
+
+### `frontend-admin-settings` (`account-retention`)
+
+- **Requires:** `frontend-admin-users` + backend `account-retention` (its `app-settings` config, via `/api/admin/settings`).
+- **Lib:** `libs/frontend/features/admin-settings` (`@org/frontend-features-admin-settings`) — lazy admin-console tab at `/app/admin/settings`; reactive form to view/edit `accountRetention.inactiveDays` / `.warningDays` (server-validated `warningDays < inactiveDays`).
+- **Wiring:** see the backend `account-retention` entry's "Wiring (frontend, …)" bullet — `ADMIN_SETTINGS_ROUTES`, `provideAdminTab({ … path: 'settings', order: 30 })`, `tsconfig.base.json` path, project references.
+- **Env:** none.
