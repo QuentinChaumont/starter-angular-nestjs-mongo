@@ -19,6 +19,7 @@ import {
 } from '@org/frontend-ui';
 import { AuthService } from '../auth.service';
 import { sanitizeRedirect } from '../sanitize-redirect';
+import { AuthShell } from '../ui/auth-shell';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -33,11 +34,12 @@ const MIN_PASSWORD_LENGTH = 8;
     PasswordRevealButton,
     AsyncButtonDirective,
     FormErrors,
+    AuthShell,
     TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="register">
+    <lib-auth-shell class="register" width="420px">
       <h1>{{ 'auth.register.title' | transloco }}</h1>
 
       <form [formGroup]="form" (ngSubmit)="submit()">
@@ -112,17 +114,21 @@ const MIN_PASSWORD_LENGTH = 8;
         </button>
       </form>
 
-      <a routerLink="/login">{{ 'auth.register.haveAccount' | transloco }}</a>
-    </section>
+      <a class="register__login" routerLink="/login">
+        {{ 'auth.register.haveAccount' | transloco }}
+      </a>
+    </lib-auth-shell>
   `,
   styles: `
-    .register {
-      max-width: 420px;
-      margin: 8vh auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 24px;
+    .register h1 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .register__login {
+      font-size: 0.8125rem;
+      text-align: center;
     }
     .register form {
       display: flex;

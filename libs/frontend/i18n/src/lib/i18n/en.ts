@@ -23,6 +23,7 @@ export const en = {
       submit: 'Sign in',
       forgot: 'Forgot your password?',
       createAccount: 'Create an account',
+      orContinueWith: 'Or continue with',
       with: 'Sign in with {{ provider }}',
       invalid: 'Invalid email or password',
     },

@@ -4,7 +4,9 @@
   "license": "MIT",
   "scripts": {
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
-    "seed:admin": "nx run @org/backend:seed-admin"
+    "seed:admin": "nx run @org/backend:seed-admin",
+    "start:backend": "nx serve @org/backend",
+    "start:frontend": "nx serve frontend"
   },
   "private": true,
   "engines": {

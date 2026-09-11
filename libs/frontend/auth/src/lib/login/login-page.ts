@@ -17,6 +17,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { AuthService } from '../auth.service';
 import { sanitizeRedirect } from '../sanitize-redirect';
 import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
+import { AuthShell } from '../ui/auth-shell';
 
 @Component({
   selector: 'lib-login-page',
@@ -30,6 +31,7 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
     AsyncButtonDirective,
     FormErrors,
     TwoFactorPrompt,
+    AuthShell,
     TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,7 +39,7 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
     @if (pendingToken(); as token) {
       <lib-two-factor-prompt [pendingToken]="token" [redirectTo]="redirectTo" />
     } @else {
-    <section class="login">
+    <lib-auth-shell class="login">
       <h1>{{ 'auth.login.title' | transloco }}</h1>
 
       <form [formGroup]="form" (ngSubmit)="submit()">
@@ -79,7 +81,15 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
           {{ 'auth.login.submit' | transloco }}
         </button>
       </form>
-      <a routerLink="/forgot-password">{{ 'auth.login.forgot' | transloco }}</a>
+      <a class="login__forgot" routerLink="/forgot-password">
+        {{ 'auth.login.forgot' | transloco }}
+      </a>
+
+      @if (oidcProviders().length) {
+        <div class="login__divider" role="separator">
+          <span>{{ 'auth.login.orContinueWith' | transloco }}</span>
+        </div>
+      }
 
       @for (provider of oidcProviders(); track provider.id) {
         <a
@@ -118,21 +128,19 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
       }
 
       @if (registrationEnabled()) {
-        <a routerLink="/register" [queryParams]="{ redirectTo: redirectTo }">
+        <a class="login__create" routerLink="/register" [queryParams]="{ redirectTo: redirectTo }">
           {{ 'auth.login.createAccount' | transloco }}
         </a>
       }
-    </section>
+    </lib-auth-shell>
     }
   `,
   styles: `
-    .login {
-      max-width: 360px;
-      margin: 8vh auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 24px;
+    .login h1 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
     }
     .login form {
       display: flex;
@@ -143,6 +151,23 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
       color: var(--app-color-error);
       margin: 0;
     }
+    .login__forgot {
+      font-size: 0.8125rem;
+    }
+    .login__divider {
+      display: flex;
+      align-items: center;
+      gap: var(--app-space-3);
+      color: color-mix(in srgb, var(--app-color-on-surface) 50%, transparent);
+      font-size: 0.75rem;
+    }
+    .login__divider::before,
+    .login__divider::after {
+      content: '';
+      flex: 1;
+      block-size: 1px;
+      background: var(--app-color-outline);
+    }
     .login__provider {
       display: inline-flex;
       align-items: center;
@@ -152,6 +177,10 @@ import { TwoFactorPrompt } from '../two-factor/two-factor-prompt';
     .login__provider-icon {
       width: 18px;
       height: 18px;
+    }
+    .login__create {
+      font-size: 0.8125rem;
+      text-align: center;
     }
   `,
 })

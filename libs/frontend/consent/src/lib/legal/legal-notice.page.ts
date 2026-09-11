@@ -1,9 +1,5 @@
-import { Location } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { LegalPageShell } from './legal-page-shell';
 
 /**
  * TEMPLATE — the site's legal notice / imprint ("mentions légales" under
@@ -13,15 +9,11 @@ import { Router } from '@angular/router';
  */
 @Component({
   selector: 'lib-legal-notice',
-  imports: [MatCardModule, MatButtonModule, MatIconModule],
+  imports: [LegalPageShell],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <mat-card class="legal">
-      <button mat-button class="legal__back" (click)="back()">
-        <mat-icon>arrow_back</mat-icon> Back
-      </button>
-      <h1>Legal Notice</h1>
-      <p><em>Last updated: 09/09/2026</em></p>
+    <lib-legal-page-shell heading="Legal Notice">
+      <p class="legal__meta"><em>Last updated: 09/09/2026</em></p>
 
       <h2>Site publisher</h2>
       <p>
@@ -67,30 +59,36 @@ import { Router } from '@angular/router';
           >Quentin Chaumont</a
         >.
       </p>
-    </mat-card>
+    </lib-legal-page-shell>
   `,
   styles: `
-    .legal {
-      max-width: 760px;
-      margin: 32px auto;
-      padding: 32px;
+    .legal__meta {
+      margin: 0 0 var(--app-space-4);
+      font-size: 0.8125rem;
+      color: color-mix(in srgb, var(--app-color-on-surface) 55%, transparent);
     }
-    .legal__back {
-      margin-bottom: 8px;
+    h2 {
+      margin: var(--app-space-6) 0 var(--app-space-2);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+    }
+    h2:first-of-type {
+      margin-block-start: var(--app-space-4);
+    }
+    p {
+      margin: 0 0 var(--app-space-2);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      color: color-mix(in srgb, var(--app-color-on-surface) 88%, transparent);
+    }
+    a {
+      color: var(--app-color-primary);
+    }
+    strong {
+      color: var(--app-color-on-surface);
+      font-weight: 600;
     }
   `,
 })
-export class LegalNotice {
-  private readonly location = inject(Location);
-  private readonly router = inject(Router);
-
-  /** Go back if we got here from within the app; otherwise (direct link /
-   * new tab, where `history.length` is 1) head to the app root. */
-  protected back(): void {
-    if (history.length > 1) {
-      this.location.back();
-    } else {
-      void this.router.navigateByUrl('/');
-    }
-  }
-}
+export class LegalNotice {}

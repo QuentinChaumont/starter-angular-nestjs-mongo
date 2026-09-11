@@ -21,6 +21,7 @@ export const fr: TranslationShape = {
       submit: 'Se connecter',
       forgot: 'Mot de passe oublié ?',
       createAccount: 'Créer un compte',
+      orContinueWith: 'Ou continuer avec',
       with: 'Se connecter avec {{ provider }}',
       invalid: 'E-mail ou mot de passe invalide',
     },

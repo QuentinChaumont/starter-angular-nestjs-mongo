@@ -7,6 +7,7 @@ import { RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AsyncButtonDirective, FormErrors } from '@org/frontend-ui';
 import { ResetService } from './reset.service';
+import { AuthShell } from '../ui/auth-shell';
 
 @Component({
   selector: 'lib-forgot-password-page',
@@ -18,11 +19,12 @@ import { ResetService } from './reset.service';
     MatButtonModule,
     AsyncButtonDirective,
     FormErrors,
+    AuthShell,
     TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="forgot">
+    <lib-auth-shell class="forgot">
       <h1>{{ 'auth.forgot.title' | transloco }}</h1>
 
       @if (done()) {
@@ -53,21 +55,24 @@ import { ResetService } from './reset.service';
         </form>
         <a routerLink="/login">{{ 'auth.forgot.backToLogin' | transloco }}</a>
       }
-    </section>
+    </lib-auth-shell>
   `,
   styles: `
-    .forgot {
-      max-width: 360px;
-      margin: 8vh auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 24px;
+    .forgot h1 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
     }
     .forgot form {
       display: flex;
       flex-direction: column;
       gap: 8px;
+    }
+    .forgot a,
+    .forgot p[role='status'] {
+      font-size: 0.8125rem;
+      margin: 0;
     }
   `,
 })

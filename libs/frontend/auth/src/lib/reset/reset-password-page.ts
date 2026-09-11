@@ -18,6 +18,7 @@ import {
   PasswordRevealButton,
 } from '@org/frontend-ui';
 import { ResetService } from './reset.service';
+import { AuthShell } from '../ui/auth-shell';
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -32,11 +33,12 @@ const MIN_PASSWORD_LENGTH = 8;
     PasswordRevealButton,
     AsyncButtonDirective,
     FormErrors,
+    AuthShell,
     TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="reset">
+    <lib-auth-shell class="reset">
       <h1>{{ 'auth.reset.title' | transloco }}</h1>
 
       @if (!token) {
@@ -89,16 +91,17 @@ const MIN_PASSWORD_LENGTH = 8;
           </button>
         </form>
       }
-    </section>
+    </lib-auth-shell>
   `,
   styles: `
-    .reset {
-      max-width: 360px;
-      margin: 8vh auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 24px;
+    .reset h1 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .reset a {
+      font-size: 0.8125rem;
     }
     .reset form {
       display: flex;

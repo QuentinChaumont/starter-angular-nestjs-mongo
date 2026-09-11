@@ -5,15 +5,22 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslocoPipe } from '@jsverse/transloco';
 import { AuthService } from '../auth.service';
 import { ResetService } from './reset.service';
+import { AuthShell } from '../ui/auth-shell';
 
 type State = 'pending' | 'ok' | 'error';
 
 @Component({
   selector: 'lib-verify-email-page',
-  imports: [RouterLink, MatButtonModule, MatProgressBarModule, TranslocoPipe],
+  imports: [
+    RouterLink,
+    MatButtonModule,
+    MatProgressBarModule,
+    AuthShell,
+    TranslocoPipe,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="verify">
+    <lib-auth-shell class="verify">
       @switch (state()) {
         @case ('pending') {
           <mat-progress-bar mode="indeterminate"></mat-progress-bar>
@@ -34,17 +41,20 @@ type State = 'pending' | 'ok' | 'error';
           </a>
         }
       }
-    </section>
+    </lib-auth-shell>
   `,
   styles: `
     .verify {
-      max-width: 360px;
-      margin: 12vh auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 24px;
       text-align: center;
+    }
+    .verify h1 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    .verify mat-progress-bar {
+      margin-block: var(--app-space-2);
     }
   `,
 })

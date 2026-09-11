@@ -15,6 +15,7 @@ import { TranslocoPipe, TranslocoService } from '@jsverse/transloco';
 import { isApiError } from '@org/shared-contracts';
 import { AsyncButtonDirective, FormErrors } from '@org/frontend-ui';
 import { AuthService } from '../auth.service';
+import { AuthShell } from '../ui/auth-shell';
 
 /**
  * The "enter your 6-digit code" step shown after a password or OIDC login
@@ -30,11 +31,12 @@ import { AuthService } from '../auth.service';
     MatButtonModule,
     AsyncButtonDirective,
     FormErrors,
+    AuthShell,
     TranslocoPipe,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <section class="tfa">
+    <lib-auth-shell class="tfa">
       <h1>{{ 'auth.twoFactor.title' | transloco }}</h1>
       <p class="tfa__hint">{{ 'auth.twoFactor.hint' | transloco }}</p>
 
@@ -64,16 +66,14 @@ import { AuthService } from '../auth.service';
           {{ 'auth.twoFactor.verify' | transloco }}
         </button>
       </form>
-    </section>
+    </lib-auth-shell>
   `,
   styles: `
-    .tfa {
-      max-width: 360px;
-      margin: 8vh auto;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 24px;
+    .tfa h1 {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
     }
     .tfa form {
       display: flex;

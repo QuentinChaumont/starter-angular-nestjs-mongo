@@ -1,11 +1,7 @@
-import { Location } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { Router } from '@angular/router';
 import { PublicSettingsService, RETENTION_FALLBACK } from '@org/frontend-core';
+import { LegalPageShell } from './legal-page-shell';
 
 /**
  * TEMPLATE — replace the bracketed placeholders with this project's real
@@ -14,15 +10,11 @@ import { PublicSettingsService, RETENTION_FALLBACK } from '@org/frontend-core';
  */
 @Component({
   selector: 'lib-privacy-policy',
-  imports: [MatCardModule, MatButtonModule, MatIconModule],
+  imports: [LegalPageShell],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <mat-card class="legal">
-      <button mat-button class="legal__back" (click)="back()">
-        <mat-icon>arrow_back</mat-icon> Back
-      </button>
-      <h1>Privacy Notice</h1>
-      <p><em>Last updated: 09/09/2026</em></p>
+    <lib-legal-page-shell heading="Privacy Notice">
+      <p class="legal__meta"><em>Last updated: 09/09/2026</em></p>
 
       <h2>Controller</h2>
       <p>
@@ -101,22 +93,44 @@ import { PublicSettingsService, RETENTION_FALLBACK } from '@org/frontend-core';
         location]), transactional email ([PROVIDER — location]), and, subject to
         your consent, analytics ([PROVIDER — location]).
       </p>
-    </mat-card>
+    </lib-legal-page-shell>
   `,
   styles: `
-    .legal {
-      max-width: 760px;
-      margin: 32px auto;
-      padding: 32px;
+    .legal__meta {
+      margin: 0 0 var(--app-space-4);
+      font-size: 0.8125rem;
+      color: color-mix(in srgb, var(--app-color-on-surface) 55%, transparent);
     }
-    .legal__back {
-      margin-bottom: 8px;
+    h2 {
+      margin: var(--app-space-6) 0 var(--app-space-2);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.005em;
+    }
+    h2:first-of-type {
+      margin-block-start: var(--app-space-4);
+    }
+    p,
+    li {
+      margin: 0 0 var(--app-space-2);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      color: color-mix(in srgb, var(--app-color-on-surface) 88%, transparent);
+    }
+    ul {
+      margin: 0 0 var(--app-space-2);
+      padding-inline-start: 1.25em;
+    }
+    a {
+      color: var(--app-color-primary);
+    }
+    strong {
+      color: var(--app-color-on-surface);
+      font-weight: 600;
     }
   `,
 })
 export class PrivacyPolicy {
-  private readonly location = inject(Location);
-  private readonly router = inject(Router);
   private readonly settings = inject(PublicSettingsService);
 
   protected readonly retention = toSignal(this.settings.get(), {
@@ -130,15 +144,5 @@ export class PrivacyPolicy {
     return days
       ? `permanently deleted after ${days} days of inactivity`
       : 'not automatically deleted';
-  }
-
-  /** Go back if we got here from within the app; otherwise (direct link /
-   * new tab, where `history.length` is 1) head to the app root. */
-  protected back(): void {
-    if (history.length > 1) {
-      this.location.back();
-    } else {
-      void this.router.navigateByUrl('/');
-    }
   }
 }

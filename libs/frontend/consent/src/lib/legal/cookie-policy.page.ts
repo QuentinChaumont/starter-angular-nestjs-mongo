@@ -1,9 +1,5 @@
-import { Location } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatIconModule } from '@angular/material/icon';
-import { Router } from '@angular/router';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { LegalPageShell } from './legal-page-shell';
 
 /**
  * TEMPLATE — replace the bracketed placeholders with this project's real
@@ -12,15 +8,11 @@ import { Router } from '@angular/router';
  */
 @Component({
   selector: 'lib-cookie-policy',
-  imports: [MatCardModule, MatButtonModule, MatIconModule],
+  imports: [LegalPageShell],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <mat-card class="legal">
-      <button mat-button class="legal__back" (click)="back()">
-        <mat-icon>arrow_back</mat-icon> Back
-      </button>
-      <h1>Cookie Policy</h1>
-      <p><em>Last updated: 09/09/2026</em></p>
+    <lib-legal-page-shell heading="Cookie Policy">
+      <p class="legal__meta"><em>Last updated: 09/09/2026</em></p>
 
       <h2>Who we are</h2>
       <p>
@@ -63,41 +55,49 @@ import { Router } from '@angular/router';
 
       <h2>Contact</h2>
       <p>Questions: chaumont.quentin@gmail.com</p>
-    </mat-card>
+    </lib-legal-page-shell>
   `,
   styles: `
-    .legal {
-      max-width: 760px;
-      margin: 32px auto;
-      padding: 32px;
+    .legal__meta {
+      margin: 0 0 var(--app-space-4);
+      font-size: 0.8125rem;
+      color: color-mix(in srgb, var(--app-color-on-surface) 55%, transparent);
     }
-    .legal__back {
-      margin-bottom: 8px;
+    h2 {
+      margin: var(--app-space-6) 0 var(--app-space-2);
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: -0.005em;
     }
-    .legal table {
+    h2:first-of-type {
+      margin-block-start: var(--app-space-4);
+    }
+    p {
+      margin: 0 0 var(--app-space-2);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      color: color-mix(in srgb, var(--app-color-on-surface) 88%, transparent);
+    }
+    strong {
+      color: var(--app-color-on-surface);
+      font-weight: 600;
+    }
+    table {
       width: 100%;
       border-collapse: collapse;
-      margin: 12px 0;
+      margin: var(--app-space-2) 0 var(--app-space-4);
+      font-size: 0.875rem;
     }
-    .legal th,
-    .legal td {
-      border: 1px solid var(--app-color-outline);
-      padding: 8px;
+    th,
+    td {
+      border: var(--app-border-hairline);
+      padding: var(--app-space-2) var(--app-space-3);
       text-align: start;
+    }
+    th {
+      font-weight: 600;
+      background: var(--app-color-surface-variant);
     }
   `,
 })
-export class CookiePolicy {
-  private readonly location = inject(Location);
-  private readonly router = inject(Router);
-
-  /** Go back if we got here from within the app; otherwise (direct link /
-   * new tab, where `history.length` is 1) head to the app root. */
-  protected back(): void {
-    if (history.length > 1) {
-      this.location.back();
-    } else {
-      void this.router.navigateByUrl('/');
-    }
-  }
-}
+export class CookiePolicy {}
