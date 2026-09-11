@@ -71,6 +71,16 @@ npx nx serve frontend          # http://localhost:4200
 > derived from it — rotating `JWT_SECRET` later invalidates every enrolled
 > second factor.
 
+### Inactive-account retention
+
+Opt-in, not on by default: an admin turns it on from the admin console's
+**Settings** tab (`inactiveDays` / `warningDays`) — until then the daily
+sweep is a no-op and no account is ever auto-deleted. Once configured, the
+privacy notice's retention section updates itself to state the current
+values. The sweep's schedule and per-run batch size are ops knobs, not
+settings-store fields: `ACCOUNT_RETENTION_CRON` (default `0 3 * * *`) and
+`ACCOUNT_RETENTION_BATCH_LIMIT` (default `1000`) in `.env`.
+
 ## 5. Legal pages
 
 Fill the `[PLACEHOLDERS]` in the three template pages before going live:
