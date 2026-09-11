@@ -285,7 +285,7 @@ describe('Account retention sweep (e2e, real Mongo instance)', () => {
 
     const still = await getUser(recentId);
     expect(still.status).toBe(200);
-    expect((await still.json()).email).toBe(recent.email);
+    expect(((await still.json()) as { email: string }).email).toBe(recent.email);
 
     const adminStill = await getUser(adminId);
     expect(adminStill.status).toBe(200);
