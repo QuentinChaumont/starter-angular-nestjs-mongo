@@ -58,10 +58,43 @@ The "warned at least `warningDays` ago" guard is measured from when the
 email actually went out, so lowering `inactiveDays` between runs never
 deletes an account before it has had its full warning window.
 
+A warning is only **fresh** for `2 * warningDays` after it was sent: the
+delete phase also requires `retentionWarnedAt` to be no older than that,
+and the warn phase treats an account whose warning has gone stale as
+unwarned again. Without this, disabling retention (`inactiveDays: null`)
+after warnings went out and re-enabling it later (or raising
+`inactiveDays`) would delete already-warned accounts on the very next
+sweep, off a long-expired warning email; instead they get a fresh warning
+first.
+
 ### Never purged
 
 Accounts with the `admin` role and accounts with `disabledAt` set are
 excluded from **both** phases.
+
+### ⚠️ First enable on an existing database
+
+`lastActiveAt` only starts being stamped once this brick is deployed and a
+user authenticates. Every account that predates that moment ages from
+`createdAt` instead (see "Reference date" above and `$ifNull` in
+`UserRepository.findRetentionCandidates`). If you enable retention with a
+short `inactiveDays` immediately after deploying,
+long-tenured-but-perfectly-active users can be misclassified as inactive
+— and with `warningDays: null`, deleted with **no warning email at all**.
+
+Before enabling retention on a database that predates this brick, do
+**one** of:
+
+- Wait at least one full `inactiveDays` window after deploying before
+  turning retention on, so every real user has had a chance to log in and
+  get a real `lastActiveAt`.
+- Backfill `lastActiveAt` for existing users first, e.g.:
+  ```js
+  db.users.updateMany(
+    { lastActiveAt: { $exists: false } },
+    { $set: { lastActiveAt: new Date() } },
+  );
+  ```
 
 ## Settings (`app-settings` brick)
 

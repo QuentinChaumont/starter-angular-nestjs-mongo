@@ -81,6 +81,11 @@ values. The sweep's schedule and per-run batch size are ops knobs, not
 settings-store fields: `ACCOUNT_RETENTION_CRON` (default `0 3 * * *`) and
 `ACCOUNT_RETENTION_BATCH_LIMIT` (default `1000`) in `.env`.
 
+⚠️ On a database that predates this brick, wait a full inactivity window
+after deploying (or backfill `lastActiveAt`) before enabling retention —
+see "First enable on an existing database" in
+`libs/backend/features/account-retention/README.md`.
+
 ## 5. Legal pages
 
 Fill the `[PLACEHOLDERS]` in the three template pages before going live:

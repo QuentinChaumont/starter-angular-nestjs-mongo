@@ -21,6 +21,7 @@ import {
 } from '@org/backend-testing';
 import type { Model } from 'mongoose';
 import { AuditModule } from '@org/backend-features-audit';
+import { InMemoryMailTransport, MAIL_TRANSPORT } from '@org/backend-mailer';
 import { AccountRetentionModule } from './account-retention.module';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -59,15 +60,27 @@ describe('Account retention sweep (e2e, real Mongo instance)', () => {
     firstName: 'Fresh',
     lastName: 'Fiona',
   };
+  // Backdated but excluded on the two hard safety rails (finding #5):
+  // never `admin`, never `disabledAt`-set — see `UserRepository.findRetentionCandidates`.
+  const disabled = {
+    email: 'disabled.dan@example.com',
+    password: 'Str0ng!Passw0rd',
+    firstName: 'Disabled',
+    lastName: 'Dan',
+  };
   let staleId: string;
   let recentId: string;
+  let disabledId: string;
+  let adminId: string;
   let adminToken: string;
+  let mail: InMemoryMailTransport;
 
   beforeAll(async () => {
     testMongo = await startTestMongo({
       JWT_SECRET: 'test-secret',
       AUTH_RATE_LIMIT_LIMIT: 1000,
     });
+    mail = new InMemoryMailTransport();
 
     const moduleRef = await Test.createTestingModule({
       imports: [
@@ -77,6 +90,8 @@ describe('Account retention sweep (e2e, real Mongo instance)', () => {
     })
       .overrideProvider(AppConfigService)
       .useValue(testMongo.config)
+      .overrideProvider(MAIL_TRANSPORT)
+      .useValue(mail)
       .compile();
 
     app = moduleRef.createNestApplication();
@@ -88,12 +103,13 @@ describe('Account retention sweep (e2e, real Mongo instance)', () => {
     userModel = app.get<Model<User>>(getModelToken(User.name));
 
     // Seeded admin, created directly (not through the public register flow).
-    await app.get(UserService).create({
+    const adminCreated = await app.get(UserService).create({
       ...admin,
       firstName: 'Ada',
       lastName: 'Admin',
       roles: ['admin'],
     });
+    adminId = adminCreated._id.toString();
 
     const login = await (
       await fetch(`${baseUrl}/auth/login`, {
@@ -104,20 +120,38 @@ describe('Account retention sweep (e2e, real Mongo instance)', () => {
     ).json();
     adminToken = (login as { accessToken: string }).accessToken;
 
-    // Two ordinary accounts, created through the real HTTP endpoint.
+    // Ordinary accounts, created through the real HTTP endpoint.
     // `UserController` is `@Roles('admin')` at class level once the auth
     // brick is installed, so this needs the admin's bearer token too.
     const staleCreated = await registerUser(stale);
     staleId = staleCreated._id;
     const recentCreated = await registerUser(recent);
     recentId = recentCreated._id;
+    const disabledCreated = await registerUser(disabled);
+    disabledId = disabledCreated._id;
 
     // Backdate the stale user's last activity well past any inactivity
     // window the test configures below — `recent` is left untouched, so
-    // its reference date falls back to its (fresh) `createdAt`.
+    // its reference date falls back to its (fresh) `createdAt`. The admin
+    // and the disabled account are backdated identically to the stale
+    // user, so surviving the sweep proves the role/disabled exclusion
+    // rather than merely not being stale (finding #5).
     await userModel.updateOne(
       { _id: staleId },
       { $set: { lastActiveAt: new Date(Date.now() - 40 * DAY_MS) } },
+    );
+    await userModel.updateOne(
+      { _id: adminId },
+      { $set: { lastActiveAt: new Date(Date.now() - 40 * DAY_MS) } },
+    );
+    await userModel.updateOne(
+      { _id: disabledId },
+      {
+        $set: {
+          lastActiveAt: new Date(Date.now() - 40 * DAY_MS),
+          disabledAt: new Date(),
+        },
+      },
     );
 
     const patched = await fetch(`${baseUrl}/admin/settings`, {
@@ -179,8 +213,11 @@ describe('Account retention sweep (e2e, real Mongo instance)', () => {
     return [];
   };
 
-  it('warns the stale account and leaves the recent one alone', async () => {
+  it('warns the stale account and leaves the recent, admin and disabled accounts alone', async () => {
     const result = await runSweep();
+    // Exactly one warning — if the admin/disabled exclusion (finding #5)
+    // were dropped or inverted, the backdated admin and disabled accounts
+    // (also stale as of `beforeAll`) would inflate this count.
     expect(result).toEqual({ warned: 1, deleted: 0 });
 
     const staleDoc = await userModel.findById(staleId).exec();
@@ -188,25 +225,72 @@ describe('Account retention sweep (e2e, real Mongo instance)', () => {
 
     const still = await getUser(recentId);
     expect(still.status).toBe(200);
+
+    const adminDoc = await userModel.findById(adminId).exec();
+    expect(adminDoc?.retentionWarnedAt).toBeUndefined();
+    const disabledDoc = await userModel.findById(disabledId).exec();
+    expect(disabledDoc?.retentionWarnedAt).toBeUndefined();
+
+    // Finding #1: the stale account was already 40 days inactive when
+    // first warned (30 days past `inactiveDays: 30`) — well past the
+    // point where the naive `lastActiveAt + inactiveDays` formula lands
+    // in the past. The email must never state a deletion date earlier
+    // than "warningDays from now", the earliest the delete-phase guard
+    // could actually remove the account.
+    expect(mail.sent).toHaveLength(1);
+    const earliestPossibleDeletion = new Date(Date.now() + 7 * DAY_MS);
+    const expectedDate = new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(earliestPossibleDeletion);
+    expect(mail.sent[0].text).toContain(expectedDate);
+
+    // Finding #3: no OIDC frontend URL is configured in this test's env,
+    // so the call-to-action link must fall back to the configured CORS
+    // origin — never a bare, unusable relative path.
+    expect(mail.sent[0].text).toContain('http://localhost:4200/app/profile');
+    expect(mail.sent[0].text).not.toContain('undefined/app/profile');
   });
 
-  it('deletes the stale account once the warning window has elapsed', async () => {
+  it('deletes the stale account once the warning window has elapsed, sparing admin and disabled accounts', async () => {
     await userModel.updateOne(
       { _id: staleId },
+      { $set: { retentionWarnedAt: new Date(Date.now() - 8 * DAY_MS) } },
+    );
+    // Simulate the admin/disabled accounts also carrying an elapsed
+    // warning, so this exercises the delete-phase's own exclusion
+    // directly rather than only inheriting it from never being warned.
+    await userModel.updateOne(
+      { _id: adminId },
+      { $set: { retentionWarnedAt: new Date(Date.now() - 8 * DAY_MS) } },
+    );
+    await userModel.updateOne(
+      { _id: disabledId },
       { $set: { retentionWarnedAt: new Date(Date.now() - 8 * DAY_MS) } },
     );
 
     const result = await runSweep();
     expect(result).toEqual({ warned: 0, deleted: 1 });
+
+    const adminStill = await userModel.findById(adminId).exec();
+    expect(adminStill).not.toBeNull();
+    const disabledStill = await userModel.findById(disabledId).exec();
+    expect(disabledStill).not.toBeNull();
   });
 
-  it('purges the account (404), audits it, and spares the recent one', async () => {
+  it('purges the account (404), audits it, and spares the recent, admin and disabled accounts', async () => {
     const gone = await getUser(staleId);
     expect(gone.status).toBe(404);
 
     const still = await getUser(recentId);
     expect(still.status).toBe(200);
     expect((await still.json()).email).toBe(recent.email);
+
+    const adminStill = await getUser(adminId);
+    expect(adminStill.status).toBe(200);
+    const disabledStill = await getUser(disabledId);
+    expect(disabledStill.status).toBe(200);
 
     const [row] = await findAudit('action=account.purged&pageSize=1');
     expect(row).toMatchObject({

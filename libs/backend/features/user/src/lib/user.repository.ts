@@ -45,13 +45,24 @@ export class UserRepository extends BaseRepository<User> {
 
   /** Accounts eligible for the retention sweep: reference date
    * (`lastActiveAt`, falling back to `createdAt`) at or before `before`,
-   * never `admin`, never disabled. `onlyUnwarned` restricts to accounts
-   * with no pending warning; `warnedBefore` restricts to accounts warned
-   * at or before that instant. */
+   * never `admin`, never disabled.
+   *
+   * `onlyUnwarned` (warn phase) restricts to accounts with no pending
+   * warning; when `expiredWarningBefore` is also given, an account warned
+   * at or before that instant counts as unwarned too — its prior warning
+   * has gone stale (see `account-retention.job.ts`) and it's due a fresh
+   * one.
+   *
+   * `warnedBefore` (delete phase) restricts to accounts warned at or
+   * before that instant; when `warnedAfter` is also given, the warning
+   * must also be at or after that instant — a warning older than that is
+   * stale and no longer authorizes deletion. */
   async findRetentionCandidates(opts: {
     before: Date;
     onlyUnwarned?: boolean;
+    expiredWarningBefore?: Date;
     warnedBefore?: Date;
+    warnedAfter?: Date;
     limit: number;
   }): Promise<UserDocument[]> {
     const query: Record<string, unknown> = {
@@ -62,10 +73,21 @@ export class UserRepository extends BaseRepository<User> {
       },
     };
     if (opts.onlyUnwarned) {
-      query['retentionWarnedAt'] = { $in: [null, undefined] };
+      if (opts.expiredWarningBefore) {
+        query['$or'] = [
+          { retentionWarnedAt: { $in: [null, undefined] } },
+          { retentionWarnedAt: { $lte: opts.expiredWarningBefore } },
+        ];
+      } else {
+        query['retentionWarnedAt'] = { $in: [null, undefined] };
+      }
     }
     if (opts.warnedBefore) {
-      query['retentionWarnedAt'] = { $ne: null, $lte: opts.warnedBefore };
+      query['retentionWarnedAt'] = {
+        $ne: null,
+        $lte: opts.warnedBefore,
+        ...(opts.warnedAfter ? { $gte: opts.warnedAfter } : {}),
+      };
     }
     return this.model.find(query).limit(opts.limit).exec();
   }

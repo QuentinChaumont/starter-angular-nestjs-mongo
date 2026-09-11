@@ -15,7 +15,11 @@ function build(settings: {
   const appSettings = {
     get: jest.fn().mockResolvedValue({ accountRetention: settings }),
   };
-  const config = { accountRetention: { cron: '0 3 * * *', batchLimit: 1000 } };
+  const config = {
+    accountRetention: { cron: '0 3 * * *', batchLimit: 1000 },
+    oidc: { frontendUrl: undefined },
+    http: { corsOrigins: ['http://localhost:4200'] },
+  };
   const logger = { log: jest.fn(), warn: jest.fn(), error: jest.fn() };
   const job = new AccountRetentionJob(
     appSettings as never,
@@ -51,6 +55,7 @@ describe('AccountRetentionJob.run', () => {
     expect(users.findRetentionCandidates).toHaveBeenNthCalledWith(1, {
       before: new Date(NOW.getTime() - (180 - 14) * DAY),
       onlyUnwarned: true,
+      expiredWarningBefore: new Date(NOW.getTime() - 2 * 14 * DAY),
       limit: 1000,
     });
     expect(mailer.send).toHaveBeenCalledTimes(1);
@@ -73,10 +78,38 @@ describe('AccountRetentionJob.run', () => {
     expect(users.findRetentionCandidates).toHaveBeenNthCalledWith(2, {
       before: new Date(NOW.getTime() - 180 * DAY),
       warnedBefore: new Date(NOW.getTime() - 14 * DAY),
+      warnedAfter: new Date(NOW.getTime() - 2 * 14 * DAY),
       limit: 1000,
     });
     expect(users.deleteById).toHaveBeenCalledWith('u2', { reason: 'retention' });
     expect(result.deleted).toBe(1);
+  });
+
+  it('excludes a warning older than 2x warningDays from the delete phase and treats it as due for a fresh warning (finding #7)', async () => {
+    const { job, users } = build({ inactiveDays: 180, warningDays: 14 });
+    users.findRetentionCandidates.mockResolvedValue([]);
+
+    await job.run(NOW);
+
+    const staleWarningBefore = new Date(NOW.getTime() - 2 * 14 * DAY);
+    // Warn phase: an account whose prior warning is this stale counts as
+    // unwarned again, not "already handled".
+    expect(users.findRetentionCandidates).toHaveBeenNthCalledWith(1, {
+      before: new Date(NOW.getTime() - (180 - 14) * DAY),
+      onlyUnwarned: true,
+      expiredWarningBefore: staleWarningBefore,
+      limit: 1000,
+    });
+    // Delete phase: a warning this stale no longer authorizes deletion —
+    // without this bound, disabling retention after a warning went out
+    // and re-enabling it later would delete the account off that
+    // long-expired warning, with no fresh one ever sent.
+    expect(users.findRetentionCandidates).toHaveBeenNthCalledWith(2, {
+      before: new Date(NOW.getTime() - 180 * DAY),
+      warnedBefore: new Date(NOW.getTime() - 14 * DAY),
+      warnedAfter: staleWarningBefore,
+      limit: 1000,
+    });
   });
 
   it('with warningDays null, deletes past-threshold accounts with no email', async () => {
@@ -97,6 +130,50 @@ describe('AccountRetentionJob.run', () => {
     });
     expect(users.deleteById).toHaveBeenCalledWith('u3', { reason: 'retention' });
     expect(result.deleted).toBe(1);
+  });
+
+  it('states a deletion date that is never in the past, even well past the warn threshold (finding #1)', async () => {
+    const { job, users, mailer } = build({ inactiveDays: 180, warningDays: 14 });
+    // 210 days inactive — 30 days further past `inactiveDays` than an
+    // account that *just* crossed the warn threshold (166 days). The
+    // naive `lastActiveAt + inactiveDays` formula would land 30 days in
+    // the past.
+    users.findRetentionCandidates
+      .mockResolvedValueOnce([
+        { _id: 'u5', email: 'u5@x.y', firstName: 'E', locale: 'en',
+          lastActiveAt: new Date(NOW.getTime() - 210 * DAY), createdAt: new Date(0) },
+      ])
+      .mockResolvedValueOnce([]);
+
+    await job.run(NOW);
+
+    const mail = mailer.send.mock.calls[0][0];
+    // The account can never actually be deleted before its full warning
+    // window elapses (the delete-phase guard), so the earliest truthful
+    // date is `now + warningDays`.
+    const earliestPossibleDeletion = new Date(NOW.getTime() + 14 * DAY);
+    const expectedDate = new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    }).format(earliestPossibleDeletion);
+    expect(mail.text).toContain(expectedDate);
+  });
+
+  it('builds an absolute profile link from the CORS origin when OIDC_FRONTEND_URL is unset (finding #3)', async () => {
+    const { job, users, mailer } = build({ inactiveDays: 180, warningDays: 14 });
+    users.findRetentionCandidates
+      .mockResolvedValueOnce([
+        { _id: 'u6', email: 'u6@x.y', firstName: 'F', locale: 'en',
+          lastActiveAt: new Date(NOW.getTime() - 170 * DAY), createdAt: new Date(0) },
+      ])
+      .mockResolvedValueOnce([]);
+
+    await job.run(NOW);
+
+    const mail = mailer.send.mock.calls[0][0];
+    expect(mail.text).toContain('http://localhost:4200/app/profile');
+    expect(mail.text).not.toContain('undefined/app/profile');
   });
 
   it('leaves retentionWarnedAt unset if the email send throws', async () => {

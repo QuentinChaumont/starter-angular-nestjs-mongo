@@ -44,6 +44,19 @@ export class AccountRetentionJob {
     // used as the narrowed value everywhere the warn phase needs it.
     const warnWindow =
       warningDays != null && warningDays < inactiveDays ? warningDays : null;
+    // A warning is only "fresh" for `2 * warnWindow` days after it was
+    // sent. Without this bound, disabling retention (`inactiveDays: null`)
+    // after warnings went out and later re-enabling it (or raising
+    // `inactiveDays`) would delete previously-warned accounts on the very
+    // next sweep off a long-stale warning email — see final-review finding
+    // #7. Past the freshness window the account is treated as unwarned
+    // again (see the warn-phase `expiredWarningBefore` use below) and gets
+    // a fresh warning instead of being deleted outright. The slack itself
+    // (`warnWindow`) is an arbitrary but reasonable choice.
+    const staleWarningBefore =
+      warnWindow != null
+        ? new Date(now.getTime() - 2 * warnWindow * DAY_MS)
+        : undefined;
 
     let warned = 0;
     if (warnWindow != null) {
@@ -53,19 +66,34 @@ export class AccountRetentionJob {
       const candidates = await this.users.findRetentionCandidates({
         before,
         onlyUnwarned: true,
+        expiredWarningBefore: staleWarningBefore,
         limit,
       });
       for (const user of candidates) {
         const reference = user.lastActiveAt ?? user.createdAt;
+        // The warn phase only selects accounts whose reference date has
+        // just crossed `now - (inactiveDays - warnWindow)`, but an account
+        // can sit unwarned past that point (e.g. a lowered `inactiveDays`,
+        // or simply never having been swept before). `reference +
+        // inactiveDays` alone can then land in the past. The account can
+        // never actually be deleted before its full warning window has
+        // elapsed (the delete-phase guard below requires it), so the
+        // stated date is never earlier than that.
         const deletionOn = new Date(
-          reference.getTime() + inactiveDays * DAY_MS,
+          Math.max(
+            reference.getTime() + inactiveDays * DAY_MS,
+            now.getTime() + warnWindow * DAY_MS,
+          ),
         );
         try {
+          const base = (
+            this.config.oidc.frontendUrl ?? this.config.http.corsOrigins[0]
+          ).replace(/\/$/, '');
           const mail = renderAccountRetentionWarning({
             firstName: user.firstName,
             lastActiveOn: formatDate(reference, user.locale),
             deletionOn: formatDate(deletionOn, user.locale),
-            url: `${this.config.oidc?.frontendUrl ?? ''}/app/profile`,
+            url: `${base}/app/profile`,
             locale: user.locale,
           });
           await this.mailer.send({ to: user.email, ...mail });
@@ -87,6 +115,7 @@ export class AccountRetentionJob {
         ? {
             before: deleteBefore,
             warnedBefore: new Date(now.getTime() - warnWindow * DAY_MS),
+            warnedAfter: staleWarningBefore,
             limit,
           }
         : { before: deleteBefore, limit },
