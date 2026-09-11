@@ -73,6 +73,14 @@ describe('UserService.deleteById', () => {
     await service.deleteById('u1', { reason: 'retention' });
     expect(onDeleted.mock.calls[0][0].reason).toBe('retention');
   });
+
+  it('emits reason "admin" when asked', async () => {
+    const { service, events } = build({ _id: 'u1', email: 'a@b.c' });
+    const onDeleted = jest.fn();
+    events.onDeleted(onDeleted);
+    await service.deleteById('u1', { reason: 'admin' });
+    expect(onDeleted.mock.calls[0][0].reason).toBe('admin');
+  });
 });
 
 describe('UserService retention queries', () => {

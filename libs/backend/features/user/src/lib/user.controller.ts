@@ -128,8 +128,11 @@ export class UserController {
     return this.service.updateById(id, dto);
   }
 
+  /** Admin-initiated delete — distinct from `deleteAccount` (self-service,
+   * `DELETE /me`) so the audit trail never attributes it to the deleted
+   * user themselves (see `AuditListeners.onDeleted`). */
   @Delete(':id')
   async remove(@Param('id') id: string): Promise<void> {
-    await this.service.deleteById(id);
+    await this.service.deleteById(id, { reason: 'admin' });
   }
 }

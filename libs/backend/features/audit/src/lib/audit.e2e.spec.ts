@@ -171,6 +171,45 @@ describe('Audit log (e2e, real Mongo instance)', () => {
     expect(row.actorId).toEqual(expect.any(String));
   });
 
+  it('attributes an admin-initiated user delete to the acting admin, not the deleted user', async () => {
+    const { accessToken } = await login(admin);
+
+    const created = await fetch(`${baseUrl}/users`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        email: 'carol.victim@example.com',
+        password: 'Str0ng!Passw0rd',
+        firstName: 'Carol',
+        lastName: 'Victim',
+      }),
+    });
+    const victim = (await created.json()) as { _id: string };
+
+    const del = await fetch(`${baseUrl}/users/${victim._id}`, {
+      method: 'DELETE',
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    expect(del.status).toBe(200);
+
+    const [row] = await findAudit(
+      accessToken,
+      'action=account.deleted&pageSize=1',
+    );
+    expect(row).toMatchObject({
+      action: 'account.deleted',
+      target: victim._id,
+      targetType: 'user',
+      meta: { reason: 'admin' },
+    });
+    // actor is the admin who made the request, not the deleted user
+    expect(row.actorId).not.toBe(victim._id);
+    expect(row.actorId).toEqual(expect.any(String));
+  });
+
   it('is admin-only', async () => {
     const { accessToken } = await login(target);
     const res = await fetch(`${baseUrl}/audit`, {

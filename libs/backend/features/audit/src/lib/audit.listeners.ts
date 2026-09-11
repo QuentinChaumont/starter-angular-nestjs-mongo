@@ -132,7 +132,12 @@ export class AuditListeners implements OnModuleInit {
           e.reason === 'retention'
             ? AUDIT_ACTION.ACCOUNT_PURGED
             : AUDIT_ACTION.ACCOUNT_DELETED,
-        actorId: e.reason === 'retention' ? undefined : e.userId,
+        // `self` — the deleted user is genuinely their own actor.
+        // `admin` — left unset, like `ROLES_CHANGED` / `STATUS_CHANGED`:
+        // `AuditService.record` then falls back to the request-scoped
+        // caller (the acting admin), never the deleted user.
+        // `retention` — no request context (cron); stays unset.
+        actorId: e.reason === 'self' ? e.userId : undefined,
         target: e.userId,
         targetType: 'user',
         meta: { email: e.email, reason: e.reason },

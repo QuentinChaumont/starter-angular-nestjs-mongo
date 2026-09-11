@@ -22,9 +22,10 @@ export interface UserStatusChangedEvent {
 export interface UserDeletedEvent {
   userId: string;
   email: string;
-  /** `self` — the user deleted their own account; `retention` — the
-   * inactivity sweep removed it. */
-  reason: 'self' | 'retention';
+  /** `self` — the user deleted their own account; `admin` — an admin
+   * deleted it via the admin console; `retention` — the inactivity sweep
+   * removed it. */
+  reason: 'self' | 'admin' | 'retention';
 }
 
 /**

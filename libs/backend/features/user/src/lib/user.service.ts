@@ -213,7 +213,9 @@ export class UserService {
   findRetentionCandidates(opts: {
     before: Date;
     onlyUnwarned?: boolean;
+    expiredWarningBefore?: Date;
     warnedBefore?: Date;
+    warnedAfter?: Date;
     limit: number;
   }): Promise<UserDocument[]> {
     return this.repository.findRetentionCandidates(opts);
@@ -366,7 +368,7 @@ export class UserService {
 
   async deleteById(
     id: string,
-    opts: { reason?: 'self' | 'retention' } = {},
+    opts: { reason?: 'self' | 'admin' | 'retention' } = {},
   ): Promise<void> {
     const user = await this.repository.findById(id);
     const deleted = await this.repository.deleteById(id);
