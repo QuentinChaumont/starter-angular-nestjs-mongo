@@ -31,7 +31,7 @@
     "@nestjs/config": "^4.0.4",
     "@nestjs/jwt": "^11.0.2",
     "@org/backend-core": "0.0.1",
-    "mongodb-memory-server": "^11.2.0"
+    "mongodb-memory-server": "^11.3.0"
   },
   "devDependencies": {
     "@nestjs/core": "^11.0.0",
