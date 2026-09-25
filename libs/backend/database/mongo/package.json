@@ -32,6 +32,6 @@
     "@nestjs/core": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
     "@org/backend-testing": "0.0.1",
-    "mongodb-memory-server": "^11.2.0"
+    "mongodb-memory-server": "^11.3.0"
   }
 }
