@@ -27,9 +27,9 @@
     }
   },
   "dependencies": {
-    "@nestjs/common": "^11.0.0",
+    "@nestjs/common": "^11.2.9",
     "@nestjs/mongoose": "^11.0.0",
-    "@nestjs/swagger": "^11.4.7",
+    "@nestjs/swagger": "^11.4.8",
     "@org/backend-core": "0.0.1",
     "@org/backend-database-mongo": "0.0.1",
     "@org/shared-contracts": "0.0.1",
@@ -38,8 +38,8 @@
     "mongoose": "^9.9.3"
   },
   "devDependencies": {
-    "@nestjs/core": "^11.0.0",
-    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/core": "^11.2.9",
+    "@nestjs/platform-express": "^11.2.9",
     "@nestjs/testing": "^11.0.0",
     "@org/backend-auth": "0.0.1",
     "@org/backend-features-user": "0.0.1",
